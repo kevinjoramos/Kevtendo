@@ -206,19 +206,347 @@ class CPU (val bus: Bus) {
      * I chose to implement the opcodes as
      */
 
-    class TYA(): Instruction() {
-        override val name: String
-            get() = TODO("Not yet implemented")
-        override val addressingModeName: String
-            get() = TODO("Not yet implemented")
-        override val cycleCount: Int
-            get() = TODO("Not yet implemented")
-
-        override fun run() {
+    class ADC(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
             TODO("Not yet implemented")
         }
     }
 
+    class AND(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class ASL(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class BCC(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class BCS(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class BEQ(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class BIT(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class BMI(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class BNE(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class BPL(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class BRK(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class BVC(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class BVS(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class CLC(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class CLD(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class CLI(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class CLV(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class CMP(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class CPX(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class CPY(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class DEC(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class DEX(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class DEY(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class EOR(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class INC(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class INX(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class INY(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class BEQ(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class JMP(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class JSR(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class LDA(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class LDX(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class LDY(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class LSR(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class NOP(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class ORA(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class PHA(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class PHP(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class PLA(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class PLP(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class ROL(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class ROR(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class RTI(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class RTS(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class SBC(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class SEC(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class SED(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class SEI(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class STA(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class STX(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class STY(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class TAX(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class TAY(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class TSX(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class TXA(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class TXS(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
+
+    class TYA(): Instruction() {
+        override fun run(targetAddress: UShort): UShort {
+            TODO("Not yet implemented")
+        }
+    }
 
 
 

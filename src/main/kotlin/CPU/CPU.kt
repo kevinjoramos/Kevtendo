@@ -294,25 +294,25 @@ class CPU (val bus: Bus) {
         }
     }
 
-    class CLC(): Instruction() {
+    inner class CLC(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class CLD(): Instruction() {
+    inner class CLD(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class CLI(): Instruction() {
+    inner class CLI(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class CLV(): Instruction() {
+    inner class CLV(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
@@ -532,19 +532,19 @@ class CPU (val bus: Bus) {
         }
     }
 
-    class SEC(): Instruction() {
+    inner class SEC(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class SED(): Instruction() {
+    inner class SED(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class SEI(): Instruction() {
+    inner class SEI(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }

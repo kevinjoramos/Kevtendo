@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 @ExperimentalUnsignedTypes
-class CPUTests {
+class AddressingModeTests {
     private lateinit var testCPU: CPU
     private lateinit var testBus: Bus
 

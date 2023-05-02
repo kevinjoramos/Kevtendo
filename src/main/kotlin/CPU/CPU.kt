@@ -294,27 +294,48 @@ class CPU (val bus: Bus) {
         }
     }
 
+    /**
+     * Clear Carry Flag
+     * This instruction initializes the carry flag to a 0.
+     * This instruction affects no registers in the microprocessor and no flags other than the carry flag which is reset.
+     */
     inner class CLC(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.carryFlag = false
         }
     }
 
+    /**
+     * Clear Decimal Mode
+     * This instruction sets the decimal mode flag to a 0.
+     * CLD affects no registers in the microprocessor and no flags other than the decimal mode flag which is set to a 0.
+     */
     inner class CLD(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.decimalFlag = false
         }
     }
 
+    /**
+     * Clear Interrupt Disable
+     * This instruction initializes the interrupt disable to a 0. This allows the microprocessor to receive interrupts.
+     * It affects no registers in the microprocessor and no flags other than the interrupt disable which is cleared.
+     */
     inner class CLI(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.interruptDisableFlag = false
         }
     }
 
+
+    /**
+     * Clear Overflow Flag
+     * This instruction clears the overflow flag to a 0.
+     * CLV affects no registers in the microprocessor and no flags other than the overflow flag which is set to a 0.
+     */
     inner class CLV(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.overflowFlag = false
         }
     }
 
@@ -338,30 +359,30 @@ class CPU (val bus: Bus) {
 
     inner class DEC(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val operand: UByte = bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU.bus.readAddress(targetAddress)
             val result = operand.dec()
-            bus.writeToAddress(targetAddress, result)
+            this@CPU.bus.writeToAddress(targetAddress, result)
 
-            zeroFlag = result == (0x00u).toUByte()
-            negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU.zeroFlag = result == (0x00u).toUByte()
+            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
         }
     }
 
     inner class DEX(): Instruction() {
         override fun run(targetAddress: UShort) {
-            xRegister--
+            this@CPU.xRegister--
 
-            zeroFlag = xRegister == (0x00u).toUByte()
-            negativeFlag = (xRegister.toUInt() shr 7) == 1u
+            this@CPU.zeroFlag = this@CPU.xRegister == (0x00u).toUByte()
+            this@CPU.negativeFlag = (this@CPU.xRegister.toUInt() shr 7) == 1u
         }
     }
 
     inner class DEY(): Instruction() {
         override fun run(targetAddress: UShort) {
-            yRegister--
+            this@CPU.yRegister--
 
-            zeroFlag = yRegister == (0x00u).toUByte()
-            negativeFlag = (yRegister.toUInt() shr 7) == 1u
+            this@CPU.zeroFlag = this@CPU.yRegister == (0x00u).toUByte()
+            this@CPU.negativeFlag = (this@CPU.yRegister.toUInt() shr 7) == 1u
         }
     }
 
@@ -381,12 +402,12 @@ class CPU (val bus: Bus) {
      */
     inner class INC(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val operand: UByte = bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU.bus.readAddress(targetAddress)
             val result = operand.inc()
-            bus.writeToAddress(targetAddress, result)
+            this@CPU.bus.writeToAddress(targetAddress, result)
 
-            zeroFlag = result == (0x00u).toUByte()
-            negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU.zeroFlag = result == (0x00u).toUByte()
+            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
         }
     }
 
@@ -402,10 +423,10 @@ class CPU (val bus: Bus) {
      */
     inner class INX(): Instruction() {
         override fun run(targetAddress: UShort) {
-            xRegister++
+            this@CPU.xRegister++
 
-            zeroFlag = xRegister == (0x00u).toUByte()
-            negativeFlag = (xRegister.toUInt() shr 7) == 1u
+            this@CPU.zeroFlag = this@CPU.xRegister == (0x00u).toUByte()
+            this@CPU.negativeFlag = (this@CPU.xRegister.toUInt() shr 7) == 1u
         }
     }
 
@@ -420,10 +441,10 @@ class CPU (val bus: Bus) {
      */
     inner class INY(): Instruction() {
         override fun run(targetAddress: UShort) {
-            yRegister++
+            this@CPU.yRegister++
 
-            zeroFlag = yRegister == (0x00u).toUByte()
-            negativeFlag = (yRegister.toUInt() shr 7) == 1u
+            this@CPU.zeroFlag = this@CPU.yRegister == (0x00u).toUByte()
+            this@CPU.negativeFlag = (this@CPU.yRegister.toUInt() shr 7) == 1u
         }
     }
 
@@ -532,21 +553,37 @@ class CPU (val bus: Bus) {
         }
     }
 
+    /**
+     * Set Carry Flag
+     * This instruction initializes the carry flag to a 1.
+     * This instruction affects no registers in the microprocessor and no flags other than the carry flag which is set.
+     */
     inner class SEC(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.carryFlag = true
         }
     }
 
+    /**
+     * Set Decimal Flag
+     * This instruction sets the decimal mode flag D to a 1.
+     * SED affects no registers in the microprocessor and no flags other than the decimal mode which is set to a 1.
+     */
     inner class SED(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.decimalFlag = true
         }
     }
 
+    /**
+     * Set Interrupt Disable
+     * This instruction initializes the interrupt disable to a 1.
+     * It is used to mask interrupt requests during system reset operations and during interrupt commands.
+     * It affects no registers in the microprocessor and no flags other than the interrupt disable which is set.
+     */
     inner class SEI(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.interruptDisableFlag = true
         }
     }
 

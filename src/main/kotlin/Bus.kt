@@ -11,7 +11,6 @@ class Bus (var ram: UByteArray) {
     fun writeToAddress(address: UShort, data: UByte) = ram.set(address.toInt(), data)
 
     fun clearRam() {
-
         val size = this.ram.size
         this.ram = UByteArray(size)
     }

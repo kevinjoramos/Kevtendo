@@ -647,39 +647,91 @@ class CPU (val bus: Bus) {
         }
     }
 
+    /**
+     * Transfer Accumulator to X register.
+     * This instruction takes the value from the accumulator and loads it to register X
+     * without disturbing the content of the accumulator A.
+     *
+     * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
+     */
     inner class TAX(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.xRegister = this@CPU.accumulator
+            this@CPU.zeroFlag = this@CPU.xRegister == (0x00u).toUByte()
+            this@CPU.negativeFlag = (this@CPU.xRegister.toUInt() shr 7) == 1u
         }
     }
 
+    /**
+     * Transfer Accumulator to Y register.
+     * This instruction takes the value from the accumulator and loads it to register Y
+     * without disturbing the content of the accumulator A.
+     *
+     * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
+     */
     inner class TAY(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.yRegister = this@CPU.accumulator
+            this@CPU.zeroFlag = this@CPU.yRegister == (0x00u).toUByte()
+            this@CPU.negativeFlag = (this@CPU.yRegister.toUInt() shr 7) == 1u
         }
     }
 
+    /**
+     * Transfer Stack Pointer to X register.
+     * This instruction takes the value from the stack pointer and loads it to register X
+     * without disturbing the content of the stack pointer.
+     *
+     * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
+     */
     inner class TSX(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.xRegister = this@CPU.stackPointer
+            this@CPU.zeroFlag = this@CPU.xRegister == (0x00u).toUByte()
+            this@CPU.negativeFlag = (this@CPU.xRegister.toUInt() shr 7) == 1u
         }
     }
 
+
+    /**
+     * Transfer X register to Accumulator.
+     * This instruction takes the value from the x register and loads it into the accumulator
+     * without disturbing the content of the x register.
+     *
+     * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
+     */
     inner class TXA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.accumulator = this@CPU.xRegister
+            this@CPU.zeroFlag = this@CPU.accumulator == (0x00u).toUByte()
+            this@CPU.negativeFlag = (this@CPU.accumulator.toUInt() shr 7) == 1u
         }
     }
 
+    /**
+     * Transfer X register to Stack Pointer
+     * This instruction transfers the value in the index register X to the stack pointer.
+     * TXS changes only the stack pointer, making it equal to the content of the index
+     * register X. It does not affect any of the flags.
+     */
     inner class TXS(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.stackPointer = this@CPU.xRegister
         }
     }
 
+    /**
+     * Transfer Y register to Accumulator.
+     * This instruction takes the value from the y register and loads it into the accumulator
+     * without disturbing the content of the y register.
+     *
+     * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
+     */
     inner class TYA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.accumulator = this@CPU.yRegister
+            this@CPU.zeroFlag = this@CPU.accumulator == (0x00u).toUByte()
+            this@CPU.negativeFlag = (this@CPU.accumulator.toUInt() shr 7) == 1u
         }
     }
 

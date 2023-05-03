@@ -460,21 +460,48 @@ class CPU (val bus: Bus) {
         }
     }
 
-    class LDA(): Instruction() {
+    /**
+     * Load Accumulator
+     * Load the accumulator from memory
+     * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
+     */
+    inner class LDA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val data: UByte = bus.readAddress(targetAddress)
+            this@CPU.accumulator = data
+
+            this@CPU.zeroFlag = data == (0x00u).toUByte()
+            this@CPU.negativeFlag = (data.toUInt() shr 7) == 1u
         }
     }
 
-    class LDX(): Instruction() {
+    /**
+     * Load X Register
+     * Load the index register X from memory.
+     * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
+     */
+    inner class LDX(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val data: UByte = bus.readAddress(targetAddress)
+            this@CPU.xRegister = data
+
+            this@CPU.zeroFlag = data == (0x00u).toUByte()
+            this@CPU.negativeFlag = (data.toUInt() shr 7) == 1u
         }
     }
 
-    class LDY(): Instruction() {
+    /**
+     * Load Y Register
+     * Load the index register Y from memory.
+     * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
+     */
+    inner class LDY(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val data: UByte = bus.readAddress(targetAddress)
+            this@CPU.yRegister = data
+
+            this@CPU.zeroFlag = data == (0x00u).toUByte()
+            this@CPU.negativeFlag = (data.toUInt() shr 7) == 1u
         }
     }
 
@@ -587,55 +614,70 @@ class CPU (val bus: Bus) {
         }
     }
 
-    class STA(): Instruction() {
+    /**
+     * Store Accumulator In Memory
+     * This instruction transfers the contents of the accumulator to memory.
+     * This instruction affects none of the flags in the processor status register and does not affect the accumulator.
+     */
+    inner class STA(): Instruction() {
+        override fun run(targetAddress: UShort) {
+            this@CPU.bus.writeToAddress(targetAddress, this@CPU.accumulator)
+        }
+    }
+
+    /**
+     * Store Register X in Memory
+     * Transfers value of X register to addressed memory location.
+     * No flags or registers in the microprocessor are affected by the store operation.
+     */
+    inner class STX(): Instruction() {
+        override fun run(targetAddress: UShort) {
+            this@CPU.bus.writeToAddress(targetAddress, this@CPU.xRegister)
+        }
+    }
+
+    /**
+     * Store Register Y in Memory
+     * Transfer the value of the Y register to the addressed memory location.
+     * STY does not affect any flags or registers in the microprocessor.
+     */
+    inner class STY(): Instruction() {
+        override fun run(targetAddress: UShort) {
+            this@CPU.bus.writeToAddress(targetAddress, this@CPU.yRegister)
+        }
+    }
+
+    inner class TAX(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class STX(): Instruction() {
+    inner class TAY(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class STY(): Instruction() {
+    inner class TSX(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class TAX(): Instruction() {
+    inner class TXA(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class TAY(): Instruction() {
+    inner class TXS(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class TSX(): Instruction() {
-        override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
-        }
-    }
-
-    class TXA(): Instruction() {
-        override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
-        }
-    }
-
-    class TXS(): Instruction() {
-        override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
-        }
-    }
-
-    class TYA(): Instruction() {
+    inner class TYA(): Instruction() {
         override fun run(targetAddress: UShort) {
             TODO("Not yet implemented")
         }

@@ -1,6 +1,6 @@
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 
 @ExperimentalUnsignedTypes
 class BusTests {
@@ -18,14 +18,14 @@ class BusTests {
     fun `read address from memory happy path`() {
         val testBus = generateTestBus(64)
         val address: UShort = 0x000Fu
-        assertEquals(0x0Fu, testBus.readAddress(address))
+        assertEquals((0x0Fu).toUByte(), testBus.readAddress(address))
     }
 
     @Test
     fun `read address from memory nasty path`() {
         val testBus = generateTestBus(64)
         val address: UShort = 0x000Fu
-        assertNotEquals(0x1Fu, testBus.readAddress(address))
+        assertNotEquals((0x1Fu).toUByte(), testBus.readAddress(address))
     }
 
     @Test
@@ -42,6 +42,6 @@ class BusTests {
     fun `clear all memory in ram`() {
         val testBus = generateTestBus(64)
         testBus.clearRam()
-        testBus.ram.forEach { assertEquals(0u, it) }
+        testBus.ram.forEach { assertEquals((0u).toUByte(), it) }
     }
 }

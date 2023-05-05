@@ -2,7 +2,6 @@ import CPU.CPU
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import kotlin.test.assertContentEquals
 
 @ExperimentalUnsignedTypes
 class FlagInstructionTests {

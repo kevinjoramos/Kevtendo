@@ -228,9 +228,27 @@ class CPU (val bus: Bus) {
         }
     }
 
-    class ASL(): Instruction() {
+    inner class ASLA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val data: UInt = this@CPU.accumulator.toUInt()
+            val result: UByte = (data shl 1).toUByte()
+            this@CPU.accumulator = result
+
+            this@CPU.carryFlag = (data shr 7) == 1u
+            this@CPU.zeroFlag = result == (0x00u).toUByte()
+            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
+        }
+    }
+
+    inner class ASL(): Instruction() {
+        override fun run(targetAddress: UShort) {
+            val data: UInt = this@CPU.bus.readAddress(targetAddress).toUInt()
+            val result: UByte = (data shl 1).toUByte()
+            this@CPU.bus.writeToAddress(targetAddress, result)
+
+            this@CPU.carryFlag = (data shr 7) == 1u
+            this@CPU.zeroFlag = result == (0x00u).toUByte()
+            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
         }
     }
 

@@ -440,14 +440,173 @@ class ShiftInstructionTests {
 
     @Test
     fun `test ROR rotate right on Accumulator`() {
+        val data: UByte = 0x04u
+        val result: UByte = 0x02u
+
+        testCPU.apply {
+            accumulator = data
+            carryFlag = false
+            negativeFlag = false
+            zeroFlag = false
+            RORA().run(0x0000u)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.accumulator)
+            assertEquals(false, it.carryFlag)
+            assertEquals(false, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+    }
+
+    @Test
+    fun `test ROR rotate right on Accumulator with carry in`() {
+        val data: UByte = 0x00u
+        val result: UByte = 0x80u
+
+        testCPU.apply {
+            accumulator = data
+            carryFlag = true
+            negativeFlag = false
+            zeroFlag = false
+            RORA().run(0x0000u)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.accumulator)
+            assertEquals(false, it.carryFlag)
+            assertEquals(false, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+    }
+
+    @Test
+    fun `test ROR rotate right on Accumulator with carry in and out and negative`() {
+        val data: UByte = 0x01u
+        val result: UByte = 0x80u
+
+        testCPU.apply {
+            accumulator = data
+            carryFlag = true
+            negativeFlag = false
+            zeroFlag = false
+            RORA().run(0x0000u)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.accumulator)
+            assertEquals(true, it.carryFlag)
+            assertEquals(true, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+    }
+
+    @Test
+    fun `test ROR rotate right on Accumulator with carry out and zero`() {
         val data: UByte = 0x01u
         val result: UByte = 0x00u
 
         testCPU.apply {
             accumulator = data
-            carryFlag = true
-
+            carryFlag = false
+            negativeFlag = false
+            zeroFlag = false
+            RORA().run(0x0000u)
         }
 
+        testCPU.also {
+            assertEquals(result, it.accumulator)
+            assertEquals(true, it.carryFlag)
+            assertEquals(false, it.negativeFlag)
+            assertEquals(true, it.zeroFlag)
+        }
+    }
+
+    @Test
+    fun `test ROR rotate right`() {
+        val targetAddress: UShort = 0x0105u
+        val data: UByte = 0x04u
+        val result: UByte = 0x02u
+
+        testCPU.apply {
+            bus.ram[targetAddress.toInt()] = data
+            carryFlag = false
+            negativeFlag = false
+            zeroFlag = false
+            ROR().run(targetAddress)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.bus.ram[targetAddress.toInt()])
+            assertEquals(false, it.carryFlag)
+            assertEquals(false, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+    }
+
+    @Test
+    fun `test ROR rotate right with carry in`() {
+        val targetAddress: UShort = 0x0105u
+        val data: UByte = 0x00u
+        val result: UByte = 0x80u
+
+        testCPU.apply {
+            bus.ram[targetAddress.toInt()] = data
+            carryFlag = true
+            negativeFlag = false
+            zeroFlag = false
+            ROR().run(targetAddress)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.bus.ram[targetAddress.toInt()])
+            assertEquals(false, it.carryFlag)
+            assertEquals(false, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+    }
+
+    @Test
+    fun `test ROR rotate right with carry in and out and negative`() {
+        val targetAddress: UShort = 0x0105u
+        val data: UByte = 0x01u
+        val result: UByte = 0x80u
+
+        testCPU.apply {
+            bus.ram[targetAddress.toInt()] = data
+            carryFlag = true
+            negativeFlag = false
+            zeroFlag = false
+            ROR().run(targetAddress)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.bus.ram[targetAddress.toInt()])
+            assertEquals(true, it.carryFlag)
+            assertEquals(true, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+    }
+
+    @Test
+    fun `test ROR rotate right with carry out and zero`() {
+        val targetAddress: UShort = 0x0105u
+        val data: UByte = 0x01u
+        val result: UByte = 0x00u
+
+        testCPU.apply {
+            bus.ram[targetAddress.toInt()] = data
+            carryFlag = false
+            negativeFlag = false
+            zeroFlag = false
+            ROR().run(targetAddress)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.bus.ram[targetAddress.toInt()])
+            assertEquals(true, it.carryFlag)
+            assertEquals(false, it.negativeFlag)
+            assertEquals(true, it.zeroFlag)
+        }
     }
 }

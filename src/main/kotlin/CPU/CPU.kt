@@ -671,9 +671,27 @@ class CPU (val bus: Bus) {
         }
     }
 
-    class ROR(): Instruction() {
+    inner class RORA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val data: UInt = this@CPU.accumulator.toUInt()
+            val result: UByte = if (carryFlag) ((data shr 1) or (0x80u)).toUByte() else (data shr 1).toUByte()
+            this@CPU.accumulator = result
+
+            this@CPU.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
+            this@CPU.zeroFlag = result == (0x00u).toUByte()
+            this@CPU.negativeFlag = false
+        }
+    }
+
+    inner class ROR(): Instruction() {
+        override fun run(targetAddress: UShort) {
+            val data: UInt = this@CPU.bus.readAddress(targetAddress).toUInt()
+            val result: UByte = if (carryFlag) ((data shr 1) or (0x80u)).toUByte() else (data shr 1).toUByte()
+            this@CPU.bus.writeToAddress(targetAddress, result)
+
+            this@CPU.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
+            this@CPU.zeroFlag = result == (0x00u).toUByte()
+            this@CPU.negativeFlag = false
         }
     }
 

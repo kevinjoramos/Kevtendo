@@ -637,6 +637,8 @@ class CPU (val bus: Bus) {
      * The ROL instruction sets carry equal to the input bit 7,
      * sets N equal to the input bit 6 ,
      * sets the Z flag if the result is 0.
+     * Note: I had to separate the ROL command into two implementations because passing the accumulator creates a copy,
+     * and does not change the accumulator.
      */
     inner class ROLA(): Instruction() {
         override fun run(targetAddress: UShort) {
@@ -671,6 +673,18 @@ class CPU (val bus: Bus) {
         }
     }
 
+    /**
+     * Rotate Right on Accumulator
+     * The rotate right instruction shifts either the accumulator or addressed memory right 1 bit with bit 0 shifted
+     * into the carry and carry shifted into bit 7.
+     * The ROR instruction sets carry equal to input bit 0,
+     * sets N equal to the input carry
+     * sets the Z flag if the result of the rotate is 0;
+     * otherwise it resets Z and
+     * does not affect the overflow flag at all.
+     * Note: I had to separate the ROL command into two implementations because passing the accumulator creates a copy,
+     * and does not change the accumulator.
+     */
     inner class RORA(): Instruction() {
         override fun run(targetAddress: UShort) {
             val data: UInt = this@CPU.accumulator.toUInt()
@@ -679,10 +693,20 @@ class CPU (val bus: Bus) {
 
             this@CPU.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
             this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = false
+            this@CPU.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
         }
     }
 
+    /**
+     * Rotate Right
+     * The rotate right instruction shifts either the accumulator or addressed memory right 1 bit with bit 0 shifted
+     * into the carry and carry shifted into bit 7.
+     * The ROR instruction sets carry equal to input bit 0,
+     * sets N equal to the input carry
+     * sets the Z flag if the result of the rotate is 0;
+     * otherwise it resets Z and
+     * does not affect the overflow flag at all.
+     */
     inner class ROR(): Instruction() {
         override fun run(targetAddress: UShort) {
             val data: UInt = this@CPU.bus.readAddress(targetAddress).toUInt()
@@ -691,7 +715,7 @@ class CPU (val bus: Bus) {
 
             this@CPU.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
             this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = false
+            this@CPU.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
         }
     }
 

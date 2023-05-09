@@ -475,7 +475,7 @@ class ShiftInstructionTests {
         testCPU.also {
             assertEquals(result, it.accumulator)
             assertEquals(false, it.carryFlag)
-            assertEquals(false, it.negativeFlag)
+            assertEquals(true, it.negativeFlag)
             assertEquals(false, it.zeroFlag)
         }
     }
@@ -545,7 +545,7 @@ class ShiftInstructionTests {
     }
 
     @Test
-    fun `test ROR rotate right with carry in`() {
+    fun `test ROR rotate right with carry in with negative`() {
         val targetAddress: UShort = 0x0105u
         val data: UByte = 0x00u
         val result: UByte = 0x80u
@@ -561,7 +561,7 @@ class ShiftInstructionTests {
         testCPU.also {
             assertEquals(result, it.bus.ram[targetAddress.toInt()])
             assertEquals(false, it.carryFlag)
-            assertEquals(false, it.negativeFlag)
+            assertEquals(true, it.negativeFlag)
             assertEquals(false, it.zeroFlag)
         }
     }

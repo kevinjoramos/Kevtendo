@@ -652,9 +652,10 @@ class CPU (val bus: Bus) {
         }
     }
 
-    class PHA(): Instruction() {
+    inner class PHA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.bus.writeToAddress(stackPointer.toUShort(), this@CPU.accumulator)
+            this@CPU.stackPointer--
         }
     }
 

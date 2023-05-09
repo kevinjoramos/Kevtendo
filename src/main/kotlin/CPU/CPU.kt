@@ -222,9 +222,23 @@ class CPU (val bus: Bus) {
         }
     }
 
-    class AND(): Instruction() {
+    /**
+     * And Memory with Accumulator
+     * The AND instruction transfer the accumulator and memory to the adder which performs a bit-by-bit AND operation
+     * and stores the result back in the accumulator.
+     *
+     * This instruction affects the accumulator; sets the zero flag if the result in the accumulator is 0,
+     * otherwise resets the zero flag; sets the negative flag if the result in the accumulator has bit 7 on,
+     * otherwise resets the negative flag.
+     */
+    inner class AND(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val operand: UByte = this@CPU.bus.readAddress(targetAddress)
+            val result: UByte = this@CPU.accumulator and operand
+            this@CPU.accumulator = result
+
+            this@CPU.zeroFlag = result == (0x00u).toUByte()
+            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
         }
     }
 

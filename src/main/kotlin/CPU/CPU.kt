@@ -302,9 +302,20 @@ class CPU (val bus: Bus) {
         }
     }
 
-    class BIT(): Instruction() {
+    /**
+     * Test Bits in Memory with Accumulator
+     * Bit 7 of operand toggles the negative flag;
+     * Bit 6 of perand toggles the overflow flag
+     * the zero-flag is set to the result of operand AND accumulator.
+     */
+    inner class BIT(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val operand: UInt = bus.readAddress(targetAddress).toUInt()
+            val result: UByte = this@CPU.accumulator and operand.toUByte()
+
+            this@CPU.negativeFlag = (operand shr 7) == 1u
+            this@CPU.overflowFlag = (operand and 0x40u) != 0u
+            this@CPU.zeroFlag = result == (0x00u).toUByte()
         }
     }
 
@@ -436,9 +447,20 @@ class CPU (val bus: Bus) {
         }
     }
 
-    class EOR(): Instruction() {
+    /**
+     * Exclusive OR Memory with Accumulator
+     * performs a binary "EXCLUSIVE OR" on a bit-by-bit basis and stores the result in the accumulator.
+     * Negative flag toggled by bit 7 of result.
+     * Zero flag toggled by result.
+     */
+    inner class EOR(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val operand: UByte = this@CPU.bus.readAddress(targetAddress)
+            val result: UByte = this@CPU.accumulator xor operand
+            this@CPU.accumulator = result
+
+            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU.zeroFlag = result == (0x00u).toUByte()
         }
     }
 
@@ -607,15 +629,26 @@ class CPU (val bus: Bus) {
     /**
      * No Operation
      */
-    class NOP(): Instruction() {
+    inner class NOP(): Instruction() {
         override fun run(targetAddress: UShort) {
             return
         }
     }
 
-    class ORA(): Instruction() {
+    /**
+     * OR Memory with Accumulator
+     * performs a binary OR on a bit-by-bit basis and stores the result in the accumulator.
+     * Negative flag toggled by bit 7 of result.
+     * Zero flag toggled by result.
+     */
+    inner class ORA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val operand: UByte = this@CPU.bus.readAddress(targetAddress)
+            val result: UByte = this@CPU.accumulator or operand
+            this@CPU.accumulator = result
+
+            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU.zeroFlag = result == (0x00u).toUByte()
         }
     }
 

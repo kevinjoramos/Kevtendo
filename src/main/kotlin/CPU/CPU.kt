@@ -652,6 +652,12 @@ class CPU (val bus: Bus) {
         }
     }
 
+    /**
+     * Push Accumulator On Stack
+     * copies the current value of the accumulator into the memory location the stack register points to.
+     * decrements the stack pointer value
+     * does not affect any flags or registers.
+     */
     inner class PHA(): Instruction() {
         override fun run(targetAddress: UShort) {
             this@CPU.bus.writeToAddress(stackPointer.toUShort(), this@CPU.accumulator)
@@ -659,21 +665,106 @@ class CPU (val bus: Bus) {
         }
     }
 
-    class PHP(): Instruction() {
+    /**
+     * Push Processor Status on Stack
+     * copies the current value of the status register into the memory location the stack register points to.
+     * decrements the stack pointer value
+     * does not affect any flags or registers.
+     * NOTE: I implemented the stack register as booleans for the individual bits. I used bit masking here
+     * to create the register value.
+     */
+    inner class PHP(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            var result: UByte = 0u
+            val negativeBitMask: UByte = 0x80u
+            val overflowBitMask: UByte = 0x40u
+            val extraBitMask: UByte = 0x20u
+            val breakBitMask: UByte = 0x10u
+            val decimalBitMask: UByte = 0x08u
+            val interruptDisableBitMask: UByte = 0x04u
+            val zeroBitMask: UByte = 0x02u
+            val carryBitMask: UByte = 0x01u
+
+            if (this@CPU.negativeFlag) {
+                result = result or negativeBitMask
+            }
+
+            if (this@CPU.overflowFlag) {
+                result = result or overflowBitMask
+            }
+
+            if (this@CPU.extraFlag) {
+                result = result or extraBitMask
+            }
+
+            if (this@CPU.breakFlag) {
+                result = result or breakBitMask
+            }
+
+            if (this@CPU.decimalFlag) {
+                result = result or decimalBitMask
+            }
+
+            if (this@CPU.interruptDisableFlag) {
+                result = result or interruptDisableBitMask
+            }
+
+            if (this@CPU.zeroFlag) {
+                result = result or zeroBitMask
+            }
+
+            if (this@CPU.carryFlag) {
+                result = result or carryBitMask
+            }
+
+            this@CPU.bus.writeToAddress(this@CPU.stackPointer.toUShort(), result)
+            this@CPU.stackPointer--
         }
     }
 
-    class PLA(): Instruction() {
+    /**
+     * Pull Accumulator from Stack
+     * increments the stack pointer, and copies the value in that location to accumulator.
+     * -bit 7 of the result toggles negative flag.
+     * -toggles zero flag if result is 0.
+     */
+    inner class PLA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.stackPointer++
+            val data: UByte = this@CPU.bus.readAddress(stackPointer.toUShort())
+            this@CPU.accumulator = data
+
+            this@CPU.negativeFlag = (data.toUInt() shr 7) == 1u
+            this@CPU.zeroFlag = data == (0x00u).toUByte()
         }
     }
 
-    class PLP(): Instruction() {
+    /**
+     * Pull Processor Status from Stack
+     * increments the stack pointer, and copies the value in that address to the status register.
+     */
+    inner class PLP(): Instruction() {
         override fun run(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU.stackPointer++
+            val data: UByte = this@CPU.bus.readAddress(stackPointer.toUShort())
+
+            val negativeBitMask: UByte = 0x80u
+            val overflowBitMask: UByte = 0x40u
+            val extraBitMask: UByte = 0x20u
+            val breakBitMask: UByte = 0x10u
+            val decimalBitMask: UByte = 0x08u
+            val interruptDisableBitMask: UByte = 0x04u
+            val zeroBitMask: UByte = 0x02u
+            val carryBitMask: UByte = 0x01u
+
+            this@CPU.negativeFlag = data and negativeBitMask == negativeBitMask
+            this@CPU.overflowFlag = data and overflowBitMask == overflowBitMask
+            this@CPU.extraFlag = data and extraBitMask == extraBitMask
+            this@CPU.breakFlag = data and breakBitMask == breakBitMask
+            this@CPU.decimalFlag = data and decimalBitMask == decimalBitMask
+            this@CPU.interruptDisableFlag = data and interruptDisableBitMask == interruptDisableBitMask
+            this@CPU.zeroFlag = data and zeroBitMask == zeroBitMask
+            this@CPU.carryFlag = data and carryBitMask == carryBitMask
         }
     }
 

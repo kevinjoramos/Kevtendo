@@ -1,18 +1,18 @@
-import CPU.CPU
+import CPU.CPU6502
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @ExperimentalUnsignedTypes
 class AddressingModeTests {
-    private lateinit var testCPU: CPU
+    private lateinit var testCPU: CPU6502
     private lateinit var testBus: Bus
 
     @BeforeEach
     fun setup() {
         val testRam = UByteArray(65_535)
         testBus = Bus(testRam)
-        testCPU = CPU(testBus)
+        testCPU = CPU6502(testBus)
     }
 
     /**

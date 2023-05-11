@@ -14,7 +14,7 @@ import Bus
  *
  */
 @ExperimentalUnsignedTypes
-class CPU (val bus: Bus) {
+class CPU6502 (val bus: Bus) {
 
     /**
      * 6502 Architecture components
@@ -233,12 +233,12 @@ class CPU (val bus: Bus) {
      */
     inner class AND(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val operand: UByte = this@CPU.bus.readAddress(targetAddress)
-            val result: UByte = this@CPU.accumulator and operand
-            this@CPU.accumulator = result
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val result: UByte = this@CPU6502.accumulator and operand
+            this@CPU6502.accumulator = result
 
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
         }
     }
 
@@ -253,13 +253,13 @@ class CPU (val bus: Bus) {
      */
     inner class ASLA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val data: UInt = this@CPU.accumulator.toUInt()
+            val data: UInt = this@CPU6502.accumulator.toUInt()
             val result: UByte = (data shl 1).toUByte()
-            this@CPU.accumulator = result
+            this@CPU6502.accumulator = result
 
-            this@CPU.carryFlag = (data shr 7) == 1u
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU6502.carryFlag = (data shr 7) == 1u
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
         }
     }
 
@@ -274,13 +274,13 @@ class CPU (val bus: Bus) {
      */
     inner class ASL(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val data: UInt = this@CPU.bus.readAddress(targetAddress).toUInt()
+            val data: UInt = this@CPU6502.bus.readAddress(targetAddress).toUInt()
             val result: UByte = (data shl 1).toUByte()
-            this@CPU.bus.writeToAddress(targetAddress, result)
+            this@CPU6502.bus.writeToAddress(targetAddress, result)
 
-            this@CPU.carryFlag = (data shr 7) == 1u
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU6502.carryFlag = (data shr 7) == 1u
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
         }
     }
 
@@ -311,11 +311,11 @@ class CPU (val bus: Bus) {
     inner class BIT(): Instruction() {
         override fun run(targetAddress: UShort) {
             val operand: UInt = bus.readAddress(targetAddress).toUInt()
-            val result: UByte = this@CPU.accumulator and operand.toUByte()
+            val result: UByte = this@CPU6502.accumulator and operand.toUByte()
 
-            this@CPU.negativeFlag = (operand shr 7) == 1u
-            this@CPU.overflowFlag = (operand and 0x40u) != 0u
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (operand shr 7) == 1u
+            this@CPU6502.overflowFlag = (operand and 0x40u) != 0u
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
     }
 
@@ -362,7 +362,7 @@ class CPU (val bus: Bus) {
      */
     inner class CLC(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.carryFlag = false
+            this@CPU6502.carryFlag = false
         }
     }
 
@@ -373,7 +373,7 @@ class CPU (val bus: Bus) {
      */
     inner class CLD(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.decimalFlag = false
+            this@CPU6502.decimalFlag = false
         }
     }
 
@@ -384,7 +384,7 @@ class CPU (val bus: Bus) {
      */
     inner class CLI(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.interruptDisableFlag = false
+            this@CPU6502.interruptDisableFlag = false
         }
     }
 
@@ -396,7 +396,7 @@ class CPU (val bus: Bus) {
      */
     inner class CLV(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.overflowFlag = false
+            this@CPU6502.overflowFlag = false
         }
     }
 
@@ -420,30 +420,30 @@ class CPU (val bus: Bus) {
 
     inner class DEC(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val operand: UByte = this@CPU.bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
             val result = operand.dec()
-            this@CPU.bus.writeToAddress(targetAddress, result)
+            this@CPU6502.bus.writeToAddress(targetAddress, result)
 
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
         }
     }
 
     inner class DEX(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.xRegister--
+            this@CPU6502.xRegister--
 
-            this@CPU.zeroFlag = this@CPU.xRegister == (0x00u).toUByte()
-            this@CPU.negativeFlag = (this@CPU.xRegister.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
         }
     }
 
     inner class DEY(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.yRegister--
+            this@CPU6502.yRegister--
 
-            this@CPU.zeroFlag = this@CPU.yRegister == (0x00u).toUByte()
-            this@CPU.negativeFlag = (this@CPU.yRegister.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (this@CPU6502.yRegister.toUInt() shr 7) == 1u
         }
     }
 
@@ -455,12 +455,12 @@ class CPU (val bus: Bus) {
      */
     inner class EOR(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val operand: UByte = this@CPU.bus.readAddress(targetAddress)
-            val result: UByte = this@CPU.accumulator xor operand
-            this@CPU.accumulator = result
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val result: UByte = this@CPU6502.accumulator xor operand
+            this@CPU6502.accumulator = result
 
-            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
     }
 
@@ -474,12 +474,12 @@ class CPU (val bus: Bus) {
      */
     inner class INC(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val operand: UByte = this@CPU.bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
             val result = operand.inc()
-            this@CPU.bus.writeToAddress(targetAddress, result)
+            this@CPU6502.bus.writeToAddress(targetAddress, result)
 
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
         }
     }
 
@@ -495,10 +495,10 @@ class CPU (val bus: Bus) {
      */
     inner class INX(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.xRegister++
+            this@CPU6502.xRegister++
 
-            this@CPU.zeroFlag = this@CPU.xRegister == (0x00u).toUByte()
-            this@CPU.negativeFlag = (this@CPU.xRegister.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
         }
     }
 
@@ -513,10 +513,10 @@ class CPU (val bus: Bus) {
      */
     inner class INY(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.yRegister++
+            this@CPU6502.yRegister++
 
-            this@CPU.zeroFlag = this@CPU.yRegister == (0x00u).toUByte()
-            this@CPU.negativeFlag = (this@CPU.yRegister.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (this@CPU6502.yRegister.toUInt() shr 7) == 1u
         }
     }
 
@@ -540,10 +540,10 @@ class CPU (val bus: Bus) {
     inner class LDA(): Instruction() {
         override fun run(targetAddress: UShort) {
             val data: UByte = bus.readAddress(targetAddress)
-            this@CPU.accumulator = data
+            this@CPU6502.accumulator = data
 
-            this@CPU.zeroFlag = data == (0x00u).toUByte()
-            this@CPU.negativeFlag = (data.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = data == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
         }
     }
 
@@ -555,10 +555,10 @@ class CPU (val bus: Bus) {
     inner class LDX(): Instruction() {
         override fun run(targetAddress: UShort) {
             val data: UByte = bus.readAddress(targetAddress)
-            this@CPU.xRegister = data
+            this@CPU6502.xRegister = data
 
-            this@CPU.zeroFlag = data == (0x00u).toUByte()
-            this@CPU.negativeFlag = (data.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = data == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
         }
     }
 
@@ -570,10 +570,10 @@ class CPU (val bus: Bus) {
     inner class LDY(): Instruction() {
         override fun run(targetAddress: UShort) {
             val data: UByte = bus.readAddress(targetAddress)
-            this@CPU.yRegister = data
+            this@CPU6502.yRegister = data
 
-            this@CPU.zeroFlag = data == (0x00u).toUByte()
-            this@CPU.negativeFlag = (data.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = data == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
         }
     }
 
@@ -593,13 +593,13 @@ class CPU (val bus: Bus) {
      */
     inner class LSRA(): Instruction() {
         override fun run(targetAddress: UShort){
-            val data: UInt = this@CPU.accumulator.toUInt()
+            val data: UInt = this@CPU6502.accumulator.toUInt()
             val result: UByte = (data shr 1).toUByte()
-            this@CPU.accumulator = result
+            this@CPU6502.accumulator = result
 
-            this@CPU.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = false
+            this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = false
         }
     }
 
@@ -616,13 +616,13 @@ class CPU (val bus: Bus) {
      */
     inner class LSR(): Instruction() {
         override fun run(targetAddress: UShort){
-            val data: UInt = this@CPU.bus.readAddress(targetAddress).toUInt()
+            val data: UInt = this@CPU6502.bus.readAddress(targetAddress).toUInt()
             val result: UByte = (data shr 1).toUByte()
-            this@CPU.bus.writeToAddress(targetAddress, result)
+            this@CPU6502.bus.writeToAddress(targetAddress, result)
 
-            this@CPU.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = false
+            this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = false
         }
     }
 
@@ -643,12 +643,12 @@ class CPU (val bus: Bus) {
      */
     inner class ORA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val operand: UByte = this@CPU.bus.readAddress(targetAddress)
-            val result: UByte = this@CPU.accumulator or operand
-            this@CPU.accumulator = result
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val result: UByte = this@CPU6502.accumulator or operand
+            this@CPU6502.accumulator = result
 
-            this@CPU.negativeFlag = (result.toUInt() shr 7) == 1u
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
     }
 
@@ -660,8 +660,8 @@ class CPU (val bus: Bus) {
      */
     inner class PHA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.bus.writeToAddress(stackPointer.toUShort(), this@CPU.accumulator)
-            this@CPU.stackPointer--
+            this@CPU6502.bus.writeToAddress(stackPointer.toUShort(), this@CPU6502.accumulator)
+            this@CPU6502.stackPointer--
         }
     }
 
@@ -685,40 +685,40 @@ class CPU (val bus: Bus) {
             val zeroBitMask: UByte = 0x02u
             val carryBitMask: UByte = 0x01u
 
-            if (this@CPU.negativeFlag) {
+            if (this@CPU6502.negativeFlag) {
                 result = result or negativeBitMask
             }
 
-            if (this@CPU.overflowFlag) {
+            if (this@CPU6502.overflowFlag) {
                 result = result or overflowBitMask
             }
 
-            if (this@CPU.extraFlag) {
+            if (this@CPU6502.extraFlag) {
                 result = result or extraBitMask
             }
 
-            if (this@CPU.breakFlag) {
+            if (this@CPU6502.breakFlag) {
                 result = result or breakBitMask
             }
 
-            if (this@CPU.decimalFlag) {
+            if (this@CPU6502.decimalFlag) {
                 result = result or decimalBitMask
             }
 
-            if (this@CPU.interruptDisableFlag) {
+            if (this@CPU6502.interruptDisableFlag) {
                 result = result or interruptDisableBitMask
             }
 
-            if (this@CPU.zeroFlag) {
+            if (this@CPU6502.zeroFlag) {
                 result = result or zeroBitMask
             }
 
-            if (this@CPU.carryFlag) {
+            if (this@CPU6502.carryFlag) {
                 result = result or carryBitMask
             }
 
-            this@CPU.bus.writeToAddress(this@CPU.stackPointer.toUShort(), result)
-            this@CPU.stackPointer--
+            this@CPU6502.bus.writeToAddress(this@CPU6502.stackPointer.toUShort(), result)
+            this@CPU6502.stackPointer--
         }
     }
 
@@ -730,12 +730,12 @@ class CPU (val bus: Bus) {
      */
     inner class PLA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.stackPointer++
-            val data: UByte = this@CPU.bus.readAddress(stackPointer.toUShort())
-            this@CPU.accumulator = data
+            this@CPU6502.stackPointer++
+            val data: UByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            this@CPU6502.accumulator = data
 
-            this@CPU.negativeFlag = (data.toUInt() shr 7) == 1u
-            this@CPU.zeroFlag = data == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = data == (0x00u).toUByte()
         }
     }
 
@@ -745,8 +745,8 @@ class CPU (val bus: Bus) {
      */
     inner class PLP(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.stackPointer++
-            val data: UByte = this@CPU.bus.readAddress(stackPointer.toUShort())
+            this@CPU6502.stackPointer++
+            val data: UByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
 
             val negativeBitMask: UByte = 0x80u
             val overflowBitMask: UByte = 0x40u
@@ -757,14 +757,14 @@ class CPU (val bus: Bus) {
             val zeroBitMask: UByte = 0x02u
             val carryBitMask: UByte = 0x01u
 
-            this@CPU.negativeFlag = data and negativeBitMask == negativeBitMask
-            this@CPU.overflowFlag = data and overflowBitMask == overflowBitMask
-            this@CPU.extraFlag = data and extraBitMask == extraBitMask
-            this@CPU.breakFlag = data and breakBitMask == breakBitMask
-            this@CPU.decimalFlag = data and decimalBitMask == decimalBitMask
-            this@CPU.interruptDisableFlag = data and interruptDisableBitMask == interruptDisableBitMask
-            this@CPU.zeroFlag = data and zeroBitMask == zeroBitMask
-            this@CPU.carryFlag = data and carryBitMask == carryBitMask
+            this@CPU6502.negativeFlag = data and negativeBitMask == negativeBitMask
+            this@CPU6502.overflowFlag = data and overflowBitMask == overflowBitMask
+            this@CPU6502.extraFlag = data and extraBitMask == extraBitMask
+            this@CPU6502.breakFlag = data and breakBitMask == breakBitMask
+            this@CPU6502.decimalFlag = data and decimalBitMask == decimalBitMask
+            this@CPU6502.interruptDisableFlag = data and interruptDisableBitMask == interruptDisableBitMask
+            this@CPU6502.zeroFlag = data and zeroBitMask == zeroBitMask
+            this@CPU6502.carryFlag = data and carryBitMask == carryBitMask
         }
     }
 
@@ -781,13 +781,13 @@ class CPU (val bus: Bus) {
      */
     inner class ROLA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val data: UInt = this@CPU.accumulator.toUInt()
+            val data: UInt = this@CPU6502.accumulator.toUInt()
             val result: UByte = if (carryFlag) ((data shl 1) or (1u)).toUByte() else (data shl 1).toUByte()
-            this@CPU.accumulator = result
+            this@CPU6502.accumulator = result
 
-            this@CPU.carryFlag = (data shr 7).toUByte() == (1u).toUByte()
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
+            this@CPU6502.carryFlag = (data shr 7).toUByte() == (1u).toUByte()
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
         }
     }
 
@@ -802,13 +802,13 @@ class CPU (val bus: Bus) {
      */
     inner class ROL(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val data: UInt = this@CPU.bus.readAddress(targetAddress).toUInt()
+            val data: UInt = this@CPU6502.bus.readAddress(targetAddress).toUInt()
             val result: UByte = if (carryFlag) ((data shl 1) or (1u)).toUByte() else (data shl 1).toUByte()
-            this@CPU.bus.writeToAddress(targetAddress, result)
+            this@CPU6502.bus.writeToAddress(targetAddress, result)
 
-            this@CPU.carryFlag = (data shr 7).toUByte() == (1u).toUByte()
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
+            this@CPU6502.carryFlag = (data shr 7).toUByte() == (1u).toUByte()
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
         }
     }
 
@@ -826,13 +826,13 @@ class CPU (val bus: Bus) {
      */
     inner class RORA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val data: UInt = this@CPU.accumulator.toUInt()
+            val data: UInt = this@CPU6502.accumulator.toUInt()
             val result: UByte = if (carryFlag) ((data shr 1) or (0x80u)).toUByte() else (data shr 1).toUByte()
-            this@CPU.accumulator = result
+            this@CPU6502.accumulator = result
 
-            this@CPU.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
+            this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
         }
     }
 
@@ -848,13 +848,13 @@ class CPU (val bus: Bus) {
      */
     inner class ROR(): Instruction() {
         override fun run(targetAddress: UShort) {
-            val data: UInt = this@CPU.bus.readAddress(targetAddress).toUInt()
+            val data: UInt = this@CPU6502.bus.readAddress(targetAddress).toUInt()
             val result: UByte = if (carryFlag) ((data shr 1) or (0x80u)).toUByte() else (data shr 1).toUByte()
-            this@CPU.bus.writeToAddress(targetAddress, result)
+            this@CPU6502.bus.writeToAddress(targetAddress, result)
 
-            this@CPU.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
-            this@CPU.zeroFlag = result == (0x00u).toUByte()
-            this@CPU.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
+            this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
         }
     }
 
@@ -883,7 +883,7 @@ class CPU (val bus: Bus) {
      */
     inner class SEC(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.carryFlag = true
+            this@CPU6502.carryFlag = true
         }
     }
 
@@ -894,7 +894,7 @@ class CPU (val bus: Bus) {
      */
     inner class SED(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.decimalFlag = true
+            this@CPU6502.decimalFlag = true
         }
     }
 
@@ -906,7 +906,7 @@ class CPU (val bus: Bus) {
      */
     inner class SEI(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.interruptDisableFlag = true
+            this@CPU6502.interruptDisableFlag = true
         }
     }
 
@@ -917,7 +917,7 @@ class CPU (val bus: Bus) {
      */
     inner class STA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.bus.writeToAddress(targetAddress, this@CPU.accumulator)
+            this@CPU6502.bus.writeToAddress(targetAddress, this@CPU6502.accumulator)
         }
     }
 
@@ -928,7 +928,7 @@ class CPU (val bus: Bus) {
      */
     inner class STX(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.bus.writeToAddress(targetAddress, this@CPU.xRegister)
+            this@CPU6502.bus.writeToAddress(targetAddress, this@CPU6502.xRegister)
         }
     }
 
@@ -939,7 +939,7 @@ class CPU (val bus: Bus) {
      */
     inner class STY(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.bus.writeToAddress(targetAddress, this@CPU.yRegister)
+            this@CPU6502.bus.writeToAddress(targetAddress, this@CPU6502.yRegister)
         }
     }
 
@@ -952,9 +952,9 @@ class CPU (val bus: Bus) {
      */
     inner class TAX(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.xRegister = this@CPU.accumulator
-            this@CPU.zeroFlag = this@CPU.xRegister == (0x00u).toUByte()
-            this@CPU.negativeFlag = (this@CPU.xRegister.toUInt() shr 7) == 1u
+            this@CPU6502.xRegister = this@CPU6502.accumulator
+            this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
         }
     }
 
@@ -967,9 +967,9 @@ class CPU (val bus: Bus) {
      */
     inner class TAY(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.yRegister = this@CPU.accumulator
-            this@CPU.zeroFlag = this@CPU.yRegister == (0x00u).toUByte()
-            this@CPU.negativeFlag = (this@CPU.yRegister.toUInt() shr 7) == 1u
+            this@CPU6502.yRegister = this@CPU6502.accumulator
+            this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (this@CPU6502.yRegister.toUInt() shr 7) == 1u
         }
     }
 
@@ -982,9 +982,9 @@ class CPU (val bus: Bus) {
      */
     inner class TSX(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.xRegister = this@CPU.stackPointer
-            this@CPU.zeroFlag = this@CPU.xRegister == (0x00u).toUByte()
-            this@CPU.negativeFlag = (this@CPU.xRegister.toUInt() shr 7) == 1u
+            this@CPU6502.xRegister = this@CPU6502.stackPointer
+            this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
         }
     }
 
@@ -998,9 +998,9 @@ class CPU (val bus: Bus) {
      */
     inner class TXA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.accumulator = this@CPU.xRegister
-            this@CPU.zeroFlag = this@CPU.accumulator == (0x00u).toUByte()
-            this@CPU.negativeFlag = (this@CPU.accumulator.toUInt() shr 7) == 1u
+            this@CPU6502.accumulator = this@CPU6502.xRegister
+            this@CPU6502.zeroFlag = this@CPU6502.accumulator == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (this@CPU6502.accumulator.toUInt() shr 7) == 1u
         }
     }
 
@@ -1012,7 +1012,7 @@ class CPU (val bus: Bus) {
      */
     inner class TXS(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.stackPointer = this@CPU.xRegister
+            this@CPU6502.stackPointer = this@CPU6502.xRegister
         }
     }
 
@@ -1025,9 +1025,9 @@ class CPU (val bus: Bus) {
      */
     inner class TYA(): Instruction() {
         override fun run(targetAddress: UShort) {
-            this@CPU.accumulator = this@CPU.yRegister
-            this@CPU.zeroFlag = this@CPU.accumulator == (0x00u).toUByte()
-            this@CPU.negativeFlag = (this@CPU.accumulator.toUInt() shr 7) == 1u
+            this@CPU6502.accumulator = this@CPU6502.yRegister
+            this@CPU6502.zeroFlag = this@CPU6502.accumulator == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (this@CPU6502.accumulator.toUInt() shr 7) == 1u
         }
     }
 

@@ -31,7 +31,7 @@ class LogicInstructionTests {
             bus.ram[targetAddress.toInt()] = data
             negativeFlag = true
             zeroFlag = true
-            AND().run(targetAddress)
+            AND().execute(targetAddress)
         }
 
         testCPU.also {
@@ -53,7 +53,7 @@ class LogicInstructionTests {
             bus.ram[targetAddress.toInt()] = data
             negativeFlag = false
             zeroFlag = true
-            AND().run(targetAddress)
+            AND().execute(targetAddress)
         }
 
         testCPU.also {
@@ -75,7 +75,7 @@ class LogicInstructionTests {
             bus.ram[targetAddress.toInt()] = data
             negativeFlag = true
             zeroFlag = false
-            AND().run(targetAddress)
+            AND().execute(targetAddress)
         }
 
         testCPU.also {
@@ -102,7 +102,7 @@ class LogicInstructionTests {
             negativeFlag = true
             overflowFlag = true
             zeroFlag = true
-            BIT().run(targetAddress)
+            BIT().execute(targetAddress)
         }
 
         testCPU.also {
@@ -128,7 +128,7 @@ class LogicInstructionTests {
             overflowFlag = false
             zeroFlag = false
 
-            BIT().run(targetAddress)
+            BIT().execute(targetAddress)
         }
 
 
@@ -158,7 +158,7 @@ class LogicInstructionTests {
             accumulator = accumulatorValue
             negativeFlag = true
             zeroFlag = true
-            EOR().run(targetAddress)
+            EOR().execute(targetAddress)
         }
 
         testCPU.also {
@@ -180,7 +180,7 @@ class LogicInstructionTests {
             accumulator = accumulatorValue
             negativeFlag = false
             zeroFlag = true
-            EOR().run(targetAddress)
+            EOR().execute(targetAddress)
         }
 
         testCPU.also {
@@ -202,7 +202,7 @@ class LogicInstructionTests {
             accumulator = accumulatorValue
             negativeFlag = true
             zeroFlag = false
-            EOR().run(targetAddress)
+            EOR().execute(targetAddress)
         }
 
         testCPU.also {
@@ -228,7 +228,7 @@ class LogicInstructionTests {
             accumulator = accumulatorValue
             negativeFlag = true
             zeroFlag = true
-            ORA().run(targetAddress)
+            ORA().execute(targetAddress)
         }
 
         testCPU.also {
@@ -250,7 +250,7 @@ class LogicInstructionTests {
             accumulator = accumulatorValue
             negativeFlag = false
             zeroFlag = true
-            ORA().run(targetAddress)
+            ORA().execute(targetAddress)
         }
 
         testCPU.also {
@@ -272,7 +272,7 @@ class LogicInstructionTests {
             accumulator = accumulatorValue
             negativeFlag = true
             zeroFlag = false
-            ORA().run(targetAddress)
+            ORA().execute(targetAddress)
         }
 
         testCPU.also {

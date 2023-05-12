@@ -1,5 +1,5 @@
 package CPU
 
 abstract class Instruction {
-    abstract fun run(targetAddress: UShort)
+    //abstract fun execute(targetAddress: UShort)
 }

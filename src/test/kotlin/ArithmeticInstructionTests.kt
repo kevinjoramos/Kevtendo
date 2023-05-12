@@ -25,7 +25,6 @@ class ArithmeticInstructionTests {
         val result = 0x55u
 
         testCPU.apply {
-            bus.ram[]
         }
     }
 }

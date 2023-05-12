@@ -18,49 +18,49 @@ class FlagInstructionTests {
     @Test
     fun `test CLC Clear Carry Flag`() {
         testCPU.carryFlag = true
-        testCPU.CLC().run(0x0000u)
+        testCPU.CLC().execute(0x0000u)
         assertEquals(false, testCPU.carryFlag)
     }
 
     @Test
     fun `test CLD Clear decimal flag`() {
         testCPU.decimalFlag = true
-        testCPU.CLD().run(0x0000u)
+        testCPU.CLD().execute(0x0000u)
         assertEquals(false, testCPU.decimalFlag)
     }
 
     @Test
     fun `test CLI Clear interrupt disable flag`() {
         testCPU.interruptDisableFlag = true
-        testCPU.CLI().run(0x0000u)
+        testCPU.CLI().execute(0x0000u)
         assertEquals(false, testCPU.interruptDisableFlag)
     }
 
     @Test
     fun `test CLV Clear overflow flag`() {
         testCPU.overflowFlag = true
-        testCPU.CLV().run(0x0000u)
+        testCPU.CLV().execute(0x0000u)
         assertEquals(false, testCPU.overflowFlag)
     }
 
     @Test
     fun `test SEC Set carry flag`() {
         testCPU.carryFlag = false
-        testCPU.SEC().run(0x0000u)
+        testCPU.SEC().execute(0x0000u)
         assertEquals(true, testCPU.carryFlag)
     }
 
     @Test
     fun `test SED Set decimal flag`() {
         testCPU.decimalFlag = false
-        testCPU.SED().run(0x0000u)
+        testCPU.SED().execute(0x0000u)
         assertEquals(true, testCPU.decimalFlag)
     }
 
     @Test
     fun `test SEI Set interrupt disable flag`() {
         testCPU.interruptDisableFlag = false
-        testCPU.SEI().run(0x0000u)
+        testCPU.SEI().execute(0x0000u)
         assertEquals(true, testCPU.interruptDisableFlag)
     }
 

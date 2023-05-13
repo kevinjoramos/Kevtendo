@@ -506,7 +506,7 @@ class CPU6502 (val bus: Bus) {
      * It affects no registers in the microprocessor and no flags other than the interrupt disable which is cleared.
      */
     inner class CLI(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.interruptDisableFlag = false
         }
     }
@@ -530,6 +530,10 @@ class CPU6502 (val bus: Bus) {
     }
 
     inner class CPX(): Instruction() {
+        fun execute(operand: UByte) {
+            TODO("Not yet implemented")
+        }
+
         fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
@@ -580,6 +584,9 @@ class CPU6502 (val bus: Bus) {
      * Zero flag toggled by result.
      */
     inner class EOR(): Instruction() {
+        fun execute(operand: UByte) {
+
+        }
         fun execute(targetAddress: UShort) {
             val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
             val result: UByte = this@CPU6502.accumulator xor operand
@@ -723,13 +730,7 @@ class CPU6502 (val bus: Bus) {
      */
     inner class LSRA(): Instruction() {
         fun execute(targetAddress: UShort){
-            val data: UInt = this@CPU6502.accumulator.toUInt()
-            val result: UByte = (data shr 1).toUByte()
-            this@CPU6502.accumulator = result
 
-            this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
-            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
-            this@CPU6502.negativeFlag = false
         }
     }
 
@@ -745,6 +746,16 @@ class CPU6502 (val bus: Bus) {
      * The carry is set equal to bit 0 of the input.
      */
     inner class LSR(): Instruction() {
+        fun execute() {
+            val data: UInt = this@CPU6502.accumulator.toUInt()
+            val result: UByte = (data shr 1).toUByte()
+            this@CPU6502.accumulator = result
+
+            this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = false
+        }
+
         fun execute(targetAddress: UShort){
             val data: UInt = this@CPU6502.bus.readAddress(targetAddress).toUInt()
             val result: UByte = (data shr 1).toUByte()
@@ -793,7 +804,7 @@ class CPU6502 (val bus: Bus) {
      * does not affect any flags or registers.
      */
     inner class PHA(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.bus.writeToAddress(stackPointer.toUShort(), this@CPU6502.accumulator)
             this@CPU6502.stackPointer--
         }

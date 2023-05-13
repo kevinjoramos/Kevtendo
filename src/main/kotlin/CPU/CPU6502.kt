@@ -98,6 +98,70 @@ class CPU6502 (val bus: Bus) {
         (0x25u).toUByte() to { AND().execute(zeroPageAddressing()) },
         (0x26u).toUByte() to { ROL().execute(zeroPageAddressing()) },
         (0x28u).toUByte() to { PLP().execute() },
+        (0x29u).toUByte() to { AND().execute(immediateAddressing()) },
+        (0x2Au).toUByte() to { ROL().execute() },
+        (0x2Cu).toUByte() to { BIT().execute(absoluteAddressing()) },
+        (0x2Du).toUByte() to { AND().execute(absoluteAddressing()) },
+        (0x2Eu).toUByte() to { ROL().execute(absoluteAddressing()) },
+
+        (0x30u).toUByte() to { BMI().execute(relativeAddressing()) },
+        (0x31u).toUByte() to { AND().execute(indirectYIndexedAddressing()) },
+        (0x35u).toUByte() to { AND().execute(zeroPageXIndexedAddressing()) },
+        (0x36u).toUByte() to { ROL().execute(zeroPageXIndexedAddressing()) },
+        (0x38u).toUByte() to { SEC().execute() },
+        (0x39u).toUByte() to { AND().execute(absoluteYIndexedAddressing()) },
+        (0x3Du).toUByte() to { AND().execute(absoluteXIndexedAddressing()) },
+        (0x3Eu).toUByte() to { ROL().execute(absoluteXIndexedAddressing()) },
+
+        (0x40u).toUByte() to { RTI().execute() },
+        (0x41u).toUByte() to { EOR().execute(xIndexedIndirectAddressing()) },
+        (0x45u).toUByte() to { EOR().execute(zeroPageAddressing()) },
+        (0x46u).toUByte() to { LSR().execute(zeroPageAddressing()) },
+        (0x48u).toUByte() to { PHA().execute() },
+        (0x49u).toUByte() to { EOR().execute(immediateAddressing()) },
+        (0x4Au).toUByte() to { LSR().execute() },
+        (0x4Cu).toUByte() to { JMP().execute(absoluteAddressing()) },
+        (0x4Du).toUByte() to { EOR().execute(absoluteAddressing()) },
+        (0x4Eu).toUByte() to { LSR().execute(absoluteAddressing()) },
+
+        (0x50u).toUByte() to { BVC().execute(relativeAddressing()) },
+        (0x51u).toUByte() to { EOR().execute(indirectYIndexedAddressing()) },
+        (0x55u).toUByte() to { EOR().execute(zeroPageXIndexedAddressing()) },
+        (0x56u).toUByte() to { LSR().execute(zeroPageXIndexedAddressing()) },
+        (0x58u).toUByte() to { CLI().execute() },
+        (0x59u).toUByte() to { EOR().execute(absoluteYIndexedAddressing()) },
+        (0x5Du).toUByte() to { EOR().execute(absoluteXIndexedAddressing()) },
+        (0x5Eu).toUByte() to { LSR().execute(absoluteYIndexedAddressing()) },
+
+        (0x60u).toUByte() to { RTS().execute() },
+
+
+        (0x70u).toUByte() to { BVS().execute(relativeAddressing()) },
+
+
+        (0x90u).toUByte() to { BCC().execute(relativeAddressing()) },
+
+
+        (0xA0u).toUByte() to { LDY().execute(immediateAddressing()) },
+
+        (0xB0u).toUByte() to { BCS().execute(relativeAddressing()) },
+
+        (0xC0u).toUByte() to { CPY().execute(immediateAddressing()) },
+
+        (0xD0u).toUByte() to { BNE().execute(relativeAddressing()) },
+
+        (0xE0u).toUByte() to { CPX().execute(immediateAddressing()) },
+
+        (0xF0u).toUByte() to { BEQ().execute(relativeAddressing()) },
+
+
+
+
+
+
+
+
+
 
     )
 
@@ -266,7 +330,7 @@ class CPU6502 (val bus: Bus) {
      * I chose to implement the opcodes as
      */
 
-    class ADC(): Instruction() {
+    inner class ADC(): Instruction() {
         fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
@@ -286,6 +350,10 @@ class CPU6502 (val bus: Bus) {
      * otherwise resets the negative flag.
      */
     inner class AND(): Instruction() {
+        fun execute(operand: UByte) {
+            TODO("Not implemented")
+        }
+
         fun execute(targetAddress: UShort) {
             val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
             val result: UByte = this@CPU6502.accumulator and operand
@@ -339,20 +407,20 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
-    class BCC(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class BCC(): Instruction() {
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class BCS(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class BCS(): Instruction() {
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class BEQ(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class BEQ(): Instruction() {
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
@@ -374,19 +442,19 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
-    class BMI(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class BMI(): Instruction() {
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class BNE(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class BNE(): Instruction() {
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class BPL(): Instruction() {
+    inner class BPL(): Instruction() {
         fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
@@ -398,14 +466,14 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
-    class BVC(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class BVC(): Instruction() {
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class BVS(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class BVS(): Instruction() {
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
@@ -427,7 +495,7 @@ class CPU6502 (val bus: Bus) {
      * CLD affects no registers in the microprocessor and no flags other than the decimal mode flag which is set to a 0.
      */
     inner class CLD(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.decimalFlag = false
         }
     }
@@ -438,7 +506,7 @@ class CPU6502 (val bus: Bus) {
      * It affects no registers in the microprocessor and no flags other than the interrupt disable which is cleared.
      */
     inner class CLI(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.interruptDisableFlag = false
         }
     }
@@ -450,31 +518,34 @@ class CPU6502 (val bus: Bus) {
      * CLV affects no registers in the microprocessor and no flags other than the overflow flag which is set to a 0.
      */
     inner class CLV(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.overflowFlag = false
         }
     }
 
-    class CMP(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class CMP(): Instruction() {
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class CPX(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class CPX(): Instruction() {
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
-    class CPY(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class CPY(): Instruction() {
+        fun execute(operand: UByte) {
+
+        }
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
 
     inner class DEC(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
             val result = operand.dec()
             this@CPU6502.bus.writeToAddress(targetAddress, result)
@@ -485,7 +556,7 @@ class CPU6502 (val bus: Bus) {
     }
 
     inner class DEX(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.xRegister--
 
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
@@ -494,7 +565,7 @@ class CPU6502 (val bus: Bus) {
     }
 
     inner class DEY(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.yRegister--
 
             this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()
@@ -509,7 +580,7 @@ class CPU6502 (val bus: Bus) {
      * Zero flag toggled by result.
      */
     inner class EOR(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
             val result: UByte = this@CPU6502.accumulator xor operand
             this@CPU6502.accumulator = result
@@ -528,7 +599,7 @@ class CPU6502 (val bus: Bus) {
      * if the increment causes the result to become 0, the Z flag is set on, otherwise it is reset.
      */
     inner class INC(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
             val result = operand.inc()
             this@CPU6502.bus.writeToAddress(targetAddress, result)
@@ -549,7 +620,7 @@ class CPU6502 (val bus: Bus) {
      * INX does not affect any other register other than the X register.
      */
     inner class INX(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.xRegister++
 
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
@@ -567,7 +638,7 @@ class CPU6502 (val bus: Bus) {
      * the Z flag.
      */
     inner class INY(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.yRegister++
 
             this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()
@@ -575,8 +646,8 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
-    class JMP(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class JMP(): Instruction() {
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
@@ -593,7 +664,7 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class LDA(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             val data: UByte = bus.readAddress(targetAddress)
             this@CPU6502.accumulator = data
 
@@ -608,7 +679,7 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class LDX(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             val data: UByte = bus.readAddress(targetAddress)
             this@CPU6502.xRegister = data
 
@@ -623,7 +694,11 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class LDY(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(operand: UByte) {
+
+        }
+
+        fun execute(targetAddress: UShort) {
             val data: UByte = bus.readAddress(targetAddress)
             this@CPU6502.yRegister = data
 
@@ -647,7 +722,7 @@ class CPU6502 (val bus: Bus) {
      * and does not change the accumulator.
      */
     inner class LSRA(): Instruction() {
-        override fun execute(targetAddress: UShort){
+        fun execute(targetAddress: UShort){
             val data: UInt = this@CPU6502.accumulator.toUInt()
             val result: UByte = (data shr 1).toUByte()
             this@CPU6502.accumulator = result
@@ -670,7 +745,7 @@ class CPU6502 (val bus: Bus) {
      * The carry is set equal to bit 0 of the input.
      */
     inner class LSR(): Instruction() {
-        override fun execute(targetAddress: UShort){
+        fun execute(targetAddress: UShort){
             val data: UInt = this@CPU6502.bus.readAddress(targetAddress).toUInt()
             val result: UByte = (data shr 1).toUByte()
             this@CPU6502.bus.writeToAddress(targetAddress, result)
@@ -685,7 +760,7 @@ class CPU6502 (val bus: Bus) {
      * No Operation
      */
     inner class NOP(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             return
         }
     }
@@ -718,7 +793,7 @@ class CPU6502 (val bus: Bus) {
      * does not affect any flags or registers.
      */
     inner class PHA(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.bus.writeToAddress(stackPointer.toUShort(), this@CPU6502.accumulator)
             this@CPU6502.stackPointer--
         }
@@ -788,7 +863,7 @@ class CPU6502 (val bus: Bus) {
      * -toggles zero flag if result is 0.
      */
     inner class PLA(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.stackPointer++
             val data: UByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
             this@CPU6502.accumulator = data
@@ -886,7 +961,7 @@ class CPU6502 (val bus: Bus) {
      * and does not change the accumulator.
      */
     inner class RORA(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             val data: UInt = this@CPU6502.accumulator.toUInt()
             val result: UByte = if (carryFlag) ((data shr 1) or (0x80u)).toUByte() else (data shr 1).toUByte()
             this@CPU6502.accumulator = result
@@ -908,7 +983,7 @@ class CPU6502 (val bus: Bus) {
      * does not affect the overflow flag at all.
      */
     inner class ROR(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             val data: UInt = this@CPU6502.bus.readAddress(targetAddress).toUInt()
             val result: UByte = if (carryFlag) ((data shr 1) or (0x80u)).toUByte() else (data shr 1).toUByte()
             this@CPU6502.bus.writeToAddress(targetAddress, result)
@@ -919,20 +994,20 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
-    class RTI(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class RTI(): Instruction() {
+        fun execute() {
             TODO("Not yet implemented")
         }
     }
 
-    class RTS(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class RTS(): Instruction() {
+        fun execute() {
             TODO("Not yet implemented")
         }
     }
 
-    class SBC(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+    inner class SBC(): Instruction() {
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
@@ -943,7 +1018,7 @@ class CPU6502 (val bus: Bus) {
      * This instruction affects no registers in the microprocessor and no flags other than the carry flag which is set.
      */
     inner class SEC(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.carryFlag = true
         }
     }
@@ -954,7 +1029,7 @@ class CPU6502 (val bus: Bus) {
      * SED affects no registers in the microprocessor and no flags other than the decimal mode which is set to a 1.
      */
     inner class SED(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.decimalFlag = true
         }
     }
@@ -966,7 +1041,7 @@ class CPU6502 (val bus: Bus) {
      * It affects no registers in the microprocessor and no flags other than the interrupt disable which is set.
      */
     inner class SEI(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.interruptDisableFlag = true
         }
     }
@@ -977,7 +1052,7 @@ class CPU6502 (val bus: Bus) {
      * This instruction affects none of the flags in the processor status register and does not affect the accumulator.
      */
     inner class STA(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.bus.writeToAddress(targetAddress, this@CPU6502.accumulator)
         }
     }
@@ -988,7 +1063,7 @@ class CPU6502 (val bus: Bus) {
      * No flags or registers in the microprocessor are affected by the store operation.
      */
     inner class STX(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.bus.writeToAddress(targetAddress, this@CPU6502.xRegister)
         }
     }
@@ -999,7 +1074,7 @@ class CPU6502 (val bus: Bus) {
      * STY does not affect any flags or registers in the microprocessor.
      */
     inner class STY(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.bus.writeToAddress(targetAddress, this@CPU6502.yRegister)
         }
     }
@@ -1012,7 +1087,7 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TAX(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.xRegister = this@CPU6502.accumulator
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
@@ -1027,7 +1102,7 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TAY(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.yRegister = this@CPU6502.accumulator
             this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.yRegister.toUInt() shr 7) == 1u
@@ -1042,7 +1117,7 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TSX(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.xRegister = this@CPU6502.stackPointer
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
@@ -1058,7 +1133,7 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TXA(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.accumulator = this@CPU6502.xRegister
             this@CPU6502.zeroFlag = this@CPU6502.accumulator == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.accumulator.toUInt() shr 7) == 1u
@@ -1072,7 +1147,7 @@ class CPU6502 (val bus: Bus) {
      * register X. It does not affect any of the flags.
      */
     inner class TXS(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.stackPointer = this@CPU6502.xRegister
         }
     }
@@ -1085,7 +1160,7 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TYA(): Instruction() {
-        override fun execute(targetAddress: UShort) {
+        fun execute(targetAddress: UShort) {
             this@CPU6502.accumulator = this@CPU6502.yRegister
             this@CPU6502.zeroFlag = this@CPU6502.accumulator == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.accumulator.toUInt() shr 7) == 1u

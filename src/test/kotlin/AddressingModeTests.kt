@@ -16,60 +16,183 @@ class AddressingModeTests {
     }
 
     /**
-     * Addressing mode tests.
+     * Immediate
      */
     @Test
     fun `test get constant with immediate addressing mode`() {
-        val instructionAddress: UShort = 0x0F0Eu
-        val operandAddress: UShort = 0x0F0Fu
+        val opcodeAddress: UShort = 0x0105u
         val operand: UByte = 0x0Au
-        testBus.ram[operandAddress.toInt()] = operand
-        testCPU.programCounter = instructionAddress
+        testBus.ram[(opcodeAddress + 1u).toInt()] = operand
+        testCPU.programCounter = opcodeAddress
 
-        assertEquals(operand, testCPU.immediateAddressingMode())
+        assertEquals(operand, testCPU.immediateAddressing())
+        assertEquals((opcodeAddress + 1u).toUShort(), testCPU.programCounter)
     }
+
+    /**
+     * Absolute
+     */
+
+    @Test
+    fun `test absolute addressing mode`() {
+        val opcodeAddress: UShort = 0x0105u
+        val mostSignificantByte: UByte = 0x30u
+        val leastSignificantByte: UByte = 0x10u
+        val result: UShort = 0x3010u
+
+        testCPU.apply {
+            programCounter = opcodeAddress
+            bus.ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
+            bus.ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
+        }
+
+        testCPU.also {
+            assertEquals(result, it.absoluteAddressing())
+            assertEquals((opcodeAddress + 2u).toUShort(), it.programCounter)
+        }
+    }
+
+    @Test
+    fun `test absolute X addressing mode with x offset`() {
+        val opcodeAddress: UShort = 0x0105u
+        val mostSignificantByte: UByte = 0x31u
+        val leastSignificantByte: UByte = 0x20u
+        val xRegisterValue: UByte = 0x12u
+        val result: UShort = 0x3132u
+
+        testCPU.apply {
+            programCounter = opcodeAddress
+            xRegister = xRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
+            bus.ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
+        }
+
+        testCPU.also {
+            assertEquals(result, it.absoluteXIndexedAddressing())
+            assertEquals((opcodeAddress + 2u).toUShort(), it.programCounter)
+        }
+    }
+
+    @Test
+    fun `test absolute X addressing mode with x offset with wrapping`() {
+        val opcodeAddress: UShort = 0x0105u
+        val mostSignificantByte: UByte = 0xFFu
+        val leastSignificantByte: UByte = 0xFEu
+        val xRegisterValue: UByte = 0x12u
+        val result: UShort = 0x10u
+
+        testCPU.apply {
+            programCounter = opcodeAddress
+            xRegister = xRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
+            bus.ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
+        }
+
+        testCPU.also {
+            assertEquals(result, it.absoluteXIndexedAddressing())
+            assertEquals((opcodeAddress + 2u).toUShort(), it.programCounter)
+        }
+    }
+
+    @Test
+    fun `test absolute Y addressing mode with y offset`() {
+        val opcodeAddress: UShort = 0x0105u
+        val mostSignificantByte: UByte = 0x31u
+        val leastSignificantByte: UByte = 0x20u
+        val yRegisterValue: UByte = 0x12u
+        val result: UShort = 0x3132u
+
+        testCPU.apply {
+            programCounter = opcodeAddress
+            yRegister = yRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
+            bus.ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
+        }
+
+        testCPU.also {
+            assertEquals(result, it.absoluteYIndexedAddressing())
+            assertEquals((opcodeAddress + 2u).toUShort(), it.programCounter)
+        }
+    }
+
+    @Test
+    fun `test absolute Y addressing mode with y offset with wrapping`() {
+        val opcodeAddress: UShort = 0x0105u
+        val mostSignificantByte: UByte = 0xFFu
+        val leastSignificantByte: UByte = 0xFEu
+        val yRegisterValue: UByte = 0x12u
+        val result: UShort = 0x10u
+
+        testCPU.apply {
+            programCounter = opcodeAddress
+            yRegister = yRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
+            bus.ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
+        }
+
+        testCPU.also {
+            assertEquals(result, it.absoluteYIndexedAddressing())
+            assertEquals((opcodeAddress + 2u).toUShort(), it.programCounter)
+        }
+    }
+
+    /**
+     * Zero-Page Addressing
+     */
 
     @Test
     fun `test get zero page address with Zero Page Addressing`() {
-        val instructionAddress: UShort = 0x0F0Eu
-        val operandAddress: UShort = 0x0F0Fu
-        val operand: UByte = 0x0Au
-        val targetZeroPageAddress: UShort = 0x000Au
+        val opcodeAddress: UShort = 0x0105u
+        val zeroPageAddress: UByte = 0x80u
+        val result: UShort = 0x0080u
 
-        testBus.ram[operandAddress.toInt()] = operand
-        testCPU.programCounter = instructionAddress
+        testCPU.apply {
+            programCounter = opcodeAddress
+            bus.ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
+        }
 
-        assertEquals(targetZeroPageAddress, testCPU.zeroPageAddressingMode())
+        testCPU.also {
+            assertEquals(result, it.zeroPageAddressing())
+            assertEquals((opcodeAddress + 1u).toUShort(), it.programCounter)
+        }
     }
 
     @Test
-    fun `test get zero page address with Zero X Page Addressing`() {
-        val instructionAddress: UShort = 0x0F0Fu
-        val operandAddress: UShort = 0x0F10u
-        val operand: UByte = 0x0Au
-        val xRegisterValue: UByte = 0x05u
-        val targetAddress: UShort = 0x000Fu
+    fun `test get zero page address with X offset`() {
+        val opcodeAddress: UShort = 0x0105u
+        val zeroPageAddress: UByte = 0x80u
+        val xRegisterValue: UByte = 0x02u
+        val result: UShort = 0x0082u
 
-        testBus.ram[operandAddress.toInt()] = operand
-        testCPU.programCounter = instructionAddress
-        testCPU.xRegister = xRegisterValue
+        testCPU.apply {
+            programCounter = opcodeAddress
+            xRegister = xRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
+        }
 
-        assertEquals(targetAddress, testCPU.zeroPageXAddressingMode())
+        testCPU.also {
+            assertEquals(result, it.zeroPageXIndexedAddressing())
+            assertEquals((opcodeAddress + 1u).toUShort(), it.programCounter)
+        }
     }
 
     @Test
     fun `test get zero page address with Zero X Page Addressing with wrap`() {
-        val instructionAddress: UShort = 0x0F0Fu
-        val operandAddress: UShort = 0x0F10u
-        val operand: UByte = 0xFAu
-        val xRegisterValue: UByte = 0x06u
-        val targetAddress: UShort = 0x0000u
+        val opcodeAddress: UShort = 0x0105u
+        val zeroPageAddress: UByte = 0x80u
+        val xRegisterValue: UByte = 0xFFu
+        val result: UShort = 0x00BFu
 
-        testBus.ram[operandAddress.toInt()] = operand
-        testCPU.programCounter = instructionAddress
-        testCPU.xRegister = xRegisterValue
+        testCPU.apply {
+            programCounter = opcodeAddress
+            xRegister = xRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
+        }
 
-        assertEquals(targetAddress, testCPU.zeroPageXAddressingMode())
+        testCPU.also {
+            assertEquals(result, it.zeroPageXIndexedAddressing())
+            assertEquals((opcodeAddress + 1u).toUShort(), it.programCounter)
+        }
     }
 
     @Test
@@ -84,7 +207,7 @@ class AddressingModeTests {
         testCPU.programCounter = instructionAddress
         testCPU.yRegister = yRegisterValue
 
-        assertEquals(targetAddress, testCPU.zeroPageYAddressingMode())
+        assertEquals(targetAddress, testCPU.zeroPageYIndexedAddressing())
     }
 
     @Test
@@ -99,7 +222,7 @@ class AddressingModeTests {
         testCPU.programCounter = instructionAddress
         testCPU.yRegister = yRegisterValue
 
-        assertEquals(targetAddress, testCPU.zeroPageYAddressingMode())
+        assertEquals(targetAddress, testCPU.zeroPageYIndexedAddressing())
     }
 
     @Test
@@ -112,96 +235,10 @@ class AddressingModeTests {
         testBus.ram[operandAddress.toInt()] = operand
         testCPU.programCounter = instructionAddress
 
-        assertEquals(targetAddress, testCPU.relativeAddressingMode())
+        assertEquals(targetAddress, testCPU.relativeAddressing())
     }
 
-    @Test
-    fun `test absolute addressing mode`() {
-        val startAddress: UShort = 0x0031u
-        val firstByteAddress: UShort = 0x0032u
-        val secondByteAddress: UShort = 0x0033u
-        val absoluteAddressMostSignificantBits: UByte = 0x12u
-        val absoluteAddressLeastSignificantBits: UByte = 0x34u
-        val absoluteAddress: UShort = 0x1234u
 
-        testBus.ram[firstByteAddress.toInt()] = absoluteAddressLeastSignificantBits
-        testBus.ram[secondByteAddress.toInt()] = absoluteAddressMostSignificantBits
-        testCPU.programCounter = startAddress
-
-        assertEquals(absoluteAddress, testCPU.absoluteAddressingMode())
-    }
-
-    @Test
-    fun `test absolute X addressing mode with x offset`() {
-        val startAddress: UShort = 0x0031u
-        val firstByteAddress: UShort = 0x0032u
-        val secondByteAddress: UShort = 0x0033u
-        val absoluteAddressMostSignificantBits: UByte = 0x12u
-        val absoluteAddressLeastSignificantBits: UByte = 0x34u
-        val xRegisterValue: UByte = 0x1Au
-        val absoluteAddress: UShort = 0x124Eu
-
-        testBus.ram[firstByteAddress.toInt()] = absoluteAddressLeastSignificantBits
-        testBus.ram[secondByteAddress.toInt()] = absoluteAddressMostSignificantBits
-        testCPU.programCounter = startAddress
-        testCPU.xRegister = xRegisterValue
-
-        assertEquals(absoluteAddress, testCPU.absoluteXAddressingMode())
-    }
-
-    @Test
-    fun `test absolute X addressing mode with x offset with wrapping`() {
-        val startAddress: UShort = 0x0031u
-        val firstByteAddress: UShort = 0x0032u
-        val secondByteAddress: UShort = 0x0033u
-        val absoluteAddressMostSignificantBits: UByte = 0xFFu
-        val absoluteAddressLeastSignificantBits: UByte = 0xFFu
-        val xRegisterValue: UByte = 0x01u
-        val absoluteAddress: UShort = 0x0000u
-
-        testBus.ram[firstByteAddress.toInt()] = absoluteAddressLeastSignificantBits
-        testBus.ram[secondByteAddress.toInt()] = absoluteAddressMostSignificantBits
-        testCPU.programCounter = startAddress
-        testCPU.xRegister = xRegisterValue
-
-        assertEquals(absoluteAddress, testCPU.absoluteXAddressingMode())
-    }
-
-    @Test
-    fun `test absolute Y addressing mode with y offset`() {
-        val startAddress: UShort = 0x0031u
-        val firstByteAddress: UShort = 0x0032u
-        val secondByteAddress: UShort = 0x0033u
-        val absoluteAddressMostSignificantBits: UByte = 0x12u
-        val absoluteAddressLeastSignificantBits: UByte = 0x34u
-        val yRegisterValue: UByte = 0x1Au
-        val absoluteAddress: UShort = 0x124Eu
-
-        testBus.ram[firstByteAddress.toInt()] = absoluteAddressLeastSignificantBits
-        testBus.ram[secondByteAddress.toInt()] = absoluteAddressMostSignificantBits
-        testCPU.programCounter = startAddress
-        testCPU.yRegister = yRegisterValue
-
-        assertEquals(absoluteAddress, testCPU.absoluteYAddressingMode())
-    }
-
-    @Test
-    fun `test absolute Y addressing mode with y offset with wrapping`() {
-        val startAddress: UShort = 0x0031u
-        val firstByteAddress: UShort = 0x0032u
-        val secondByteAddress: UShort = 0x0033u
-        val absoluteAddressMostSignificantBits: UByte = 0xFFu
-        val absoluteAddressLeastSignificantBits: UByte = 0xFFu
-        val yRegisterValue: UByte = 0x01u
-        val absoluteAddress: UShort = 0x0000u
-
-        testBus.ram[firstByteAddress.toInt()] = absoluteAddressLeastSignificantBits
-        testBus.ram[secondByteAddress.toInt()] = absoluteAddressMostSignificantBits
-        testCPU.programCounter = startAddress
-        testCPU.yRegister = yRegisterValue
-
-        assertEquals(absoluteAddress, testCPU.absoluteYAddressingMode())
-    }
 
     @Test
     fun `test indirect addressing mode`() {
@@ -224,7 +261,7 @@ class AddressingModeTests {
         testBus.ram[indirectAddress.toInt()] = targetAddressLeastSignificantByte
         testBus.ram[targetSecondByteAddress.toInt()] = targetAddressMostSignificantByte
 
-        assertEquals(targetAddress, testCPU.indirectAddressingMode())
+        assertEquals(targetAddress, testCPU.indirectAddressing())
     }
 
     @Test
@@ -244,7 +281,7 @@ class AddressingModeTests {
         testBus.ram[zeroPageAddress.toInt()] = targetLeastSignificantByte
         testBus.ram[zeroPageAddress.toInt() + 1] = targetMostSignificantByte
 
-        assertEquals(targetAddress, testCPU.indexedIndirectAddressingMode())
+        assertEquals(targetAddress, testCPU.xIndexedIndirectAddressing())
     }
 
     @Test
@@ -263,6 +300,6 @@ class AddressingModeTests {
         testBus.ram[startAddress.toInt() + 1] = operand
         testBus.ram[startAddress.toInt() + 2] = targetMSBOperand
 
-        assertEquals(targetAddress, testCPU.indirectIndexedAddressingMode())
+        assertEquals(targetAddress, testCPU.indirectYIndexedAddressing())
     }
 }

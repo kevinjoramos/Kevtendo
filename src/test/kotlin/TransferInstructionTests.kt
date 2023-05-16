@@ -212,7 +212,7 @@ class TransferInstructionTests {
             accumulator = data
             negativeFlag = true
             zeroFlag = true
-            TAX().execute(0x0000u)
+            TAX().execute()
         }
 
         assertEquals(data, testCPU.xRegister)
@@ -229,7 +229,7 @@ class TransferInstructionTests {
             accumulator = data
             negativeFlag = false
             zeroFlag = true
-            TAX().execute(0x0000u)
+            TAX().execute()
         }
 
         assertEquals(data, testCPU.xRegister)
@@ -246,7 +246,7 @@ class TransferInstructionTests {
             accumulator = data
             negativeFlag = true
             zeroFlag = false
-            TAX().execute(0x0000u)
+            TAX().execute()
         }
 
         assertEquals(data, testCPU.xRegister)
@@ -263,7 +263,7 @@ class TransferInstructionTests {
             accumulator = data
             negativeFlag = true
             zeroFlag = true
-            TAY().execute(0x0000u)
+            TAY().execute()
         }
 
         assertEquals(data, testCPU.yRegister)
@@ -280,7 +280,7 @@ class TransferInstructionTests {
             accumulator = data
             negativeFlag = false
             zeroFlag = true
-            TAY().execute(0x0000u)
+            TAY().execute()
         }
 
         assertEquals(data, testCPU.yRegister)
@@ -297,7 +297,7 @@ class TransferInstructionTests {
             accumulator = data
             negativeFlag = true
             zeroFlag = false
-            TAY().execute(0x0000u)
+            TAY().execute()
         }
 
         assertEquals(data, testCPU.yRegister)
@@ -314,7 +314,7 @@ class TransferInstructionTests {
             stackPointer = data
             negativeFlag = true
             zeroFlag = true
-            TSX().execute(0x0000u)
+            TSX().execute()
         }
 
         assertEquals(data, testCPU.xRegister)
@@ -331,7 +331,7 @@ class TransferInstructionTests {
             stackPointer = data
             negativeFlag = false
             zeroFlag = true
-            TSX().execute(0x0000u)
+            TSX().execute()
         }
 
         assertEquals(data, testCPU.xRegister)
@@ -348,7 +348,7 @@ class TransferInstructionTests {
             stackPointer = data
             negativeFlag = true
             zeroFlag = false
-            TSX().execute(0x0000u)
+            TSX().execute()
         }
 
         assertEquals(data, testCPU.xRegister)
@@ -365,7 +365,7 @@ class TransferInstructionTests {
             xRegister = data
             negativeFlag = true
             zeroFlag = true
-            TXA().execute(0x0000u)
+            TXA().execute()
         }
 
         assertEquals(data, testCPU.accumulator)
@@ -382,7 +382,7 @@ class TransferInstructionTests {
             xRegister = data
             negativeFlag = false
             zeroFlag = true
-            TXA().execute(0x0000u)
+            TXA().execute()
         }
 
         assertEquals(data, testCPU.accumulator)
@@ -399,7 +399,7 @@ class TransferInstructionTests {
             xRegister = data
             negativeFlag = true
             zeroFlag = false
-            TXA().execute(0x0000u)
+            TXA().execute()
         }
 
         assertEquals(data, testCPU.accumulator)
@@ -414,7 +414,7 @@ class TransferInstructionTests {
 
         testCPU.apply {
             xRegister = data
-            TXS().execute(0x0000u)
+            TXS().execute()
         }
 
         assertEquals(data, testCPU.stackPointer)
@@ -429,7 +429,7 @@ class TransferInstructionTests {
             yRegister = data
             negativeFlag = true
             zeroFlag = true
-            TYA().execute(0x0000u)
+            TYA().execute()
         }
 
         assertEquals(data, testCPU.accumulator)
@@ -446,7 +446,7 @@ class TransferInstructionTests {
             yRegister = data
             negativeFlag = false
             zeroFlag = true
-            TYA().execute(0x0000u)
+            TYA().execute()
         }
 
         assertEquals(data, testCPU.accumulator)
@@ -463,7 +463,7 @@ class TransferInstructionTests {
             yRegister = data
             negativeFlag = true
             zeroFlag = false
-            TYA().execute(0x0000u)
+            TYA().execute()
         }
 
         assertEquals(data, testCPU.accumulator)

@@ -26,7 +26,7 @@ class StackInstructionTests {
         testCPU.apply {
             accumulator = data
             stackPointer = 0xFFu
-            PHA().execute(0x0000u)
+            PHA().execute()
         }
 
         testCPU.also {
@@ -56,7 +56,7 @@ class StackInstructionTests {
             zeroFlag = true
             carryFlag = true
 
-            PHP().execute(0x0000u)
+            PHP().execute()
         }
 
         testCPU.also {
@@ -82,7 +82,7 @@ class StackInstructionTests {
             zeroFlag = true
             carryFlag = false
 
-            PHP().execute(0x0000u)
+            PHP().execute()
         }
 
         testCPU.also {
@@ -105,7 +105,7 @@ class StackInstructionTests {
             stackPointer = startingLocation
             negativeFlag = true
             zeroFlag = true
-            PLA().execute(0x0000u)
+            PLA().execute()
         }
 
         testCPU.also {
@@ -126,7 +126,7 @@ class StackInstructionTests {
             stackPointer = startingLocation
             negativeFlag = false
             zeroFlag = true
-            PLA().execute(0x0000u)
+            PLA().execute()
         }
 
         testCPU.also {
@@ -147,7 +147,7 @@ class StackInstructionTests {
             stackPointer = startingLocation
             negativeFlag = true
             zeroFlag = false
-            PLA().execute(0x0000u)
+            PLA().execute()
         }
 
         testCPU.also {
@@ -179,7 +179,7 @@ class StackInstructionTests {
             interruptDisableFlag = true
             zeroFlag = true
             carryFlag = true
-            PLP().execute(0x0000u)
+            PLP().execute()
         }
 
         testCPU.also {
@@ -212,7 +212,7 @@ class StackInstructionTests {
             interruptDisableFlag = true
             zeroFlag = true
             carryFlag = true
-            PLP().execute(0x0000u)
+            PLP().execute()
         }
 
         testCPU.also {
@@ -245,7 +245,7 @@ class StackInstructionTests {
             interruptDisableFlag = true
             zeroFlag = true
             carryFlag = true
-            PLP().execute(0x0000u)
+            PLP().execute()
         }
 
         testCPU.also {

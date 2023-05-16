@@ -67,9 +67,10 @@ class CPU6502 (val bus: Bus) {
      * 3. call the correct instruction.
      */
     private fun executeInstructions(opcode: UByte) {
-
-
-
+        val instruction = this.opcodeTable.withDefault {
+            null
+        }[opcode] ?: throw InvalidOpcodeException("Opcode $opcode not found in opcode table.")
+        instruction.invoke()
     }
 
     val opcodeTable: Map<UByte, () -> Unit> = mapOf(
@@ -241,19 +242,75 @@ class CPU6502 (val bus: Bus) {
         (0xFEu).toUByte() to { INC().execute(absoluteXIndexedAddressing()) },
     )
 
-    fun impliedAddressing() {}
+    /**
+     * Immediate Addressing Mode
+     * Returns the literal 8-bit operand located immediately after the opcode.
+     * Total instruction length is: Opcode + Operand = 2 bytes.
+     */
+    fun immediateAddressing(): UByte {
+        programCounter++
+        return bus.readAddress(programCounter)
+    }
 
-    fun immediateAddressing(): UByte { TODO("not_implemented") }
+    /**
+     * Absolute Addressing Mode
+     * Returns a 16-bit memory address that contains operand.
+     * This address is provided in the next 2 bytes after the opcode; little-endian.
+     * Total instruction length is: Opcode + LSB + MSB = 3 bytes.
+     */
+    fun absoluteAddressing(): UShort {
+        programCounter++
+        val leastSignificantByte = bus.readAddress(programCounter).toUShort()
+        programCounter++
+        val mostSignificantByte = bus.readAddress((programCounter)).toUInt()
+        return ((mostSignificantByte shl 8).toUShort() or leastSignificantByte)
+    }
 
-    fun absoluteAddressing(): UShort { TODO("not_implemented") }
+    /**
+     * Zero-Page Addressing Mode
+     * Returns a 16-bit zero-page memory address that contains operand.
+     * Since the high-byte of this address is 00, only the lower-byte is placed after the operand.
+     * Total instruction length is: Opcode + LSB = 2 bytes.
+     */
+    fun zeroPageAddressing(): UShort {
+        programCounter++
+        return bus.readAddress(programCounter).toUShort()
+    }
 
-    fun zeroPageAddressing(): UShort { TODO("not_implemented") } //zero page {}
+    /**
+     * Absolute Addressing Mode X Indexed
+     * Returns a 16-bit memory address computed from the given 16-bit address + contents of x register.
+     * The given address is provided in the next 2 bytes after the opcode; little-endian.
+     * Total instruction length is: Opcode + LSB + MSB = 3 bytes.
+     */
+    fun absoluteXIndexedAddressing(): UShort {
+        programCounter++
+        val leastSignificantByte = bus.readAddress(programCounter).toUShort()
+        programCounter++
+        val mostSignificantByte = bus.readAddress((programCounter)).toUInt()
+        return (((mostSignificantByte shl 8).toUShort() or leastSignificantByte) + xRegister).toUShort()
+    }
 
-    fun absoluteXIndexedAddressing(): UShort { TODO("not_implemented") }
+    /**
+     * Absolute Addressing Mode Y Indexed
+     * Returns a 16-bit memory address computed from the given 16-bit address + contents of y register.
+     * The given address is provided in the next 2 bytes after the opcode; little-endian.
+     * Total instruction length is: Opcode + LSB + MSB = 3 bytes.
+     */
+    fun absoluteYIndexedAddressing(): UShort {
+        programCounter++
+        val leastSignificantByte = bus.readAddress(programCounter).toUShort()
+        programCounter++
+        val mostSignificantByte = bus.readAddress((programCounter)).toUInt()
+        return (((mostSignificantByte shl 8).toUShort() or leastSignificantByte) + yRegister).toUShort()
+    }
 
-    fun absoluteYIndexedAddressing(): UShort { TODO("not_implemented") }
-
-    fun zeroPageXIndexedAddressing(): UShort { TODO("not_implemented") } //zero page {}
+    fun zeroPageXIndexedAddressing(): UShort {
+        programCounter++
+        val operand: UByte = bus.readAddress(programCounter)
+        val targetAddress: UByte = (operand + xRegister).toUByte()
+        return targetAddress.toUShort()
+    }
 
     fun zeroPageYIndexedAddressing(): UShort { TODO("not_implemented") } //zero page {}
 
@@ -265,41 +322,7 @@ class CPU6502 (val bus: Bus) {
 
     fun relativeAddressing(): UShort {TODO("not_implemented")}
 
-
-
-   /* *//**
-     * Addressing modes
-     * *implicit mode not included since its target it inferred from instruction.
-     * *accumulator mode not included since a kotlin function would only return a copy
-     * of the accumulators value.
-     *//*
-    fun implicitAddressingMode(): UShort {
-        return 0u
-    }
-
-    fun accumulatorAddressingMode(): UShort {
-        return 0u
-    }
-
-    *//**
-     * "Immediate addressing allows the programmer to directly specify an 8 bit constant within the instruction."
-     * returns byte from next instruction address.
-     *//*
-    fun immediateAddressingMode(): UByte {
-        programCounter++
-        return bus.readAddress(programCounter)
-    }
-
-    *//**
-     * Zero page addressing allows for efficient access to the first 256 bytes of memory.
-     * referenced by one byte.
-     * Returns address of specified zero-page address.
-     *//*
-    fun zeroPageAddressingMode(): UShort {
-        programCounter++
-        return bus.readAddress(programCounter).toUShort()
-    }
-
+    /*
     *//**
      * Zero page X addressing allows for the xRegister offset to be added to the operand.
      * Returns address of specified zero-page address.
@@ -332,13 +355,6 @@ class CPU6502 (val bus: Bus) {
         return (programCounter + addressOffset).toUShort()
     }
 
-    fun absoluteAddressingMode(): UShort {
-        programCounter++
-        val leastSignificantByte = bus.readAddress(programCounter).toUShort()
-        programCounter++
-        val mostSignificantByte = bus.readAddress((programCounter)).toUInt()
-        return ((mostSignificantByte shl 8) + leastSignificantByte).toUShort()
-    }
 
     fun absoluteXAddressingMode(): UShort {
         programCounter++

@@ -73,82 +73,82 @@ class CPU6502 (val bus: Bus) {
     }
 
     val opcodeTable: Map<UByte, () -> Unit> = mapOf(
-        (0x00u).toUByte() to { BRK().execute() },//
+        (0x00u).toUByte() to { BRK().execute() },
         (0x01u).toUByte() to { ORA().execute(xIndexedIndirectAddressing()) },
         (0x05u).toUByte() to { ORA().execute(zeroPageAddressing()) },
         (0x06u).toUByte() to { ASL().execute(zeroPageAddressing()) },
-        (0x08u).toUByte() to { PHP().execute() },//
-        (0x09u).toUByte() to { ORA().execute(immediateAddressing()) },//
+        (0x08u).toUByte() to { PHP().execute() },
+        (0x09u).toUByte() to { ORA().execute(immediateAddressing()) },
         (0x0Au).toUByte() to { ASL().execute() },
-        (0x0Du).toUByte() to { ORA().execute(absoluteAddressing()) },//
+        (0x0Du).toUByte() to { ORA().execute(absoluteAddressing()) },
         (0x0Eu).toUByte() to { ASL().execute(absoluteAddressing()) },
 
         (0x10u).toUByte() to { BPL().execute(relativeAddressing()) },
         (0x11u).toUByte() to { ORA().execute(indirectYIndexedAddressing()) },
         (0x15u).toUByte() to { ORA().execute(zeroPageXIndexedAddressing()) },
         (0x16u).toUByte() to { ASL().execute(zeroPageXIndexedAddressing()) },
-        (0x18u).toUByte() to { CLC().execute() },//
+        (0x18u).toUByte() to { CLC().execute() },
         (0x19u).toUByte() to { ORA().execute(absoluteYIndexedAddressing()) },
         (0x1Du).toUByte() to { ORA().execute(absoluteXIndexedAddressing()) },
         (0x1Eu).toUByte() to { ASL().execute(absoluteXIndexedAddressing()) },
 
-        (0x20u).toUByte() to { JSR().execute(absoluteAddressing()) },//
+        (0x20u).toUByte() to { JSR().execute(absoluteAddressing()) },
         (0x21u).toUByte() to { AND().execute(xIndexedIndirectAddressing()) },
         (0x24u).toUByte() to { BIT().execute(zeroPageAddressing()) },
         (0x25u).toUByte() to { AND().execute(zeroPageAddressing()) },
         (0x26u).toUByte() to { ROL().execute(zeroPageAddressing()) },
-        (0x28u).toUByte() to { PLP().execute() },//
-        (0x29u).toUByte() to { AND().execute(immediateAddressing()) },//
+        (0x28u).toUByte() to { PLP().execute() },
+        (0x29u).toUByte() to { AND().execute(immediateAddressing()) },
         (0x2Au).toUByte() to { ROL().execute() },
-        (0x2Cu).toUByte() to { BIT().execute(absoluteAddressing()) },//
-        (0x2Du).toUByte() to { AND().execute(absoluteAddressing()) },//
+        (0x2Cu).toUByte() to { BIT().execute(absoluteAddressing()) },
+        (0x2Du).toUByte() to { AND().execute(absoluteAddressing()) },
         (0x2Eu).toUByte() to { ROL().execute(absoluteAddressing()) },
 
         (0x30u).toUByte() to { BMI().execute(relativeAddressing()) },
         (0x31u).toUByte() to { AND().execute(indirectYIndexedAddressing()) },
         (0x35u).toUByte() to { AND().execute(zeroPageXIndexedAddressing()) },
         (0x36u).toUByte() to { ROL().execute(zeroPageXIndexedAddressing()) },
-        (0x38u).toUByte() to { SEC().execute() },//
+        (0x38u).toUByte() to { SEC().execute() },
         (0x39u).toUByte() to { AND().execute(absoluteYIndexedAddressing()) },
         (0x3Du).toUByte() to { AND().execute(absoluteXIndexedAddressing()) },
         (0x3Eu).toUByte() to { ROL().execute(absoluteXIndexedAddressing()) },
 
-        (0x40u).toUByte() to { RTI().execute() },//
+        (0x40u).toUByte() to { RTI().execute() },
         (0x41u).toUByte() to { EOR().execute(xIndexedIndirectAddressing()) },
         (0x45u).toUByte() to { EOR().execute(zeroPageAddressing()) },
         (0x46u).toUByte() to { LSR().execute(zeroPageAddressing()) },
-        (0x48u).toUByte() to { PHA().execute() },//
-        (0x49u).toUByte() to { EOR().execute(immediateAddressing()) },//
+        (0x48u).toUByte() to { PHA().execute() },
+        (0x49u).toUByte() to { EOR().execute(immediateAddressing()) },
         (0x4Au).toUByte() to { LSR().execute() },
-        (0x4Cu).toUByte() to { JMP().execute(absoluteAddressing()) },//
-        (0x4Du).toUByte() to { EOR().execute(absoluteAddressing()) },//
+        (0x4Cu).toUByte() to { JMP().execute(absoluteAddressing()) },
+        (0x4Du).toUByte() to { EOR().execute(absoluteAddressing()) },
         (0x4Eu).toUByte() to { LSR().execute(absoluteAddressing()) },
 
         (0x50u).toUByte() to { BVC().execute(relativeAddressing()) },
         (0x51u).toUByte() to { EOR().execute(indirectYIndexedAddressing()) },
         (0x55u).toUByte() to { EOR().execute(zeroPageXIndexedAddressing()) },
         (0x56u).toUByte() to { LSR().execute(zeroPageXIndexedAddressing()) },
-        (0x58u).toUByte() to { CLI().execute() },//
+        (0x58u).toUByte() to { CLI().execute() },
         (0x59u).toUByte() to { EOR().execute(absoluteYIndexedAddressing()) },
         (0x5Du).toUByte() to { EOR().execute(absoluteXIndexedAddressing()) },
-        (0x5Eu).toUByte() to { LSR().execute(absoluteYIndexedAddressing()) },
+        (0x5Eu).toUByte() to { LSR().execute(absoluteXIndexedAddressing()) },
 
-        (0x60u).toUByte() to { RTS().execute() },//
+        (0x60u).toUByte() to { RTS().execute() },
         (0x61u).toUByte() to { ADC().execute(xIndexedIndirectAddressing()) },
         (0x65u).toUByte() to { ADC().execute(zeroPageAddressing()) },
         (0x66u).toUByte() to { ROR().execute(zeroPageAddressing()) },
-        (0x68u).toUByte() to { PLA().execute() },//
-        (0x69u).toUByte() to { ADC().execute(immediateAddressing()) },//
+        (0x68u).toUByte() to { PLA().execute() },
+        (0x69u).toUByte() to { ADC().execute(immediateAddressing()) },
         (0x6Au).toUByte() to { ROR().execute() },
         (0x6Cu).toUByte() to { JMP().execute(indirectAddressing()) },
-        (0x6Du).toUByte() to { ADC().execute(absoluteAddressing()) },//
+        (0x6Du).toUByte() to { ADC().execute(absoluteAddressing()) },
         (0x6Eu).toUByte() to { ROR().execute(absoluteAddressing()) },
 
         (0x70u).toUByte() to { BVS().execute(relativeAddressing()) },
         (0x71u).toUByte() to { ADC().execute(indirectYIndexedAddressing()) },
         (0x75u).toUByte() to { ADC().execute(zeroPageXIndexedAddressing()) },
         (0x76u).toUByte() to { ROR().execute(zeroPageXIndexedAddressing()) },
-        (0x78u).toUByte() to { SEI().execute() },//
+        (0x78u).toUByte() to { SEI().execute() },
         (0x79u).toUByte() to { ADC().execute(absoluteYIndexedAddressing()) },
         (0x7Du).toUByte() to { ADC().execute(absoluteXIndexedAddressing()) },
         (0x7Eu).toUByte() to { ROR().execute(absoluteXIndexedAddressing()) },
@@ -157,88 +157,88 @@ class CPU6502 (val bus: Bus) {
         (0x84u).toUByte() to { STY().execute(zeroPageAddressing()) },
         (0x85u).toUByte() to { STA().execute(zeroPageAddressing()) },
         (0x86u).toUByte() to { STX().execute(zeroPageAddressing()) },
-        (0x88u).toUByte() to { DEY().execute() },//
+        (0x88u).toUByte() to { DEY().execute() },
         (0x8Au).toUByte() to { TXA().execute() },
-        (0x8Cu).toUByte() to { STY().execute(absoluteAddressing()) },//
-        (0x8Du).toUByte() to { STA().execute(absoluteAddressing()) },//
+        (0x8Cu).toUByte() to { STY().execute(absoluteAddressing()) },
+        (0x8Du).toUByte() to { STA().execute(absoluteAddressing()) },
         (0x8Eu).toUByte() to { STX().execute(absoluteAddressing()) },
 
         (0x90u).toUByte() to { BCC().execute(relativeAddressing()) },
         (0x91u).toUByte() to { STA().execute(indirectYIndexedAddressing()) },
         (0x94u).toUByte() to { STY().execute(zeroPageXIndexedAddressing()) },
         (0x95u).toUByte() to { STA().execute(zeroPageXIndexedAddressing()) },
-        (0x96u).toUByte() to { STX().execute() },
-        (0x98u).toUByte() to { TYA().execute() },//
-        (0x99u).toUByte() to { STA().execute() },
+        (0x96u).toUByte() to { STX().execute(zeroPageYIndexedAddressing()) },
+        (0x98u).toUByte() to { TYA().execute() },
+        (0x99u).toUByte() to { STA().execute(absoluteYIndexedAddressing()) },
         (0x9Au).toUByte() to { TXS().execute() },
-        (0x9Du).toUByte() to { STA().execute() },
+        (0x9Du).toUByte() to { STA().execute(absoluteXIndexedAddressing()) },
 
-        (0xA0u).toUByte() to { LDY().execute(immediateAddressing()) },//
-        (0xA1u).toUByte() to { LDA().execute() },
-        (0xA2u).toUByte() to { LDX().execute(immediateAddressing()) },//
-        (0xA4u).toUByte() to { LDY().execute() },
-        (0xA5u).toUByte() to { LDA().execute() },
-        (0xA6u).toUByte() to { LDX().execute() },
-        (0xA8u).toUByte() to { TAY().execute() },//
-        (0xA9u).toUByte() to { LDA().execute(immediateAddressing()) },//
+        (0xA0u).toUByte() to { LDY().execute(immediateAddressing()) },
+        (0xA1u).toUByte() to { LDA().execute(xIndexedIndirectAddressing()) },
+        (0xA2u).toUByte() to { LDX().execute(immediateAddressing()) },
+        (0xA4u).toUByte() to { LDY().execute(zeroPageAddressing()) },
+        (0xA5u).toUByte() to { LDA().execute(zeroPageAddressing()) },
+        (0xA6u).toUByte() to { LDX().execute(zeroPageAddressing()) },
+        (0xA8u).toUByte() to { TAY().execute() },
+        (0xA9u).toUByte() to { LDA().execute(immediateAddressing()) },
         (0xAAu).toUByte() to { TAX().execute() },
-        (0xACu).toUByte() to { LDY().execute(absoluteAddressing()) },//
-        (0xADu).toUByte() to { LDA().execute(absoluteAddressing()) },//
-        (0xAEu).toUByte() to { LDX().execute() },
+        (0xACu).toUByte() to { LDY().execute(absoluteAddressing()) },
+        (0xADu).toUByte() to { LDA().execute(absoluteAddressing()) },
+        (0xAEu).toUByte() to { LDX().execute(absoluteAddressing()) },
 
-        (0xB0u).toUByte() to { BCS().execute() },
-        (0xB1u).toUByte() to { LDA().execute() },
-        (0xB4u).toUByte() to { LDY().execute() },
-        (0xB5u).toUByte() to { LDA().execute() },
-        (0xB6u).toUByte() to { LDX().execute() },
-        (0xB8u).toUByte() to { CLV().execute() },//
-        (0xB9u).toUByte() to { LDA().execute() },
+        (0xB0u).toUByte() to { BCS().execute(relativeAddressing()) },
+        (0xB1u).toUByte() to { LDA().execute(indirectYIndexedAddressing()) },
+        (0xB4u).toUByte() to { LDY().execute(zeroPageXIndexedAddressing()) },
+        (0xB5u).toUByte() to { LDA().execute(zeroPageXIndexedAddressing()) },
+        (0xB6u).toUByte() to { LDX().execute(zeroPageYIndexedAddressing()) },
+        (0xB8u).toUByte() to { CLV().execute() },
+        (0xB9u).toUByte() to { LDA().execute(absoluteYIndexedAddressing()) },
         (0xBAu).toUByte() to { TSX().execute() },
-        (0xBCu).toUByte() to { LDY().execute() },
-        (0xBDu).toUByte() to { LDA().execute() },
-        (0xBEu).toUByte() to { LDX().execute() },
+        (0xBCu).toUByte() to { LDY().execute(absoluteXIndexedAddressing()) },
+        (0xBDu).toUByte() to { LDA().execute(absoluteXIndexedAddressing()) },
+        (0xBEu).toUByte() to { LDX().execute(absoluteYIndexedAddressing()) },
 
-        (0xC0u).toUByte() to { CPY().execute(immediateAddressing()) },//
-        (0xC1u).toUByte() to { CMP().execute() },
-        (0xC4u).toUByte() to { CPY().execute() },
-        (0xC5u).toUByte() to { CMP().execute() },
-        (0xC6u).toUByte() to { DEC().execute() },
-        (0xC8u).toUByte() to { INY().execute() },//
-        (0xC9u).toUByte() to { CMP().execute(immediateAddressing()) },//
+        (0xC0u).toUByte() to { CPY().execute(immediateAddressing()) },
+        (0xC1u).toUByte() to { CMP().execute(xIndexedIndirectAddressing()) },
+        (0xC4u).toUByte() to { CPY().execute(zeroPageAddressing()) },
+        (0xC5u).toUByte() to { CMP().execute(zeroPageAddressing()) },
+        (0xC6u).toUByte() to { DEC().execute(zeroPageAddressing()) },
+        (0xC8u).toUByte() to { INY().execute() },
+        (0xC9u).toUByte() to { CMP().execute(immediateAddressing()) },
         (0xCAu).toUByte() to { DEX().execute() },
-        (0xCCu).toUByte() to { CPY().execute(absoluteAddressing()) },//
-        (0xCDu).toUByte() to { CMP().execute(absoluteAddressing()) },//
-        (0xCEu).toUByte() to { DEC().execute() },
+        (0xCCu).toUByte() to { CPY().execute(absoluteAddressing()) },
+        (0xCDu).toUByte() to { CMP().execute(absoluteAddressing()) },
+        (0xCEu).toUByte() to { DEC().execute(absoluteAddressing()) },
 
-        (0xD0u).toUByte() to { BNE().execute() },
-        (0xD1u).toUByte() to { CMP().execute() },
-        (0xD5u).toUByte() to { CMP().execute() },
-        (0xD6u).toUByte() to { DEC().execute() },
-        (0xD8u).toUByte() to { CLD().execute() },//
-        (0xD9u).toUByte() to { CMP().execute() },
-        (0xDDu).toUByte() to { CMP().execute() },
-        (0xDEu).toUByte() to { DEC().execute() },
+        (0xD0u).toUByte() to { BNE().execute(relativeAddressing()) },
+        (0xD1u).toUByte() to { CMP().execute(indirectYIndexedAddressing()) },
+        (0xD5u).toUByte() to { CMP().execute(zeroPageXIndexedAddressing()) },
+        (0xD6u).toUByte() to { DEC().execute(zeroPageXIndexedAddressing()) },
+        (0xD8u).toUByte() to { CLD().execute() },
+        (0xD9u).toUByte() to { CMP().execute(absoluteYIndexedAddressing()) },
+        (0xDDu).toUByte() to { CMP().execute(absoluteXIndexedAddressing()) },
+        (0xDEu).toUByte() to { DEC().execute(absoluteXIndexedAddressing()) },
 
-        (0xE0u).toUByte() to { CPX().execute(immediateAddressing()) },//
-        (0xE1u).toUByte() to { SBC().execute() },
-        (0xE4u).toUByte() to { CPX().execute() },
-        (0xE5u).toUByte() to { SBC().execute() },
-        (0xE6u).toUByte() to { INC().execute() },
-        (0xE8u).toUByte() to { INX().execute() },//
-        (0xE9u).toUByte() to { SBC().execute(immediateAddressing()) },//
+        (0xE0u).toUByte() to { CPX().execute(immediateAddressing()) },
+        (0xE1u).toUByte() to { SBC().execute(xIndexedIndirectAddressing()) },
+        (0xE4u).toUByte() to { CPX().execute(zeroPageAddressing()) },
+        (0xE5u).toUByte() to { SBC().execute(zeroPageAddressing()) },
+        (0xE6u).toUByte() to { INC().execute(zeroPageAddressing()) },
+        (0xE8u).toUByte() to { INX().execute() },
+        (0xE9u).toUByte() to { SBC().execute(immediateAddressing()) },
         (0xEAu).toUByte() to { NOP().execute() },
-        (0xECu).toUByte() to { CPX().execute(absoluteAddressing()) },//
-        (0xEDu).toUByte() to { SBC().execute(absoluteAddressing()) },//
-        (0xEEu).toUByte() to { INC().execute() },
+        (0xECu).toUByte() to { CPX().execute(absoluteAddressing()) },
+        (0xEDu).toUByte() to { SBC().execute(absoluteAddressing()) },
+        (0xEEu).toUByte() to { INC().execute(absoluteAddressing()) },
 
-        (0xF0u).toUByte() to { BEQ().execute() },
-        (0xF1u).toUByte() to { SBC().execute() },
-        (0xF5u).toUByte() to { SBC().execute() },
-        (0xF6u).toUByte() to { INC().execute() },
-        (0xF8u).toUByte() to { SED().execute() },//
-        (0xF9u).toUByte() to { SBC().execute() },
-        (0xFDu).toUByte() to { SBC().execute() },
-        (0xFEu).toUByte() to { INC().execute() },
+        (0xF0u).toUByte() to { BEQ().execute(relativeAddressing()) },
+        (0xF1u).toUByte() to { SBC().execute(indirectYIndexedAddressing()) },
+        (0xF5u).toUByte() to { SBC().execute(zeroPageXIndexedAddressing()) },
+        (0xF6u).toUByte() to { INC().execute(zeroPageXIndexedAddressing()) },
+        (0xF8u).toUByte() to { SED().execute() },
+        (0xF9u).toUByte() to { SBC().execute(absoluteYIndexedAddressing()) },
+        (0xFDu).toUByte() to { SBC().execute(absoluteXIndexedAddressing()) },
+        (0xFEu).toUByte() to { INC().execute(absoluteXIndexedAddressing()) },
     )
 
     fun impliedAddressing() {}
@@ -401,17 +401,19 @@ class CPU6502 (val bus: Bus) {
     }
 
 */
+
+
     /**
      * Op codes
      * I chose to implement the opcodes as
      */
 
     inner class ADC(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute(operand: UByte) {
             TODO("Not yet implemented")
         }
 
-        fun run(operand: UByte) {
+        fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
     }
@@ -537,7 +539,7 @@ class CPU6502 (val bus: Bus) {
     }
 
     inner class BRK(): Instruction() {
-        fun run() {
+        fun execute() {
             TODO("Not yet implemented")
         }
     }
@@ -571,7 +573,7 @@ class CPU6502 (val bus: Bus) {
      * CLD affects no registers in the microprocessor and no flags other than the decimal mode flag which is set to a 0.
      */
     inner class CLD(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.decimalFlag = false
         }
     }
@@ -594,12 +596,16 @@ class CPU6502 (val bus: Bus) {
      * CLV affects no registers in the microprocessor and no flags other than the overflow flag which is set to a 0.
      */
     inner class CLV(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.overflowFlag = false
         }
     }
 
     inner class CMP(): Instruction() {
+        fun execute(operand: UByte) {
+            TODO("Not yet implemented.")
+        }
+
         fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
@@ -636,6 +642,10 @@ class CPU6502 (val bus: Bus) {
     }
 
     inner class DEX(): Instruction() {
+        fun execute() {
+            TODO("Not yet implemented.")
+        }
+
         fun execute(targetAddress: UShort) {
             this@CPU6502.xRegister--
 
@@ -645,6 +655,10 @@ class CPU6502 (val bus: Bus) {
     }
 
     inner class DEY(): Instruction() {
+        fun execute() {
+            TODO("Not yet Implemented")
+        }
+
         fun execute(targetAddress: UShort) {
             this@CPU6502.yRegister--
 
@@ -661,8 +675,9 @@ class CPU6502 (val bus: Bus) {
      */
     inner class EOR(): Instruction() {
         fun execute(operand: UByte) {
-
+            TODO("Not yet implemented.")
         }
+
         fun execute(targetAddress: UShort) {
             val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
             val result: UByte = this@CPU6502.accumulator xor operand
@@ -703,7 +718,7 @@ class CPU6502 (val bus: Bus) {
      * INX does not affect any other register other than the X register.
      */
     inner class INX(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.xRegister++
 
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
@@ -721,6 +736,10 @@ class CPU6502 (val bus: Bus) {
      * the Z flag.
      */
     inner class INY(): Instruction() {
+        fun execute() {
+
+        }
+
         fun execute(targetAddress: UShort) {
             this@CPU6502.yRegister++
 
@@ -747,6 +766,10 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class LDA(): Instruction() {
+        fun execute(operand: UByte) {
+            TODO("Not yet implemented")
+        }
+
         fun execute(targetAddress: UShort) {
             val data: UByte = bus.readAddress(targetAddress)
             this@CPU6502.accumulator = data
@@ -762,6 +785,10 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class LDX(): Instruction() {
+        fun execute(operand: UByte) {
+            TODO("Not yet implemented")
+        }
+
         fun execute(targetAddress: UShort) {
             val data: UByte = bus.readAddress(targetAddress)
             this@CPU6502.xRegister = data
@@ -847,7 +874,7 @@ class CPU6502 (val bus: Bus) {
      * No Operation
      */
     inner class NOP(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             return
         }
     }
@@ -950,7 +977,7 @@ class CPU6502 (val bus: Bus) {
      * -toggles zero flag if result is 0.
      */
     inner class PLA(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.stackPointer++
             val data: UByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
             this@CPU6502.accumulator = data
@@ -1070,6 +1097,10 @@ class CPU6502 (val bus: Bus) {
      * does not affect the overflow flag at all.
      */
     inner class ROR(): Instruction() {
+        fun execute() {
+            TODO("Not yet implemented")
+        }
+
         fun execute(targetAddress: UShort) {
             val data: UInt = this@CPU6502.bus.readAddress(targetAddress).toUInt()
             val result: UByte = if (carryFlag) ((data shr 1) or (0x80u)).toUByte() else (data shr 1).toUByte()
@@ -1094,6 +1125,10 @@ class CPU6502 (val bus: Bus) {
     }
 
     inner class SBC(): Instruction() {
+        fun execute(operand: UByte) {
+            TODO("Not yet implemented.")
+        }
+
         fun execute(targetAddress: UShort) {
             TODO("Not yet implemented")
         }
@@ -1116,7 +1151,7 @@ class CPU6502 (val bus: Bus) {
      * SED affects no registers in the microprocessor and no flags other than the decimal mode which is set to a 1.
      */
     inner class SED(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.decimalFlag = true
         }
     }
@@ -1128,7 +1163,7 @@ class CPU6502 (val bus: Bus) {
      * It affects no registers in the microprocessor and no flags other than the interrupt disable which is set.
      */
     inner class SEI(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.interruptDisableFlag = true
         }
     }
@@ -1174,7 +1209,7 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TAX(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.xRegister = this@CPU6502.accumulator
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
@@ -1189,7 +1224,7 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TAY(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.yRegister = this@CPU6502.accumulator
             this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.yRegister.toUInt() shr 7) == 1u
@@ -1204,7 +1239,7 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TSX(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.xRegister = this@CPU6502.stackPointer
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
@@ -1220,7 +1255,7 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TXA(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.accumulator = this@CPU6502.xRegister
             this@CPU6502.zeroFlag = this@CPU6502.accumulator == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.accumulator.toUInt() shr 7) == 1u
@@ -1234,7 +1269,7 @@ class CPU6502 (val bus: Bus) {
      * register X. It does not affect any of the flags.
      */
     inner class TXS(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.stackPointer = this@CPU6502.xRegister
         }
     }
@@ -1247,7 +1282,7 @@ class CPU6502 (val bus: Bus) {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TYA(): Instruction() {
-        fun execute(targetAddress: UShort) {
+        fun execute() {
             this@CPU6502.accumulator = this@CPU6502.yRegister
             this@CPU6502.zeroFlag = this@CPU6502.accumulator == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.accumulator.toUInt() shr 7) == 1u

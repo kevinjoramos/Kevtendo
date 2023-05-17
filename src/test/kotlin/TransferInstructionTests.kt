@@ -15,6 +15,48 @@ class TransferInstructionTests {
         testCPU = CPU6502(testBus)
     }
 
+    /**
+     * LDA
+     */
+    @Test
+    fun `test LDA load accumulator with immediate operand`() {
+        val data: UByte = 0x05u
+
+        testCPU.negativeFlag = true
+        testCPU.zeroFlag = true
+
+        testCPU.LDA().execute(data)
+        assertEquals(data, testCPU.accumulator)
+        assertEquals(false, testCPU.negativeFlag)
+        assertEquals(false, testCPU.zeroFlag)
+    }
+
+    @Test
+    fun `test LDA load accumulator with immediate operand with negative flag`() {
+        val data: UByte = 0x80u
+
+        testCPU.negativeFlag = true
+        testCPU.zeroFlag = true
+
+        testCPU.LDA().execute(data)
+        assertEquals(data, testCPU.accumulator)
+        assertEquals(true, testCPU.negativeFlag)
+        assertEquals(false, testCPU.zeroFlag)
+    }
+
+    @Test
+    fun `test LDA load accumulator with immediate operand with zero flag`() {
+        val data: UByte = 0x00u
+
+        testCPU.negativeFlag = true
+        testCPU.zeroFlag = true
+
+        testCPU.LDA().execute(data)
+        assertEquals(data, testCPU.accumulator)
+        assertEquals(false, testCPU.negativeFlag)
+        assertEquals(true, testCPU.zeroFlag)
+    }
+
     @Test
     fun `test LDA load accumulator with memory`() {
         val targetAddress: UShort = 0x0105u
@@ -56,6 +98,49 @@ class TransferInstructionTests {
 
         testCPU.LDA().execute(targetAddress)
         assertEquals(data, testCPU.accumulator)
+        assertEquals(false, testCPU.negativeFlag)
+        assertEquals(true, testCPU.zeroFlag)
+    }
+
+    /**
+     * LDX
+     */
+
+    @Test
+    fun `test LDX load x register with immediate operand`() {
+        val data: UByte = 0x05u
+
+        testCPU.negativeFlag = true
+        testCPU.zeroFlag = true
+
+        testCPU.LDX().execute(data)
+        assertEquals(data, testCPU.xRegister)
+        assertEquals(false, testCPU.negativeFlag)
+        assertEquals(false, testCPU.zeroFlag)
+    }
+
+    @Test
+    fun `test LDX load x register with immediate operand with negative flag`() {
+        val data: UByte = 0x80u
+
+        testCPU.negativeFlag = true
+        testCPU.zeroFlag = true
+
+        testCPU.LDX().execute(data)
+        assertEquals(data, testCPU.xRegister)
+        assertEquals(true, testCPU.negativeFlag)
+        assertEquals(false, testCPU.zeroFlag)
+    }
+
+    @Test
+    fun `test LDX load x register with immediate operand with zero flag`() {
+        val data: UByte = 0x00u
+
+        testCPU.negativeFlag = true
+        testCPU.zeroFlag = true
+
+        testCPU.LDX().execute(data)
+        assertEquals(data, testCPU.xRegister)
         assertEquals(false, testCPU.negativeFlag)
         assertEquals(true, testCPU.zeroFlag)
     }
@@ -105,6 +190,49 @@ class TransferInstructionTests {
         assertEquals(true, testCPU.zeroFlag)
     }
 
+    /**
+     * LDY
+     */
+
+    @Test
+    fun `test LDY load y register with immediate operand`() {
+        val data: UByte = 0x05u
+
+        testCPU.negativeFlag = true
+        testCPU.zeroFlag = true
+
+        testCPU.LDY().execute(data)
+        assertEquals(data, testCPU.yRegister)
+        assertEquals(false, testCPU.negativeFlag)
+        assertEquals(false, testCPU.zeroFlag)
+    }
+
+    @Test
+    fun `test LDY load y register with immediate operand with negative flag`() {
+        val data: UByte = 0x80u
+
+        testCPU.negativeFlag = true
+        testCPU.zeroFlag = true
+
+        testCPU.LDY().execute(data)
+        assertEquals(data, testCPU.yRegister)
+        assertEquals(true, testCPU.negativeFlag)
+        assertEquals(false, testCPU.zeroFlag)
+    }
+
+    @Test
+    fun `test LDY load y register with immediate operand with zero flag`() {
+        val data: UByte = 0x00u
+
+        testCPU.negativeFlag = true
+        testCPU.zeroFlag = true
+
+        testCPU.LDY().execute(data)
+        assertEquals(data, testCPU.yRegister)
+        assertEquals(false, testCPU.negativeFlag)
+        assertEquals(true, testCPU.zeroFlag)
+    }
+
     @Test
     fun `test LDY load y register with memory`() {
         val targetAddress: UShort = 0x0105u
@@ -150,6 +278,10 @@ class TransferInstructionTests {
         assertEquals(true, testCPU.zeroFlag)
     }
 
+    /**
+     * STA
+     */
+
     @Test
     fun `test STA store accumulator in memory`() {
         val targetAddress: UShort = 0x0105u
@@ -167,6 +299,10 @@ class TransferInstructionTests {
         assertEquals(false, testCPU.zeroFlag)
         assertEquals(false, testCPU.negativeFlag)
     }
+
+    /**
+     * STX
+     */
 
     @Test
     fun `test STX store x register in memory`() {
@@ -186,6 +322,10 @@ class TransferInstructionTests {
         assertEquals(false, testCPU.negativeFlag)
     }
 
+    /**
+     * STY
+     */
+
     @Test
     fun `test STY store y register in memory`() {
         val targetAddress: UShort = 0x0105u
@@ -203,6 +343,10 @@ class TransferInstructionTests {
         assertEquals(false, testCPU.zeroFlag)
         assertEquals(false, testCPU.negativeFlag)
     }
+
+    /**
+     * TAX
+     */
 
     @Test
     fun `test TAX transfer accumulator to x register`() {
@@ -255,6 +399,10 @@ class TransferInstructionTests {
         assertEquals(true, testCPU.zeroFlag)
     }
 
+    /**
+     * TAY
+     */
+
     @Test
     fun `test TAY transfer accumulator to y register`() {
         val data: UByte = 0x45u
@@ -305,6 +453,10 @@ class TransferInstructionTests {
         assertEquals(false, testCPU.negativeFlag)
         assertEquals(true, testCPU.zeroFlag)
     }
+
+    /**
+     * TSX
+     */
 
     @Test
     fun `test TSX transfer stack pointer to x register`() {
@@ -357,6 +509,10 @@ class TransferInstructionTests {
         assertEquals(true, testCPU.zeroFlag)
     }
 
+    /**
+     * TXA
+     */
+
     @Test
     fun `test TXA transfer x register to accumulator`() {
         val data: UByte = 0x45u
@@ -408,6 +564,10 @@ class TransferInstructionTests {
         assertEquals(true, testCPU.zeroFlag)
     }
 
+    /**
+     * TXS
+     */
+
     @Test
     fun `test TXS transfer x register to stack pointer`() {
         val data: UByte = 0x00u
@@ -420,6 +580,10 @@ class TransferInstructionTests {
         assertEquals(data, testCPU.stackPointer)
         assertEquals(data, testCPU.xRegister)
     }
+
+    /**
+     * TYA
+     */
 
     @Test
     fun `test TYA transfer y register to accumulator`() {

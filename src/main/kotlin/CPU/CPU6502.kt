@@ -731,8 +731,10 @@ class CPU6502 (val bus: Bus) {
      */
     inner class LDA(): Instruction() {
         fun execute(operand: UByte) {
-            TODO("Not yet implemented")
-        }
+            this@CPU6502.accumulator = operand
+
+            this@CPU6502.zeroFlag = operand == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (operand.toUInt() shr 7) == 1u        }
 
         fun execute(targetAddress: UShort) {
             val data: UByte = bus.readAddress(targetAddress)
@@ -750,7 +752,10 @@ class CPU6502 (val bus: Bus) {
      */
     inner class LDX(): Instruction() {
         fun execute(operand: UByte) {
-            TODO("Not yet implemented")
+            this@CPU6502.xRegister = operand
+
+            this@CPU6502.zeroFlag = operand == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (operand.toUInt() shr 7) == 1u
         }
 
         fun execute(targetAddress: UShort) {
@@ -769,7 +774,10 @@ class CPU6502 (val bus: Bus) {
      */
     inner class LDY(): Instruction() {
         fun execute(operand: UByte) {
+            this@CPU6502.yRegister = operand
 
+            this@CPU6502.zeroFlag = operand == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (operand.toUInt() shr 7) == 1u
         }
 
         fun execute(targetAddress: UShort) {

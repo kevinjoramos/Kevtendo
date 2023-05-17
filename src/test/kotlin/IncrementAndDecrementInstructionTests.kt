@@ -24,7 +24,7 @@ class IncrementAndDecrementInstructionTests {
         testBus.ram[operandAddress.toInt()] = operand
         testCPU.negativeFlag = true
         testCPU.zeroFlag = true
-        testCPU.DEC().run(operandAddress)
+        testCPU.DEC().execute(operandAddress)
 
 
         assertEquals(result, testBus.ram[operandAddress.toInt()])
@@ -41,7 +41,7 @@ class IncrementAndDecrementInstructionTests {
         testBus.ram[operandAddress.toInt()] = operand
         testCPU.negativeFlag = true
         testCPU.zeroFlag = true
-        testCPU.DEC().run(operandAddress)
+        testCPU.DEC().execute(operandAddress)
 
         assertEquals(result, testBus.ram[operandAddress.toInt()])
         assertEquals(false, testCPU.negativeFlag)
@@ -57,7 +57,7 @@ class IncrementAndDecrementInstructionTests {
         testBus.ram[operandAddress.toInt()] = operand
         testCPU.negativeFlag = false
         testCPU.zeroFlag = false
-        testCPU.DEC().run(operandAddress)
+        testCPU.DEC().execute(operandAddress)
 
         assertEquals(result, testBus.ram[operandAddress.toInt()])
         assertEquals(true, testCPU.negativeFlag)
@@ -71,7 +71,7 @@ class IncrementAndDecrementInstructionTests {
 
         testCPU.negativeFlag = true
         testCPU.zeroFlag = true
-        testCPU.DEX().run(0x0000u)
+        testCPU.DEX().execute()
 
         assertEquals(result, testCPU.xRegister)
         assertEquals(false, testCPU.negativeFlag)
@@ -85,7 +85,7 @@ class IncrementAndDecrementInstructionTests {
 
         testCPU.negativeFlag = true
         testCPU.zeroFlag = true
-        testCPU.DEX().run(0x0000u)
+        testCPU.DEX().execute()
 
         assertEquals(result, testCPU.xRegister)
         assertEquals(false, testCPU.negativeFlag)
@@ -99,7 +99,7 @@ class IncrementAndDecrementInstructionTests {
 
         testCPU.negativeFlag = false
         testCPU.zeroFlag = false
-        testCPU.DEX().run(0x0000u)
+        testCPU.DEX().execute()
 
         assertEquals(result, testCPU.xRegister)
         assertEquals(true, testCPU.negativeFlag)
@@ -113,7 +113,7 @@ class IncrementAndDecrementInstructionTests {
 
         testCPU.negativeFlag = true
         testCPU.zeroFlag = true
-        testCPU.DEY().run(0x0000u)
+        testCPU.DEY().execute()
 
         assertEquals(result, testCPU.yRegister)
         assertEquals(false, testCPU.negativeFlag)
@@ -127,7 +127,7 @@ class IncrementAndDecrementInstructionTests {
 
         testCPU.negativeFlag = true
         testCPU.zeroFlag = true
-        testCPU.DEY().run(0x0000u)
+        testCPU.DEY().execute()
 
         assertEquals(result, testCPU.yRegister)
         assertEquals(false, testCPU.negativeFlag)
@@ -141,7 +141,7 @@ class IncrementAndDecrementInstructionTests {
 
         testCPU.negativeFlag = false
         testCPU.zeroFlag = false
-        testCPU.DEY().run(0x0000u)
+        testCPU.DEY().execute()
 
         assertEquals(result, testCPU.yRegister)
         assertEquals(true, testCPU.negativeFlag)
@@ -157,7 +157,7 @@ class IncrementAndDecrementInstructionTests {
         testBus.ram[operandAddress.toInt()] = operand
         testCPU.negativeFlag = true
         testCPU.zeroFlag = true
-        testCPU.INC().run(operandAddress)
+        testCPU.INC().execute(operandAddress)
 
 
         assertEquals(result, testBus.ram[operandAddress.toInt()])
@@ -174,7 +174,7 @@ class IncrementAndDecrementInstructionTests {
         testBus.ram[operandAddress.toInt()] = operand
         testCPU.negativeFlag = true
         testCPU.zeroFlag = true
-        testCPU.INC().run(operandAddress)
+        testCPU.INC().execute(operandAddress)
 
         assertEquals(result, testBus.ram[operandAddress.toInt()])
         assertEquals(false, testCPU.negativeFlag)
@@ -190,7 +190,7 @@ class IncrementAndDecrementInstructionTests {
         testBus.ram[operandAddress.toInt()] = operand
         testCPU.negativeFlag = false
         testCPU.zeroFlag = false
-        testCPU.INC().run(operandAddress)
+        testCPU.INC().execute(operandAddress)
 
         assertEquals(result, testBus.ram[operandAddress.toInt()])
         assertEquals(true, testCPU.negativeFlag)
@@ -204,7 +204,7 @@ class IncrementAndDecrementInstructionTests {
 
         testCPU.negativeFlag = true
         testCPU.zeroFlag = true
-        testCPU.INX().run(0x0000u)
+        testCPU.INX().execute()
 
         assertEquals(result, testCPU.xRegister)
         assertEquals(false, testCPU.negativeFlag)
@@ -218,7 +218,7 @@ class IncrementAndDecrementInstructionTests {
 
         testCPU.negativeFlag = true
         testCPU.zeroFlag = true
-        testCPU.INX().run(0x0000u)
+        testCPU.INX().execute()
 
         assertEquals(result, testCPU.xRegister)
         assertEquals(false, testCPU.negativeFlag)
@@ -232,7 +232,7 @@ class IncrementAndDecrementInstructionTests {
 
         testCPU.negativeFlag = false
         testCPU.zeroFlag = false
-        testCPU.INX().run(0x0000u)
+        testCPU.INX().execute()
 
         assertEquals(result, testCPU.xRegister)
         assertEquals(true, testCPU.negativeFlag)
@@ -246,7 +246,7 @@ class IncrementAndDecrementInstructionTests {
 
         testCPU.negativeFlag = true
         testCPU.zeroFlag = true
-        testCPU.INY().run(0x0000u)
+        testCPU.INY().execute()
 
         assertEquals(result, testCPU.yRegister)
         assertEquals(false, testCPU.negativeFlag)
@@ -260,7 +260,7 @@ class IncrementAndDecrementInstructionTests {
 
         testCPU.negativeFlag = true
         testCPU.zeroFlag = true
-        testCPU.INY().run(0x0000u)
+        testCPU.INY().execute()
 
         assertEquals(result, testCPU.yRegister)
         assertEquals(false, testCPU.negativeFlag)
@@ -274,7 +274,7 @@ class IncrementAndDecrementInstructionTests {
 
         testCPU.negativeFlag = false
         testCPU.zeroFlag = false
-        testCPU.INY().run(0x0000u)
+        testCPU.INY().execute()
 
         assertEquals(result, testCPU.yRegister)
         assertEquals(true, testCPU.negativeFlag)

@@ -26,7 +26,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = true
             zeroFlag = true
-            ASLA().run(0x0000u)
+            ASL().execute()
         }
 
         assertEquals(result, testCPU.accumulator)
@@ -45,7 +45,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = true
             zeroFlag = false
-            ASLA().run(0x0000u)
+            ASL().execute()
         }
 
         assertEquals(result, testCPU.accumulator)
@@ -64,7 +64,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = false
             zeroFlag = true
-            ASLA().run(0x0000u)
+            ASL().execute()
         }
 
         assertEquals(result, testCPU.accumulator)
@@ -84,7 +84,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = true
             zeroFlag = true
-            ASL().run(targetAddress)
+            ASL().execute(targetAddress)
         }
 
         assertEquals(result, testCPU.bus.ram[targetAddress.toInt()])
@@ -104,7 +104,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = true
             zeroFlag = false
-            ASL().run(targetAddress)
+            ASL().execute(targetAddress)
         }
 
         assertEquals(result, testCPU.bus.ram[targetAddress.toInt()])
@@ -124,7 +124,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = false
             zeroFlag = true
-            ASL().run(targetAddress)
+            ASL().execute(targetAddress)
         }
 
         assertEquals(result, testCPU.bus.ram[targetAddress.toInt()])
@@ -147,7 +147,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = true
             zeroFlag = true
-            LSRA().run(0x0000u)
+            LSR().execute()
         }
 
         assertEquals(result, testCPU.accumulator)
@@ -166,7 +166,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = true
             zeroFlag = false
-            LSRA().run(0x0000u)
+            LSR().execute()
         }
 
         assertEquals(result, testCPU.accumulator)
@@ -186,7 +186,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = true
             zeroFlag = true
-            LSR().run(targetAddress)
+            LSR().execute(targetAddress)
         }
 
         assertEquals(result, testCPU.bus.ram[targetAddress.toInt()])
@@ -206,7 +206,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = true
             zeroFlag = false
-            LSR().run(targetAddress)
+            LSR().execute(targetAddress)
         }
 
         assertEquals(result, testCPU.bus.ram[targetAddress.toInt()])
@@ -229,7 +229,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = true
             zeroFlag = true
-            ROLA().run(0x0000u)
+            ROL().execute()
         }
 
         testCPU.also {
@@ -250,7 +250,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = true
             zeroFlag = true
-            ROLA().run(0x0000u)
+            ROL().execute()
         }
 
         testCPU.also {
@@ -271,7 +271,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = true
             zeroFlag = true
-            ROLA().run(0x0000u)
+            ROL().execute()
         }
 
         testCPU.also {
@@ -292,7 +292,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = true
             zeroFlag = true
-            ROLA().run(0x0000u)
+            ROL().execute()
         }
 
         testCPU.also {
@@ -313,7 +313,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = true
             zeroFlag = true
-            ROLA().run(0x0000u)
+            ROL().execute()
         }
 
         testCPU.also {
@@ -335,7 +335,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = true
             zeroFlag = true
-            ROL().run(targetAddress)
+            ROL().execute(targetAddress)
         }
 
         testCPU.also {
@@ -357,7 +357,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = true
             zeroFlag = true
-            ROL().run(targetAddress)
+            ROL().execute(targetAddress)
         }
 
         testCPU.also {
@@ -379,7 +379,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = true
             zeroFlag = true
-            ROL().run(targetAddress)
+            ROL().execute(targetAddress)
         }
 
         testCPU.also {
@@ -401,7 +401,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = true
             zeroFlag = true
-            ROL().run(targetAddress)
+            ROL().execute(targetAddress)
         }
 
         testCPU.also {
@@ -423,7 +423,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = true
             zeroFlag = true
-            ROL().run(targetAddress)
+            ROL().execute(targetAddress)
         }
 
         testCPU.also {
@@ -448,7 +448,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = false
             zeroFlag = false
-            RORA().run(0x0000u)
+            ROR().execute()
         }
 
         testCPU.also {
@@ -469,7 +469,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = false
             zeroFlag = false
-            RORA().run(0x0000u)
+            ROR().execute()
         }
 
         testCPU.also {
@@ -490,7 +490,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = false
             zeroFlag = false
-            RORA().run(0x0000u)
+            ROR().execute()
         }
 
         testCPU.also {
@@ -511,7 +511,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = false
             zeroFlag = false
-            RORA().run(0x0000u)
+            ROR().execute()
         }
 
         testCPU.also {
@@ -533,7 +533,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = false
             zeroFlag = false
-            ROR().run(targetAddress)
+            ROR().execute(targetAddress)
         }
 
         testCPU.also {
@@ -555,7 +555,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = false
             zeroFlag = false
-            ROR().run(targetAddress)
+            ROR().execute(targetAddress)
         }
 
         testCPU.also {
@@ -577,7 +577,7 @@ class ShiftInstructionTests {
             carryFlag = true
             negativeFlag = false
             zeroFlag = false
-            ROR().run(targetAddress)
+            ROR().execute(targetAddress)
         }
 
         testCPU.also {
@@ -599,7 +599,7 @@ class ShiftInstructionTests {
             carryFlag = false
             negativeFlag = false
             zeroFlag = false
-            ROR().run(targetAddress)
+            ROR().execute(targetAddress)
         }
 
         testCPU.also {

@@ -4,12 +4,9 @@ import Bus
 
 /**
  * Emulation of the 6502 processor.
- * TODO("implement addressing modes")
  * TODO("implement all opcodes")
- * TODO("implement main fetch loop")
  * TODO("implement control signals")
  * TODO("implement clock cycles")
- * TODO("implement bootup sequence.")
  *
  *
  */
@@ -358,47 +355,20 @@ class CPU6502 (val bus: Bus) {
     }
 
     fun indirectYIndexedAddressing(): UShort {
-        TODO("not_implemented")
-    }
-
-    fun relativeAddressing(): UShort {TODO("not_implemented")}
-
-    /*
-    *//**
-     * Relative addressing adds the operand(offset) to the program counter to return the target address
-     * in memory.
-     *//*
-    fun relativeAddressingMode(): UShort {
-        programCounter++
-        val addressOffset = bus.readAddress(programCounter)
-        return (programCounter + addressOffset).toUShort()
-    }
-
-    fun indexedIndirectAddressingMode(): UShort {
-        programCounter++
-        val operand: UByte = bus.readAddress(programCounter)
-        val zeroPageAddress: UShort = (operand + xRegister).toUByte().toUShort()
-        programCounter = zeroPageAddress
-        val targetLeastSignificantByte: UByte = bus.readAddress(programCounter)
-        programCounter++
-        val targetMostSignificantByte = bus.readAddress(programCounter).toUInt()
-        return ((targetMostSignificantByte shl 8) + targetLeastSignificantByte).toUShort()
-    }
-
-    fun indirectIndexedAddressingMode(): UShort {
         programCounter++
         val zeroPageOperand: UByte = bus.readAddress(programCounter)
-        val targetLSBWithCarry: UShort = (zeroPageOperand + yRegister).toUShort()
+        val targetLeastSignificantByte = bus.readAddress(zeroPageOperand.toUShort())
+        val targetMostSignificantByte: UByte =  bus.readAddress((zeroPageOperand + 1u).toUShort())
 
-        programCounter++
-        val finalOperand: UByte = bus.readAddress(programCounter)
-        val leastSignificantByte: UByte = targetLSBWithCarry.toUByte()
-        val mostSignificantByte: UByte = (finalOperand + (targetLSBWithCarry.toUInt() shr 8)).toUByte()
-
-        return ((mostSignificantByte.toUInt() shl 8) + leastSignificantByte).toUShort()
+        return ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte + yRegister).toUShort()
     }
 
-*/
+    fun relativeAddressing(): UShort {
+        programCounter++
+        val offset: Byte = bus.readAddress(programCounter).toByte()
+        return (programCounter.toInt() + (offset.toInt()) + 1).toUShort()
+    }
+
 
 
     /**

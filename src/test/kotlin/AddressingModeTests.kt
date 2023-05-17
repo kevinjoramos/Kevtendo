@@ -356,16 +356,60 @@ class AddressingModeTests {
             assertEquals((opcodeAddress + 1u).toUShort(), it.programCounter)
         }
     }
+
+    @Test
+    fun `test post-indexed indirect addressing mode (indirect y indexed) wrap`() {
+        val opcodeAddress: UShort = 0x0105u
+        val operand: UByte = 0x70u
+        val indirectAddress: UShort = 0x0070u
+        val targetMostSignificantByte: UByte = 0xFFu
+        val targetLeastSignificantByte: UByte = 0xFFu
+        val yRegisterValue: UByte = 0x10u
+        val targetAddress: UShort = 0x000Fu
+
+        testCPU.apply {
+            programCounter = opcodeAddress
+            yRegister = yRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = operand
+            bus.ram[(indirectAddress).toInt()] = targetLeastSignificantByte
+            bus.ram[(indirectAddress + 1u).toInt()] = targetMostSignificantByte
+        }
+
+        testCPU.also {
+            assertEquals(targetAddress, it.indirectYIndexedAddressing())
+            assertEquals((opcodeAddress + 1u).toUShort(), it.programCounter)
+        }
+    }
+
     @Test
     fun `test relative addressing mode offset`() {
-        val instructionAddress: UShort = 0x0AAAu
-        val operandAddress: UShort = 0x0AABu
-        val operand: UByte = 0x10u
-        val targetAddress: UShort = 0x0ABBu
+        val opcodeAddress: UShort = 0x1000u
+        val offset: UByte = 0x03u
+        val targetAddress: UShort = 0x1005u
 
-        testBus.ram[operandAddress.toInt()] = operand
-        testCPU.programCounter = instructionAddress
+        testCPU.apply {
+            programCounter = opcodeAddress
+            bus.ram[(opcodeAddress + 1u).toInt()] = offset
+        }
 
-        assertEquals(targetAddress, testCPU.relativeAddressing())
+        testCPU.also {
+            assertEquals(targetAddress, it.relativeAddressing())
+        }
+    }
+
+    @Test
+    fun `test relative addressing mode negative offset with wrap`() {
+        val opcodeAddress: UShort = 0x0000u
+        val offset: UByte = 0x80u
+        val targetAddress: UShort = 0xFF82u
+
+        testCPU.apply {
+            programCounter = opcodeAddress
+            bus.ram[(opcodeAddress + 1u).toInt()] = offset
+        }
+
+        testCPU.also {
+            assertEquals(targetAddress, it.relativeAddressing())
+        }
     }
 }

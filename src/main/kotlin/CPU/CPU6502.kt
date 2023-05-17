@@ -415,19 +415,6 @@ class CPU6502 (val bus: Bus) {
     }
 
     /**
-     * Arithmetic Shift Left on Accumulator
-     * ASL either shifts the accumulator left 1 bit or is a read/modify/write instruction that affects only memory.
-     * The instruction does not affect the overflow bit, sets N equal to the result bit 7 (bit 6 in the input), sets
-     * Z flag if the result is equal to 0, otherwise resets Z and stores the input bit 7 in the carry flag.
-     *
-     * Note: I had to separate the ASL command into two implementations because passing the accumulator creates a copy,
-     * and does not change the accumulator.
-     */
-    inner class ASLA(): Instruction() {
-
-    }
-
-    /**
      * Arithmetic Shift
      * ASL either shifts the accumulator left 1 bit or is a read/modify/write instruction that affects only memory.
      * The instruction does not affect the overflow bit, sets N equal to the result bit 7 (bit 6 in the input), sets
@@ -790,26 +777,6 @@ class CPU6502 (val bus: Bus) {
     }
 
     /**
-     * Logical Shift Right on Accumulator
-     * This instruction shifts either the accumulator or a specified memory location 1 bit to the right, with the
-     * higher bit of the result always being set to 0, and the low bit which is shifted out of the field being
-     * stored in the carry flag.
-     *
-     * The shift right does not affect the overflow flag.
-     * The N flag is always reset.
-     * The Z flag is set if the result of the shift is 0 and reset otherwise.
-     * The carry is set equal to bit 0 of the input.
-     *
-     * Note: I had to separate the LSR command into two implementations because passing the accumulator creates a copy,
-     * and does not change the accumulator.
-     */
-    inner class LSRA(): Instruction() {
-        fun execute(targetAddress: UShort){
-
-        }
-    }
-
-    /**
      * Logical Shift Right
      * This instruction shifts either the accumulator or a specified memory location 1 bit to the right, with the
      * higher bit of the result always being set to 0, and the low bit which is shifted out of the field being
@@ -1000,21 +967,6 @@ class CPU6502 (val bus: Bus) {
      * The ROL instruction sets carry equal to the input bit 7,
      * sets N equal to the input bit 6 ,
      * sets the Z flag if the result is 0.
-     * Note: I had to separate the ROL command into two implementations because passing the accumulator creates a copy,
-     * and does not change the accumulator.
-     */
-    inner class ROLA(): Instruction() {
-
-    }
-
-    /**
-     * Rotate Left on Accumulator
-     * The rotate left instruction shifts either the accumulator or addressed memory left 1 bit, with the input carry
-     * being stored in bit 0 and with the input bit 7 being stored in the carry flags.
-     *
-     * The ROL instruction sets carry equal to the input bit 7,
-     * sets N equal to the input bit 6 ,
-     * sets the Z flag if the result is 0.
      */
     inner class ROL(): Instruction() {
         fun execute() {
@@ -1039,30 +991,6 @@ class CPU6502 (val bus: Bus) {
     }
 
     /**
-     * Rotate Right on Accumulator
-     * The rotate right instruction shifts either the accumulator or addressed memory right 1 bit with bit 0 shifted
-     * into the carry and carry shifted into bit 7.
-     * The ROR instruction sets carry equal to input bit 0,
-     * sets N equal to the input carry
-     * sets the Z flag if the result of the rotate is 0;
-     * otherwise it resets Z and
-     * does not affect the overflow flag at all.
-     * Note: I had to separate the ROL command into two implementations because passing the accumulator creates a copy,
-     * and does not change the accumulator.
-     */
-    inner class RORA(): Instruction() {
-        fun execute(targetAddress: UShort) {
-            val data: UInt = this@CPU6502.accumulator.toUInt()
-            val result: UByte = if (carryFlag) ((data shr 1) or (0x80u)).toUByte() else (data shr 1).toUByte()
-            this@CPU6502.accumulator = result
-
-            this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
-            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
-            this@CPU6502.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
-        }
-    }
-
-    /**
      * Rotate Right
      * The rotate right instruction shifts either the accumulator or addressed memory right 1 bit with bit 0 shifted
      * into the carry and carry shifted into bit 7.
@@ -1074,7 +1002,13 @@ class CPU6502 (val bus: Bus) {
      */
     inner class ROR(): Instruction() {
         fun execute() {
-            TODO("Not yet implemented")
+            val data: UInt = this@CPU6502.accumulator.toUInt()
+            val result: UByte = if (carryFlag) ((data shr 1) or (0x80u)).toUByte() else (data shr 1).toUByte()
+            this@CPU6502.accumulator = result
+
+            this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
         }
 
         fun execute(targetAddress: UShort) {

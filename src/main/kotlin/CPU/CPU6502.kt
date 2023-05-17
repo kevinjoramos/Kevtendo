@@ -305,6 +305,13 @@ class CPU6502 (val bus: Bus) {
         return (((mostSignificantByte shl 8).toUShort() or leastSignificantByte) + yRegister).toUShort()
     }
 
+    /**
+     * Zero-Page Addressing Mode X Indexed
+     * Returns a 16-bit zero-page memory address that contains operand.
+     * Is similar to zero-page addressing except the value of the X register
+     * is added to point two a new address.
+     * Total instruction length is: Opcode + LSB = 2 bytes.
+     */
     fun zeroPageXIndexedAddressing(): UShort {
         programCounter++
         val operand: UByte = bus.readAddress(programCounter)
@@ -312,39 +319,51 @@ class CPU6502 (val bus: Bus) {
         return targetAddress.toUShort()
     }
 
-    fun zeroPageYIndexedAddressing(): UShort { TODO("not_implemented") } //zero page {}
-
-    fun indirectAddressing(): UShort { TODO("not_implemented") }
-
-    fun xIndexedIndirectAddressing(): UShort { TODO("not_implemented") } //zero page
-
-    fun indirectYIndexedAddressing(): UShort { TODO("not_implemented") } //zero page
-
-    fun relativeAddressing(): UShort {TODO("not_implemented")}
-
-    /*
-    *//**
-     * Zero page X addressing allows for the xRegister offset to be added to the operand.
-     * Returns address of specified zero-page address.
-     *//*
-    fun zeroPageXAddressingMode(): UShort {
-        programCounter++
-        val operand: UByte = bus.readAddress(programCounter)
-        val targetAddress: UByte = (operand + xRegister).toUByte()
-        return targetAddress.toUShort()
-    }
-
-    *//**
-     * Zero page Y addressing allows for the yRegister offset to be added to the operand.
-     * Returns address of specified zero-page address.
-     *//*
-    fun zeroPageYAddressingMode(): UShort {
+    /**
+     * Zero-Page Addressing Mode Y Indexed
+     * Returns a 16-bit zero-page memory address that contains operand.
+     * Is similar to zero-page addressing except the value of the Y register
+     * is added to point two a new address.
+     * Total instruction length is: Opcode + LSB = 2 bytes.
+     */
+    fun zeroPageYIndexedAddressing(): UShort {
         programCounter++
         val operand: UByte = bus.readAddress(programCounter)
         val targetAddress: UByte = (operand + yRegister).toUByte()
         return targetAddress.toUShort()
     }
 
+    fun indirectAddressing(): UShort {
+        programCounter++
+        val leastSignificantByte: UByte = bus.readAddress(programCounter)
+
+        programCounter++
+        val mostSignificantByte = bus.readAddress(programCounter).toUInt()
+        val indirectAddress: UShort = ((mostSignificantByte shl 8) + leastSignificantByte).toUShort()
+
+        val targetLeastSignificantByte: UByte = bus.readAddress(indirectAddress)
+        val targetMostSignificantByte = bus.readAddress((indirectAddress + 1u).toUShort()).toUInt()
+        return ((targetMostSignificantByte shl 8) + targetLeastSignificantByte).toUShort()
+    }
+
+    fun xIndexedIndirectAddressing(): UShort {
+        programCounter++
+        val operand: UByte = bus.readAddress(programCounter)
+        val zeroPageAddress: UShort = (operand + xRegister).toUByte().toUShort()
+
+        val targetLeastSignificantByte: UByte = bus.readAddress(zeroPageAddress)
+        val targetMostSignificantByte: UByte = bus.readAddress((zeroPageAddress + 1u).toUByte().toUShort())
+
+        return ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte).toUShort()
+    }
+
+    fun indirectYIndexedAddressing(): UShort {
+        TODO("not_implemented")
+    }
+
+    fun relativeAddressing(): UShort {TODO("not_implemented")}
+
+    /*
     *//**
      * Relative addressing adds the operand(offset) to the program counter to return the target address
      * in memory.
@@ -353,38 +372,6 @@ class CPU6502 (val bus: Bus) {
         programCounter++
         val addressOffset = bus.readAddress(programCounter)
         return (programCounter + addressOffset).toUShort()
-    }
-
-
-    fun absoluteXAddressingMode(): UShort {
-        programCounter++
-        val leastSignificantByte = bus.readAddress(programCounter).toUShort()
-        programCounter++
-        val mostSignificantByte = bus.readAddress((programCounter)).toUInt()
-        return ((mostSignificantByte shl 8) + leastSignificantByte + xRegister).toUShort()
-    }
-
-    fun absoluteYAddressingMode(): UShort {
-        programCounter++
-        val leastSignificantByte = bus.readAddress(programCounter).toUShort()
-        programCounter++
-        val mostSignificantByte = bus.readAddress((programCounter)).toUInt()
-        return ((mostSignificantByte shl 8) + leastSignificantByte + yRegister).toUShort()
-    }
-
-    fun indirectAddressingMode(): UShort {
-        programCounter++
-        val leastSignificantByte: UByte = bus.readAddress(programCounter)
-        programCounter++
-        val mostSignificantByte = bus.readAddress(programCounter).toUInt()
-        val indirectAddress: UShort = ((mostSignificantByte shl 8) + leastSignificantByte).toUShort()
-
-        programCounter = indirectAddress
-
-        val indirectLeastSignificantByte: UByte = bus.readAddress(programCounter)
-        programCounter++
-        val indirectMostSignificantByte = bus.readAddress(programCounter).toUInt()
-        return ((indirectMostSignificantByte shl 8) + indirectLeastSignificantByte).toUShort()
     }
 
     fun indexedIndirectAddressingMode(): UShort {
@@ -398,11 +385,6 @@ class CPU6502 (val bus: Bus) {
         return ((targetMostSignificantByte shl 8) + targetLeastSignificantByte).toUShort()
     }
 
-    *//**
-     * In inddireactIndexed addressing the operand is a zero page address whose contents are added with carry (C) to the Y register
-     * $aa + Y (C), the LSB result contains the LSB of the EA.
-     * The contents of address (operand + $01 + C) contain the MSB of the EA.
-     *//*
     fun indirectIndexedAddressingMode(): UShort {
         programCounter++
         val zeroPageOperand: UByte = bus.readAddress(programCounter)

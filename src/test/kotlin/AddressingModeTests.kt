@@ -181,7 +181,7 @@ class AddressingModeTests {
         val opcodeAddress: UShort = 0x0105u
         val zeroPageAddress: UByte = 0x80u
         val xRegisterValue: UByte = 0xFFu
-        val result: UShort = 0x00BFu
+        val result: UShort = 0x007Fu
 
         testCPU.apply {
             programCounter = opcodeAddress
@@ -197,34 +197,165 @@ class AddressingModeTests {
 
     @Test
     fun `test get zero page address with Zero Y Page Addressing`() {
-        val instructionAddress: UShort = 0x0F0Fu
-        val operandAddress: UShort = 0x0F10u
-        val operand: UByte = 0x0Au
-        val yRegisterValue: UByte = 0x05u
-        val targetAddress: UShort = 0x000Fu
+        val opcodeAddress: UShort = 0x0105u
+        val zeroPageAddress: UByte = 0x80u
+        val yRegisterValue: UByte = 0x02u
+        val result: UShort = 0x0082u
 
-        testBus.ram[operandAddress.toInt()] = operand
-        testCPU.programCounter = instructionAddress
-        testCPU.yRegister = yRegisterValue
+        testCPU.apply {
+            programCounter = opcodeAddress
+            yRegister = yRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
+        }
 
-        assertEquals(targetAddress, testCPU.zeroPageYIndexedAddressing())
+        testCPU.also {
+            assertEquals(result, it.zeroPageYIndexedAddressing())
+            assertEquals((opcodeAddress + 1u).toUShort(), it.programCounter)
+        }
     }
 
     @Test
     fun `test get zero page address with Zero Y Page Addressing with wrap`() {
-        val instructionAddress: UShort = 0x0F0Fu
-        val operandAddress: UShort = 0x0F10u
-        val operand: UByte = 0xFAu
-        val yRegisterValue: UByte = 0x06u
-        val targetAddress: UShort = 0x0000u
+        val opcodeAddress: UShort = 0x0105u
+        val zeroPageAddress: UByte = 0x80u
+        val yRegisterValue: UByte = 0xFFu
+        val result: UShort = 0x007Fu
 
-        testBus.ram[operandAddress.toInt()] = operand
-        testCPU.programCounter = instructionAddress
-        testCPU.yRegister = yRegisterValue
+        testCPU.apply {
+            programCounter = opcodeAddress
+            yRegister = yRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
+        }
 
-        assertEquals(targetAddress, testCPU.zeroPageYIndexedAddressing())
+        testCPU.also {
+            assertEquals(result, it.zeroPageYIndexedAddressing())
+            assertEquals((opcodeAddress + 1u).toUShort(), it.programCounter)
+        }
     }
 
+    /**
+     * Indirect Addressing
+     */
+
+    @Test
+    fun `test indirect addressing mode`() {
+        val opcodeAddress: UShort = 0x0105u
+        val operandMostSignificantByte: UByte = 0xFFu
+        val operandLeastSignificantByte: UByte = 0x82u
+        val operandResultAddress: UShort = 0xFF82u
+        val targetMostSignificantByte: UByte = 0x80u
+        val targetLeastSignificantByte: UByte = 0xC4u
+        val resultTargetAddress: UShort = 0x80C4u
+
+        testCPU.apply {
+            programCounter = opcodeAddress
+            bus.ram[(opcodeAddress + 1u).toInt()] = operandLeastSignificantByte
+            bus.ram[(opcodeAddress + 2u).toInt()] = operandMostSignificantByte
+            bus.ram[(operandResultAddress).toInt()] = targetLeastSignificantByte
+            bus.ram[(operandResultAddress + 1u).toInt()] = targetMostSignificantByte
+        }
+
+        testCPU.also {
+            assertEquals(resultTargetAddress, it.indirectAddressing())
+            assertEquals((opcodeAddress + 2u).toUShort(), it.programCounter)
+        }
+    }
+
+    @Test
+    fun `test pre-indexed indirect addressing mode (x indexed indirect)`() {
+        val opcodeAddress: UShort = 0x0105u
+        val operand: UByte = 0x70u
+        val xRegisterValue: UByte = 0x05u
+        val indirectAddress: UShort = 0x0075u
+        val targetMostSignificantByte: UByte = 0x30u
+        val targetLeastSignificantByte: UByte = 0x32u
+        val targetAddress: UShort = 0x3032u
+
+        testCPU.apply {
+            programCounter = opcodeAddress
+            xRegister = xRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = operand
+            bus.ram[(indirectAddress).toInt()] = targetLeastSignificantByte
+            bus.ram[(indirectAddress + 1u).toInt()] = targetMostSignificantByte
+        }
+
+        testCPU.also {
+            assertEquals(targetAddress, it.xIndexedIndirectAddressing())
+            assertEquals((opcodeAddress + 1u).toUShort(), it.programCounter)
+        }
+    }
+
+    @Test
+    fun `test pre-indexed indirect addressing mode (x indexed indirect) with wrap`() {
+        val opcodeAddress: UShort = 0x0105u
+        val operand: UByte = 0xFFu
+        val xRegisterValue: UByte = 0x05u
+        val indirectAddress: UShort = 0x0004u
+        val targetMostSignificantByte: UByte = 0x30u
+        val targetLeastSignificantByte: UByte = 0x32u
+        val targetAddress: UShort = 0x3032u
+
+        testCPU.apply {
+            programCounter = opcodeAddress
+            xRegister = xRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = operand
+            bus.ram[(indirectAddress).toInt()] = targetLeastSignificantByte
+            bus.ram[(indirectAddress + 1u).toInt()] = targetMostSignificantByte
+        }
+
+        testCPU.also {
+            assertEquals(targetAddress, it.xIndexedIndirectAddressing())
+            assertEquals((opcodeAddress + 1u).toUShort(), it.programCounter)
+        }
+    }
+
+    @Test
+    fun `test pre-indexed indirect addressing mode (x indexed indirect) split`() {
+        val opcodeAddress: UShort = 0x0105u
+        val operand: UByte = 0xF0u
+        val xRegisterValue: UByte = 0x0Fu
+        val indirectAddress: UShort = 0x00FFu
+        val targetMostSignificantByte: UByte = 0x30u
+        val targetLeastSignificantByte: UByte = 0x32u
+        val targetAddress: UShort = 0x3032u
+
+        testCPU.apply {
+            programCounter = opcodeAddress
+            xRegister = xRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = operand
+            bus.ram[(indirectAddress).toInt()] = targetLeastSignificantByte
+            bus.ram[0] = targetMostSignificantByte
+        }
+
+        testCPU.also {
+            assertEquals(targetAddress, it.xIndexedIndirectAddressing())
+            assertEquals((opcodeAddress + 1u).toUShort(), it.programCounter)
+        }
+    }
+
+    @Test
+    fun `test post-indexed indirect addressing mode (indirect y indexed)`() {
+        val opcodeAddress: UShort = 0x0105u
+        val operand: UByte = 0x70u
+        val indirectAddress: UShort = 0x0070u
+        val targetMostSignificantByte: UByte = 0x35u
+        val targetLeastSignificantByte: UByte = 0x43u
+        val yRegisterValue: UByte = 0x10u
+        val targetAddress: UShort = 0x3553u
+
+        testCPU.apply {
+            programCounter = opcodeAddress
+            yRegister = yRegisterValue
+            bus.ram[(opcodeAddress + 1u).toInt()] = operand
+            bus.ram[(indirectAddress).toInt()] = targetLeastSignificantByte
+            bus.ram[(indirectAddress + 1u).toInt()] = targetMostSignificantByte
+        }
+
+        testCPU.also {
+            assertEquals(targetAddress, it.indirectYIndexedAddressing())
+            assertEquals((opcodeAddress + 1u).toUShort(), it.programCounter)
+        }
+    }
     @Test
     fun `test relative addressing mode offset`() {
         val instructionAddress: UShort = 0x0AAAu
@@ -236,70 +367,5 @@ class AddressingModeTests {
         testCPU.programCounter = instructionAddress
 
         assertEquals(targetAddress, testCPU.relativeAddressing())
-    }
-
-
-
-    @Test
-    fun `test indirect addressing mode`() {
-        val startAddress: UShort = 0x0031u
-        val firstByteAddress: UShort = 0x0032u
-        val secondByteAddress: UShort = 0x0033u
-        val operandAddressMostSignificantBits: UByte = 0x12u
-        val operandAddressLeastSignificantBits: UByte = 0x34u
-        val indirectAddress: UShort = 0x1234u
-
-        testBus.ram[firstByteAddress.toInt()] = operandAddressLeastSignificantBits
-        testBus.ram[secondByteAddress.toInt()] = operandAddressMostSignificantBits
-        testCPU.programCounter = startAddress
-
-        val targetSecondByteAddress: UShort = 0x1235u
-        val targetAddressMostSignificantByte: UByte = 0x56u
-        val targetAddressLeastSignificantByte: UByte = 0x78u
-        val targetAddress: UShort = 0x5678u
-
-        testBus.ram[indirectAddress.toInt()] = targetAddressLeastSignificantByte
-        testBus.ram[targetSecondByteAddress.toInt()] = targetAddressMostSignificantByte
-
-        assertEquals(targetAddress, testCPU.indirectAddressing())
-    }
-
-    @Test
-    fun `test indexed indirect addressing mode`() {
-        val startAddress: UShort = 0x0031u
-        val operandAddress: UShort = 0x0032u
-        val operand: UByte = 0x51u
-        val xRegisterValue: UByte = 0xE9u
-        val zeroPageAddress: UShort = 0x003Au
-        val targetMostSignificantByte: UByte = 0x12u
-        val targetLeastSignificantByte: UByte = 0x34u
-        val targetAddress: UShort = 0x1234u
-
-        testCPU.programCounter = startAddress
-        testBus.ram[operandAddress.toInt()] = operand
-        testCPU.xRegister = xRegisterValue
-        testBus.ram[zeroPageAddress.toInt()] = targetLeastSignificantByte
-        testBus.ram[zeroPageAddress.toInt() + 1] = targetMostSignificantByte
-
-        assertEquals(targetAddress, testCPU.xIndexedIndirectAddressing())
-    }
-
-    @Test
-    fun `test indirect indexed addressing mode`() {
-        val startAddress: UShort = 0x1000u
-        val operand: UByte = 0x51u
-        val yRegisterValue: UByte = 0xE9u
-        //val targetLSBWithCarry: UShort = 0x013Au
-        //val targetLSB: UByte = 0x3Au
-        val targetMSBOperand: UByte = 0x3Fu
-        //val targetMSB: UByte = 0x40u
-        val targetAddress: UShort = 0x403Au
-
-        testCPU.programCounter = startAddress
-        testCPU.yRegister = yRegisterValue
-        testBus.ram[startAddress.toInt() + 1] = operand
-        testBus.ram[startAddress.toInt() + 2] = targetMSBOperand
-
-        assertEquals(targetAddress, testCPU.indirectYIndexedAddressing())
     }
 }

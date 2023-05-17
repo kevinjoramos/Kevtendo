@@ -611,10 +611,6 @@ class CPU6502 (val bus: Bus) {
 
     inner class DEX(): Instruction() {
         fun execute() {
-            TODO("Not yet implemented.")
-        }
-
-        fun execute(targetAddress: UShort) {
             this@CPU6502.xRegister--
 
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
@@ -624,10 +620,6 @@ class CPU6502 (val bus: Bus) {
 
     inner class DEY(): Instruction() {
         fun execute() {
-            TODO("Not yet Implemented")
-        }
-
-        fun execute(targetAddress: UShort) {
             this@CPU6502.yRegister--
 
             this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()
@@ -705,10 +697,6 @@ class CPU6502 (val bus: Bus) {
      */
     inner class INY(): Instruction() {
         fun execute() {
-
-        }
-
-        fun execute(targetAddress: UShort) {
             this@CPU6502.yRegister++
 
             this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()

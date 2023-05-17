@@ -397,7 +397,11 @@ class CPU6502 (val bus: Bus) {
      */
     inner class AND(): Instruction() {
         fun execute(operand: UByte) {
-            TODO("Not implemented")
+            val result: UByte = this@CPU6502.accumulator and operand
+            this@CPU6502.accumulator = result
+
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
         }
 
         fun execute(targetAddress: UShort) {
@@ -635,7 +639,11 @@ class CPU6502 (val bus: Bus) {
      */
     inner class EOR(): Instruction() {
         fun execute(operand: UByte) {
-            TODO("Not yet implemented.")
+            val result: UByte = this@CPU6502.accumulator xor operand
+            this@CPU6502.accumulator = result
+
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
 
         fun execute(targetAddress: UShort) {
@@ -843,7 +851,11 @@ class CPU6502 (val bus: Bus) {
      */
     inner class ORA(): Instruction() {
         fun execute(operand: UByte) {
+            val result: UByte = this@CPU6502.accumulator or operand
+            this@CPU6502.accumulator = result
 
+            this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
 
         fun execute(targetAddress: UShort) {

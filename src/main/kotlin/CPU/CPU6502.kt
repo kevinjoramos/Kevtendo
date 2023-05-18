@@ -45,11 +45,110 @@ class CPU6502 (val bus: Bus) {
     /**
      * Interrupt control signals.
      */
-    fun irq() {}
 
-    fun nmi() {}
+    /**
+     * NON MASKABLE INTERRUPT
+     * 1. complete current instruction
+     * 2. push MSB of program counter to stack
+     * 3. push LSB of program counter to stack
+     * 4. push status register to stack
+     * 5. set interupt disable flag
+     * 6. PC is loaded with address stored at 0xFFFA 0xFFFB
+     */
+    fun nmi() {
+        val vectorLeastSignificantByte = bus.readAddress(0xFFFAu)
+        val vectorMostSignificantByte = bus.readAddress(0xFFFBu)
 
-    fun ready() {}
+        bus.writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
+        stackPointer--
+
+        bus.writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
+        stackPointer--
+
+        var statusRegisterValue: UByte = 0u
+        val negativeBitMask: UByte = 0x80u
+        val overflowBitMask: UByte = 0x40u
+        val extraBitMask: UByte = 0x20u
+        val breakBitMask: UByte = 0x10u
+        val decimalBitMask: UByte = 0x08u
+        val interruptDisableBitMask: UByte = 0x04u
+        val zeroBitMask: UByte = 0x02u
+        val carryBitMask: UByte = 0x01u
+
+        if (negativeFlag) statusRegisterValue = statusRegisterValue or negativeBitMask
+        if (overflowFlag) statusRegisterValue = statusRegisterValue or overflowBitMask
+        if (extraFlag) statusRegisterValue = statusRegisterValue or extraBitMask
+        if (breakFlag) statusRegisterValue = statusRegisterValue or breakBitMask
+        if (decimalFlag) statusRegisterValue = statusRegisterValue or decimalBitMask
+        if (interruptDisableFlag) statusRegisterValue = statusRegisterValue or interruptDisableBitMask
+        if (zeroFlag) statusRegisterValue = statusRegisterValue or zeroBitMask
+        if (carryFlag) statusRegisterValue = statusRegisterValue or carryBitMask
+
+        bus.writeToAddress(stackPointer.toUShort(), statusRegisterValue)
+        stackPointer--
+
+        interruptDisableFlag = true
+
+        programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
+    }
+
+    /**
+     * RESET
+     * load the vector at 0xFFFC and 0xFFFD into PC
+     */
+    fun reset() {
+        val vectorLeastSignificantByte = bus.readAddress(0xFFFCu)
+        val vectorMostSignificantByte = bus.readAddress(0xFFFDu)
+        programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
+    }
+
+    /**
+     * IRQ MASKABLE INTERRUPT will be ignored if interruptDisable flag is true
+     * 1. complete current instruction
+     * 2. push MSB of program counter to stack
+     * 3. push LSB of program counter to stack
+     * 4. push status register to stack
+     * 5. set interupt disable flag
+     * 6. PC is loaded with address stored at 0xFFFA 0xFFFB
+     */
+    fun irq() {
+        if (interruptDisableFlag) return
+
+        val vectorLeastSignificantByte = bus.readAddress(0xFFFEu)
+        val vectorMostSignificantByte = bus.readAddress(0xFFFFu)
+
+        bus.writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
+        stackPointer--
+
+        bus.writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
+        stackPointer--
+
+        var statusRegisterValue: UByte = 0u
+        val negativeBitMask: UByte = 0x80u
+        val overflowBitMask: UByte = 0x40u
+        val extraBitMask: UByte = 0x20u
+        val breakBitMask: UByte = 0x10u
+        val decimalBitMask: UByte = 0x08u
+        val interruptDisableBitMask: UByte = 0x04u
+        val zeroBitMask: UByte = 0x02u
+        val carryBitMask: UByte = 0x01u
+
+        if (negativeFlag) statusRegisterValue = statusRegisterValue or negativeBitMask
+        if (overflowFlag) statusRegisterValue = statusRegisterValue or overflowBitMask
+        if (extraFlag) statusRegisterValue = statusRegisterValue or extraBitMask
+        if (breakFlag) statusRegisterValue = statusRegisterValue or breakBitMask
+        if (decimalFlag) statusRegisterValue = statusRegisterValue or decimalBitMask
+        if (interruptDisableFlag) statusRegisterValue = statusRegisterValue or interruptDisableBitMask
+        if (zeroFlag) statusRegisterValue = statusRegisterValue or zeroBitMask
+        if (carryFlag) statusRegisterValue = statusRegisterValue or carryBitMask
+
+        bus.writeToAddress(stackPointer.toUShort(), statusRegisterValue)
+        stackPointer--
+
+        interruptDisableFlag = true
+
+        programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
+    }
 
     fun run() {
         val opcode: UByte = bus.readAddress(programCounter)
@@ -70,7 +169,7 @@ class CPU6502 (val bus: Bus) {
         instruction.invoke()
     }
 
-    val opcodeTable: Map<UByte, () -> Unit> = mapOf(
+    private val opcodeTable: Map<UByte, () -> Unit> = mapOf(
         (0x00u).toUByte() to { BRK().execute() },
         (0x01u).toUByte() to { ORA().execute(xIndexedIndirectAddressing()) },
         (0x05u).toUByte() to { ORA().execute(zeroPageAddressing()) },

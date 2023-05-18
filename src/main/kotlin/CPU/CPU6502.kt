@@ -444,21 +444,33 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
+    /**
+     * Branch on Clear Carry
+     * Sets program counter to target address when carryFlag = 0
+     */
     inner class BCC(): Instruction() {
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            if (!this@CPU6502.carryFlag) this@CPU6502.programCounter = targetAddress
         }
     }
 
+    /**
+     * Branch on Set Carry
+     * Sets program counter to target address when carryFlag = 1
+     */
     inner class BCS(): Instruction() {
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            if (this@CPU6502.carryFlag) this@CPU6502.programCounter = targetAddress
         }
     }
 
+    /**
+     * Branch on Result Zero
+     * Sets program counter to target address when zeroFlag = 1
+     */
     inner class BEQ(): Instruction() {
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            if (this@CPU6502.zeroFlag) this@CPU6502.programCounter = targetAddress
         }
     }
 
@@ -479,21 +491,33 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
+    /**
+     * Branch on Result Minus
+     * Sets program counter to target address when negativeFlag = 1
+     */
     inner class BMI(): Instruction() {
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            if (this@CPU6502.negativeFlag) this@CPU6502.programCounter = targetAddress
         }
     }
 
+    /**
+     * Branch on Result Not Zero
+     * Sets program counter to target address when zeroFlag = 0
+     */
     inner class BNE(): Instruction() {
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            if (!this@CPU6502.zeroFlag) this@CPU6502.programCounter = targetAddress
         }
     }
 
+    /**
+     * Branch on Result Plus
+     * Sets program counter to target address when negativeFlag = 0
+     */
     inner class BPL(): Instruction() {
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            if (!this@CPU6502.negativeFlag) this@CPU6502.programCounter = targetAddress
         }
     }
 
@@ -503,15 +527,23 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
+    /**
+     * Branch on Overflow Clear
+     * Sets program counter to target address when overFlow = 0
+     */
     inner class BVC(): Instruction() {
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            if (!this@CPU6502.overflowFlag) this@CPU6502.programCounter = targetAddress
         }
     }
 
+    /**
+     * Branch on Overflow Set
+     * Sets program counter to target address when overFlow = 1
+     */
     inner class BVS(): Instruction() {
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            if (this@CPU6502.overflowFlag) this@CPU6502.programCounter = targetAddress
         }
     }
 

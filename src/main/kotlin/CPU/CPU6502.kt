@@ -1,6 +1,7 @@
 package CPU
 
 import Bus
+import kotlin.coroutines.coroutineContext
 
 /**
  * Emulation of the 6502 processor.
@@ -39,6 +40,8 @@ class CPU6502 (val bus: Bus) {
     var interruptDisableFlag = true
     var zeroFlag = false
     var carryFlag = false
+
+    val interruptSignalTriage: List<() -> Unit> = mutableListOf()
 
 
 
@@ -86,8 +89,6 @@ class CPU6502 (val bus: Bus) {
 
         bus.writeToAddress(stackPointer.toUShort(), statusRegisterValue)
         stackPointer--
-
-        interruptDisableFlag = true
 
         programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
     }
@@ -154,6 +155,8 @@ class CPU6502 (val bus: Bus) {
         val opcode: UByte = bus.readAddress(programCounter)
         executeInstructions(opcode)
         programCounter++
+
+        //interruptSignalTriage.map { it.invoke() }
     }
 
     /**
@@ -475,13 +478,68 @@ class CPU6502 (val bus: Bus) {
      * I chose to implement the opcodes as
      */
 
+    /**
+     * Add to Accumulator With Carry
+     * adds value to accumulator
+     * sets the carry flag if value exceed 255
+     * sets overflow flag if adding two positive numbers is negative.
+     * sets overflow flag if adding two negative numbers is positive.
+     * sets zero flag is result is 0.
+     * sets negative flag if result has signed bit high.
+     */
     inner class ADC(): Instruction() {
         fun execute(operand: UByte) {
-            TODO("Not yet implemented")
+            val signBitMask: UByte = 0x80u
+            val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
+            val operandSignedBit = operand and signBitMask == signBitMask
+
+            val rawResult = this@CPU6502.accumulator + operand + (if (carryFlag) 1u else 0u)
+            val result = rawResult.toUByte()
+            this@CPU6502.accumulator = result
+
+            this@CPU6502.carryFlag = (rawResult shr 8) == 1u
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            if (accumulatorSignedBit != operandSignedBit) {
+                this@CPU6502.overflowFlag = false
+                return
+            }
+
+            if (accumulatorSignedBit == this@CPU6502.negativeFlag) {
+                this@CPU6502.overflowFlag = false
+                return
+            }
+
+            this@CPU6502.overflowFlag = true
         }
 
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val signBitMask: UByte = 0x80u
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+
+            val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
+            val operandSignedBit = operand and signBitMask == signBitMask
+
+            val rawResult = this@CPU6502.accumulator + operand + (if (carryFlag) 1u else 0u)
+            val result = rawResult.toUByte()
+            this@CPU6502.accumulator = result
+
+            this@CPU6502.carryFlag = (rawResult shr 8) == 1u
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            if (accumulatorSignedBit != operandSignedBit) {
+                this@CPU6502.overflowFlag = false
+                return
+            }
+
+            if (accumulatorSignedBit == this@CPU6502.negativeFlag) {
+                this@CPU6502.overflowFlag = false
+                return
+            }
+
+            this@CPU6502.overflowFlag = true
         }
     }
 
@@ -620,6 +678,12 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
+    /**
+     * If an IRQ happens at the same time as a BRK instruction, the BRK instruction is ignored.
+     *
+     *
+     *
+     */
     inner class BRK(): Instruction() {
         fun execute() {
             TODO("Not yet implemented")
@@ -691,33 +755,93 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
+    /**
+     * Compare Memory and Accumulator
+     * subtracts the value in memory from the accumulator without storing the result.
+     * zero flag is set when operands are equal.
+     * negative flag set if result is negative.
+     * carry flag set if register >= operand
+     */
     inner class CMP(): Instruction() {
         fun execute(operand: UByte) {
-            TODO("Not yet implemented.")
+            val signBitMask: UByte = 0x80u
+            val rawResult = (this@CPU6502.accumulator.toByte() - operand.toByte()).toUInt()
+            val result = rawResult.toUByte()
+
+            this@CPU6502.carryFlag = this@CPU6502.accumulator >= operand
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
 
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val signBitMask: UByte = 0x80u
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val rawResult = (this@CPU6502.accumulator.toByte() - operand.toByte()).toUInt()
+            val result = rawResult.toUByte()
+
+            this@CPU6502.carryFlag = this@CPU6502.accumulator >= operand
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
     }
 
+    /**
+     * Compare Memory and X Register
+     * subtracts the value in memory from the register without storing the result.
+     * zero flag is set when operands are equal.
+     * negative flag set if result is negative.
+     * carry flag set if register >= operand
+     */
     inner class CPX(): Instruction() {
         fun execute(operand: UByte) {
-            TODO("Not yet implemented")
+            val signBitMask: UByte = 0x80u
+            val rawResult = (this@CPU6502.xRegister.toByte() - operand.toByte()).toUInt()
+            val result = rawResult.toUByte()
+
+            this@CPU6502.carryFlag = this@CPU6502.xRegister >= operand
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
 
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val signBitMask: UByte = 0x80u
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val rawResult = (this@CPU6502.xRegister.toByte() - operand.toByte()).toUInt()
+            val result = rawResult.toUByte()
+
+            this@CPU6502.carryFlag = this@CPU6502.xRegister >= operand
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
     }
 
+    /**
+     * Compare Memory and Y Register
+     * subtracts the value in memory from the register without storing the result.
+     * zero flag is set when operands are equal.
+     * negative flag set if result is negative.
+     * carry flag set if register >= operand
+     */
     inner class CPY(): Instruction() {
         fun execute(operand: UByte) {
+            val signBitMask: UByte = 0x80u
+            val rawResult = (this@CPU6502.yRegister.toByte() - operand.toByte()).toUInt()
+            val result = rawResult.toUByte()
 
+            this@CPU6502.carryFlag = this@CPU6502.yRegister >= operand
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
+
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
-        }
+            val signBitMask: UByte = 0x80u
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val rawResult = (this@CPU6502.yRegister.toByte() - operand.toByte()).toUInt()
+            val result = rawResult.toUByte()
+
+            this@CPU6502.carryFlag = this@CPU6502.yRegister >= operand
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()        }
     }
 
     inner class DEC(): Instruction() {

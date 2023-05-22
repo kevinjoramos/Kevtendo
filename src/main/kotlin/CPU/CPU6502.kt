@@ -1,6 +1,7 @@
 package CPU
 
 import Bus
+import kotlin.coroutines.coroutineContext
 
 /**
  * Emulation of the 6502 processor.
@@ -40,21 +41,124 @@ class CPU6502 (val bus: Bus) {
     var zeroFlag = false
     var carryFlag = false
 
+    val interruptSignalTriage: List<() -> Unit> = mutableListOf()
+
 
 
     /**
      * Interrupt control signals.
      */
-    fun irq() {}
 
-    fun nmi() {}
+    /**
+     * NON MASKABLE INTERRUPT
+     * 1. complete current instruction
+     * 2. push MSB of program counter to stack
+     * 3. push LSB of program counter to stack
+     * 4. push status register to stack
+     * 5. set interupt disable flag
+     * 6. PC is loaded with address stored at 0xFFFA 0xFFFB
+     */
+    fun nmi() {
+        val vectorLeastSignificantByte = bus.readAddress(0xFFFAu)
+        val vectorMostSignificantByte = bus.readAddress(0xFFFBu)
 
-    fun ready() {}
+        bus.writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
+        stackPointer--
+
+        bus.writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
+        stackPointer--
+
+        var statusRegisterValue: UByte = 0u
+        val negativeBitMask: UByte = 0x80u
+        val overflowBitMask: UByte = 0x40u
+        val extraBitMask: UByte = 0x20u
+        val breakBitMask: UByte = 0x10u
+        val decimalBitMask: UByte = 0x08u
+        val interruptDisableBitMask: UByte = 0x04u
+        val zeroBitMask: UByte = 0x02u
+        val carryBitMask: UByte = 0x01u
+
+        if (negativeFlag) statusRegisterValue = statusRegisterValue or negativeBitMask
+        if (overflowFlag) statusRegisterValue = statusRegisterValue or overflowBitMask
+        if (extraFlag) statusRegisterValue = statusRegisterValue or extraBitMask
+        if (breakFlag) statusRegisterValue = statusRegisterValue or breakBitMask
+        if (decimalFlag) statusRegisterValue = statusRegisterValue or decimalBitMask
+        if (interruptDisableFlag) statusRegisterValue = statusRegisterValue or interruptDisableBitMask
+        if (zeroFlag) statusRegisterValue = statusRegisterValue or zeroBitMask
+        if (carryFlag) statusRegisterValue = statusRegisterValue or carryBitMask
+
+        bus.writeToAddress(stackPointer.toUShort(), statusRegisterValue)
+        stackPointer--
+
+        this@CPU6502.interruptDisableFlag = true
+
+        programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
+    }
+
+    /**
+     * RESET
+     * load the vector at 0xFFFC and 0xFFFD into PC
+     */
+    fun reset() {
+        val vectorLeastSignificantByte = bus.readAddress(0xFFFCu)
+        val vectorMostSignificantByte = bus.readAddress(0xFFFDu)
+        programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
+    }
+
+    /**
+     * IRQ MASKABLE INTERRUPT will be ignored if interruptDisable flag is true
+     * 1. complete current instruction
+     * 2. push MSB of program counter to stack
+     * 3. push LSB of program counter to stack
+     * 4. push status register to stack
+     * 5. set interupt disable flag
+     * 6. PC is loaded with address stored at 0xFFFA 0xFFFB
+     */
+    fun irq() {
+        if (interruptDisableFlag) return
+
+        val vectorLeastSignificantByte = bus.readAddress(0xFFFEu)
+        val vectorMostSignificantByte = bus.readAddress(0xFFFFu)
+
+        bus.writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
+        stackPointer--
+
+        bus.writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
+        stackPointer--
+
+        var statusRegisterValue: UByte = 0u
+        val negativeBitMask: UByte = 0x80u
+        val overflowBitMask: UByte = 0x40u
+        val extraBitMask: UByte = 0x20u
+        val breakBitMask: UByte = 0x10u
+        val decimalBitMask: UByte = 0x08u
+        val interruptDisableBitMask: UByte = 0x04u
+        val zeroBitMask: UByte = 0x02u
+        val carryBitMask: UByte = 0x01u
+
+        if (negativeFlag) statusRegisterValue = statusRegisterValue or negativeBitMask
+        if (overflowFlag) statusRegisterValue = statusRegisterValue or overflowBitMask
+        if (extraFlag) statusRegisterValue = statusRegisterValue or extraBitMask
+        if (breakFlag) statusRegisterValue = statusRegisterValue or breakBitMask
+        if (decimalFlag) statusRegisterValue = statusRegisterValue or decimalBitMask
+        if (interruptDisableFlag) statusRegisterValue = statusRegisterValue or interruptDisableBitMask
+        if (zeroFlag) statusRegisterValue = statusRegisterValue or zeroBitMask
+        if (carryFlag) statusRegisterValue = statusRegisterValue or carryBitMask
+
+        bus.writeToAddress(stackPointer.toUShort(), statusRegisterValue)
+        stackPointer--
+
+        interruptDisableFlag = true
+
+        programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
+    }
 
     fun run() {
         val opcode: UByte = bus.readAddress(programCounter)
         executeInstructions(opcode)
         programCounter++
+
+        //interruptSignalTriage.map { it.invoke() }
     }
 
     /**
@@ -70,7 +174,7 @@ class CPU6502 (val bus: Bus) {
         instruction.invoke()
     }
 
-    val opcodeTable: Map<UByte, () -> Unit> = mapOf(
+    private val opcodeTable: Map<UByte, () -> Unit> = mapOf(
         (0x00u).toUByte() to { BRK().execute() },
         (0x01u).toUByte() to { ORA().execute(xIndexedIndirectAddressing()) },
         (0x05u).toUByte() to { ORA().execute(zeroPageAddressing()) },
@@ -376,13 +480,68 @@ class CPU6502 (val bus: Bus) {
      * I chose to implement the opcodes as
      */
 
+    /**
+     * Add to Accumulator With Carry
+     * adds value to accumulator
+     * sets the carry flag if value exceed 255
+     * sets overflow flag if adding two positive numbers is negative.
+     * sets overflow flag if adding two negative numbers is positive.
+     * sets zero flag is result is 0.
+     * sets negative flag if result has signed bit high.
+     */
     inner class ADC(): Instruction() {
         fun execute(operand: UByte) {
-            TODO("Not yet implemented")
+            val signBitMask: UByte = 0x80u
+            val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
+            val operandSignedBit = operand and signBitMask == signBitMask
+
+            val rawResult = this@CPU6502.accumulator + operand + (if (carryFlag) 1u else 0u)
+            val result = rawResult.toUByte()
+            this@CPU6502.accumulator = result
+
+            this@CPU6502.carryFlag = (rawResult shr 8) == 1u
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            if (accumulatorSignedBit != operandSignedBit) {
+                this@CPU6502.overflowFlag = false
+                return
+            }
+
+            if (accumulatorSignedBit == this@CPU6502.negativeFlag) {
+                this@CPU6502.overflowFlag = false
+                return
+            }
+
+            this@CPU6502.overflowFlag = true
         }
 
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val signBitMask: UByte = 0x80u
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+
+            val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
+            val operandSignedBit = operand and signBitMask == signBitMask
+
+            val rawResult = this@CPU6502.accumulator + operand + (if (carryFlag) 1u else 0u)
+            val result = rawResult.toUByte()
+            this@CPU6502.accumulator = result
+
+            this@CPU6502.carryFlag = (rawResult shr 8) == 1u
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            if (accumulatorSignedBit != operandSignedBit) {
+                this@CPU6502.overflowFlag = false
+                return
+            }
+
+            if (accumulatorSignedBit == this@CPU6502.negativeFlag) {
+                this@CPU6502.overflowFlag = false
+                return
+            }
+
+            this@CPU6502.overflowFlag = true
         }
     }
 
@@ -521,9 +680,50 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
+    /**
+     * Break Command
+     * performs a programed interrupt similar to IRQ
+     */
     inner class BRK(): Instruction() {
         fun execute() {
-            TODO("Not yet implemented")
+            if (interruptDisableFlag) return
+
+            val vectorLeastSignificantByte = bus.readAddress(0xFFFEu)
+            val vectorMostSignificantByte = bus.readAddress(0xFFFFu)
+
+            this@CPU6502.programCounter++
+
+            bus.writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
+            stackPointer--
+
+            bus.writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
+            stackPointer--
+
+            var statusRegisterValue: UByte = 0u
+            val negativeBitMask: UByte = 0x80u
+            val overflowBitMask: UByte = 0x40u
+            val extraBitMask: UByte = 0x20u
+            val breakBitMask: UByte = 0x10u
+            val decimalBitMask: UByte = 0x08u
+            val interruptDisableBitMask: UByte = 0x04u
+            val zeroBitMask: UByte = 0x02u
+            val carryBitMask: UByte = 0x01u
+
+            if (negativeFlag) statusRegisterValue = statusRegisterValue or negativeBitMask
+            if (overflowFlag) statusRegisterValue = statusRegisterValue or overflowBitMask
+            if (extraFlag) statusRegisterValue = statusRegisterValue or extraBitMask
+            if (breakFlag) statusRegisterValue = statusRegisterValue or breakBitMask
+            if (decimalFlag) statusRegisterValue = statusRegisterValue or decimalBitMask
+            if (interruptDisableFlag) statusRegisterValue = statusRegisterValue or interruptDisableBitMask
+            if (zeroFlag) statusRegisterValue = statusRegisterValue or zeroBitMask
+            if (carryFlag) statusRegisterValue = statusRegisterValue or carryBitMask
+
+            bus.writeToAddress(stackPointer.toUShort(), statusRegisterValue)
+            stackPointer--
+
+            interruptDisableFlag = true
+
+            programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
         }
     }
 
@@ -592,33 +792,93 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
+    /**
+     * Compare Memory and Accumulator
+     * subtracts the value in memory from the accumulator without storing the result.
+     * zero flag is set when operands are equal.
+     * negative flag set if result is negative.
+     * carry flag set if register >= operand
+     */
     inner class CMP(): Instruction() {
         fun execute(operand: UByte) {
-            TODO("Not yet implemented.")
+            val signBitMask: UByte = 0x80u
+            val rawResult = (this@CPU6502.accumulator.toByte() - operand.toByte()).toUInt()
+            val result = rawResult.toUByte()
+
+            this@CPU6502.carryFlag = this@CPU6502.accumulator >= operand
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
 
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val signBitMask: UByte = 0x80u
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val rawResult = (this@CPU6502.accumulator.toByte() - operand.toByte()).toUInt()
+            val result = rawResult.toUByte()
+
+            this@CPU6502.carryFlag = this@CPU6502.accumulator >= operand
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
     }
 
+    /**
+     * Compare Memory and X Register
+     * subtracts the value in memory from the register without storing the result.
+     * zero flag is set when operands are equal.
+     * negative flag set if result is negative.
+     * carry flag set if register >= operand
+     */
     inner class CPX(): Instruction() {
         fun execute(operand: UByte) {
-            TODO("Not yet implemented")
+            val signBitMask: UByte = 0x80u
+            val rawResult = (this@CPU6502.xRegister.toByte() - operand.toByte()).toUInt()
+            val result = rawResult.toUByte()
+
+            this@CPU6502.carryFlag = this@CPU6502.xRegister >= operand
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
 
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val signBitMask: UByte = 0x80u
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val rawResult = (this@CPU6502.xRegister.toByte() - operand.toByte()).toUInt()
+            val result = rawResult.toUByte()
+
+            this@CPU6502.carryFlag = this@CPU6502.xRegister >= operand
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
     }
 
+    /**
+     * Compare Memory and Y Register
+     * subtracts the value in memory from the register without storing the result.
+     * zero flag is set when operands are equal.
+     * negative flag set if result is negative.
+     * carry flag set if register >= operand
+     */
     inner class CPY(): Instruction() {
         fun execute(operand: UByte) {
+            val signBitMask: UByte = 0x80u
+            val rawResult = (this@CPU6502.yRegister.toByte() - operand.toByte()).toUInt()
+            val result = rawResult.toUByte()
 
+            this@CPU6502.carryFlag = this@CPU6502.yRegister >= operand
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
         }
+
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
-        }
+            val signBitMask: UByte = 0x80u
+            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val rawResult = (this@CPU6502.yRegister.toByte() - operand.toByte()).toUInt()
+            val result = rawResult.toUByte()
+
+            this@CPU6502.carryFlag = this@CPU6502.yRegister >= operand
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()        }
     }
 
     inner class DEC(): Instruction() {
@@ -733,13 +993,27 @@ class CPU6502 (val bus: Bus) {
 
     inner class JMP(): Instruction() {
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU6502.programCounter = targetAddress
         }
     }
 
+
+    /**
+     * Jump to Subroutine
+     * jumps program counter to target address, but first saves last address of current instruction to stack.
+     * Decrements the stack twice in the process.
+     */
     inner class JSR(): Instruction() {
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val currentAddressMostSignificantByte: UByte = (this@CPU6502.programCounter.toUInt() shr 8).toUByte()
+            val currentAddressLeastSignificantByte: UByte = this@CPU6502.programCounter.toUByte()
+
+            this@CPU6502.bus.writeToAddress(stackPointer.toUShort(), currentAddressMostSignificantByte)
+            this@CPU6502.stackPointer--
+            this@CPU6502.bus.writeToAddress(stackPointer.toUShort(), currentAddressLeastSignificantByte)
+            this@CPU6502.stackPointer--
+
+            this@CPU6502.programCounter = targetAddress
         }
     }
 
@@ -1054,25 +1328,116 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
+    /**
+     * Return From Interrupt
+     * restores program counter and status register from stack.
+     */
     inner class RTI(): Instruction() {
         fun execute() {
-            TODO("Not yet implemented")
+            this@CPU6502.stackPointer++
+            val statusRegisterValue = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            this@CPU6502.stackPointer++
+            val targetLeastSignificantByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            this@CPU6502.stackPointer++
+            val targetMostSignificantByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+
+            val negativeBitMask: UByte = 0x80u
+            val overflowBitMask: UByte = 0x40u
+            val extraBitMask: UByte = 0x20u
+            val breakBitMask: UByte = 0x10u
+            val decimalBitMask: UByte = 0x08u
+            val interruptDisableBitMask: UByte = 0x04u
+            val zeroBitMask: UByte = 0x02u
+            val carryBitMask: UByte = 0x01u
+
+            this@CPU6502.negativeFlag = statusRegisterValue and negativeBitMask == negativeBitMask
+            this@CPU6502.overflowFlag = statusRegisterValue and overflowBitMask == overflowBitMask
+            this@CPU6502.extraFlag = statusRegisterValue and extraBitMask == extraBitMask
+            this@CPU6502.breakFlag = statusRegisterValue and breakBitMask == breakBitMask
+            this@CPU6502.decimalFlag = statusRegisterValue and decimalBitMask == decimalBitMask
+            this@CPU6502.interruptDisableFlag = statusRegisterValue and interruptDisableBitMask == interruptDisableBitMask
+            this@CPU6502.zeroFlag = statusRegisterValue and zeroBitMask == zeroBitMask
+            this@CPU6502.carryFlag = statusRegisterValue and carryBitMask == carryBitMask
+
+            this@CPU6502.programCounter = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte).toUShort()
         }
     }
 
+    /**
+     * Return From Subroutine
+     * restores program counter from stack.
+     */
     inner class RTS(): Instruction() {
         fun execute() {
-            TODO("Not yet implemented")
+            this@CPU6502.stackPointer++
+            val targetLeastSignificantByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            this@CPU6502.stackPointer++
+            val targetMostSignificantByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+
+            this@CPU6502.programCounter = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte).toUShort()
+            this@CPU6502.programCounter++
         }
     }
 
+    /**
+     * Subtract with Carry
+     * Subtract accumulator with memory and carry-bit complement.
+     * negativeFlag and zeroFlag are set by the result.
+     * carry is called when unsigned values overflow 255.
+     * overflow only can occur when subtracting positive from negative and visa versa.
+     */
     inner class SBC(): Instruction() {
         fun execute(operand: UByte) {
-            TODO("Not yet implemented.")
+            val signBitMask: UByte = 0x80u
+            val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
+            val operandSignedBit = operand and signBitMask == signBitMask
+
+            val rawResult = this@CPU6502.accumulator - operand - (if (carryFlag) 0u else 1u)
+            val result = rawResult.toUByte()
+            this@CPU6502.accumulator = result
+
+            this@CPU6502.carryFlag = (rawResult shr 8) == 1u
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            if (accumulatorSignedBit == operandSignedBit) {
+                this@CPU6502.overflowFlag = false
+                return
+            }
+
+            if (accumulatorSignedBit != this@CPU6502.negativeFlag) {
+                this@CPU6502.overflowFlag = true
+                return
+            }
+
+            this@CPU6502.overflowFlag = false
         }
 
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val operand = this@CPU6502.bus.readAddress(targetAddress)
+            val signBitMask: UByte = 0x80u
+            val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
+            val operandSignedBit = operand and signBitMask == signBitMask
+
+            val rawResult = this@CPU6502.accumulator - operand - (if (carryFlag) 0u else 1u)
+            val result = rawResult.toUByte()
+            this@CPU6502.accumulator = result
+
+            this@CPU6502.carryFlag = (rawResult shr 8) == 1u
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            if (accumulatorSignedBit == operandSignedBit) {
+                this@CPU6502.overflowFlag = false
+                return
+            }
+
+            if (accumulatorSignedBit != this@CPU6502.negativeFlag) {
+                this@CPU6502.overflowFlag = true
+                return
+            }
+
+            this@CPU6502.overflowFlag = false
         }
     }
 

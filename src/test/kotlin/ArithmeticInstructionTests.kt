@@ -817,15 +817,19 @@ class ArithmeticInstructionTests {
         }
     }
 
+    /**
+     * SBC
+     */
+
     @Test
-        fun `test SBC subtract memory from accumulator unsigned borrow but no signed overflow`() {
+        fun `test SBC subtract immediate value from accumulator unsigned borrow but no signed overflow`() {
         val data: UByte = 0xF0u
         val accumulatorValue: UByte = 0x50u
         val result: UByte = 0x60u
 
         testCPU.apply {
             accumulator = accumulatorValue
-            carryFlag = false
+            carryFlag = true
             overflowFlag = true
             negativeFlag = true
             zeroFlag = true
@@ -839,5 +843,184 @@ class ArithmeticInstructionTests {
             assertEquals(false, it.negativeFlag)
             assertEquals(false, it.zeroFlag)
         }
+    }
+
+    @Test
+    fun `test SBC subtract immediate value from accumulator unsigned borrow and unsigned overflow`() {
+        val data: UByte = 0xB0u
+        val accumulatorValue: UByte = 0x50u
+        val result: UByte = 0xA0u
+
+        testCPU.apply {
+            accumulator = accumulatorValue
+            carryFlag = true
+            overflowFlag = false
+            negativeFlag = false
+            zeroFlag = true
+            SBC().execute(data)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.accumulator)
+            assertEquals(false, it.carryFlag)
+            assertEquals(true, it.overflowFlag)
+            assertEquals(true, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+    }
+
+    @Test
+    fun `test SBC subtract immediate value from accumulator unsigned borrow but no signed overflow 2`() {
+        val data: UByte = 0x70u
+        val accumulatorValue: UByte = 0x50u
+        val result: UByte = 0xE0u
+
+        testCPU.apply {
+            accumulator = accumulatorValue
+            carryFlag = true
+            overflowFlag = false
+            negativeFlag = false
+            zeroFlag = true
+            SBC().execute(data)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.accumulator)
+            assertEquals(false, it.carryFlag)
+            assertEquals(false, it.overflowFlag)
+            assertEquals(true, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+    }
+
+    @Test
+    fun `test SBC subtract immediate value from accumulator with borrow`() {
+        val data: UByte = 0xF0u
+        val accumulatorValue: UByte = 0x50u
+        val result: UByte = 0x5Fu
+
+        testCPU.apply {
+            accumulator = accumulatorValue
+            carryFlag = false
+            overflowFlag = false
+            negativeFlag = false
+            zeroFlag = true
+            SBC().execute(data)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.accumulator)
+            assertEquals(false, it.carryFlag)
+            assertEquals(false, it.overflowFlag)
+            assertEquals(false, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+    }
+
+    //
+
+    @Test
+    fun `test SBC subtract memory from accumulator unsigned borrow but no signed overflow`() {
+        val targetAddress: UShort = 0x0105u
+        val data: UByte = 0xF0u
+        val accumulatorValue: UByte = 0x50u
+        val result: UByte = 0x60u
+
+        testCPU.apply {
+            bus.ram[targetAddress.toInt()] = data
+            accumulator = accumulatorValue
+            carryFlag = true
+            overflowFlag = true
+            negativeFlag = true
+            zeroFlag = true
+            SBC().execute(targetAddress)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.accumulator)
+            assertEquals(false, it.carryFlag)
+            assertEquals(false, it.overflowFlag)
+            assertEquals(false, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+    }
+
+    @Test
+    fun `test SBC subtract memory from accumulator unsigned borrow and unsigned overflow`() {
+        val targetAddress: UShort = 0x0105u
+        val data: UByte = 0xB0u
+        val accumulatorValue: UByte = 0x50u
+        val result: UByte = 0xA0u
+
+        testCPU.apply {
+            bus.ram[targetAddress.toInt()] = data
+            accumulator = accumulatorValue
+            carryFlag = true
+            overflowFlag = false
+            negativeFlag = false
+            zeroFlag = true
+            SBC().execute(targetAddress)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.accumulator)
+            assertEquals(false, it.carryFlag)
+            assertEquals(true, it.overflowFlag)
+            assertEquals(true, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+    }
+
+    @Test
+    fun `test SBC subtract memory from accumulator unsigned borrow but no signed overflow 2`() {
+        val targetAddress: UShort = 0x0105u
+        val data: UByte = 0x70u
+        val accumulatorValue: UByte = 0x50u
+        val result: UByte = 0xE0u
+
+        testCPU.apply {
+            bus.ram[targetAddress.toInt()] = data
+            accumulator = accumulatorValue
+            carryFlag = true
+            overflowFlag = false
+            negativeFlag = false
+            zeroFlag = true
+            SBC().execute(targetAddress)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.accumulator)
+            assertEquals(false, it.carryFlag)
+            assertEquals(false, it.overflowFlag)
+            assertEquals(true, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+    }
+
+    @Test
+    fun `test SBC subtract memory from accumulator with borrow`() {
+        val targetAddress: UShort = 0x0105u
+        val data: UByte = 0xF0u
+        val accumulatorValue: UByte = 0x50u
+        val result: UByte = 0x5Fu
+
+        testCPU.apply {
+            bus.ram[targetAddress.toInt()] = data
+            accumulator = accumulatorValue
+            carryFlag = false
+            overflowFlag = false
+            negativeFlag = false
+            zeroFlag = true
+            SBC().execute(targetAddress)
+        }
+
+        testCPU.also {
+            assertEquals(result, it.accumulator)
+            assertEquals(false, it.carryFlag)
+            assertEquals(false, it.overflowFlag)
+            assertEquals(false, it.negativeFlag)
+            assertEquals(false, it.zeroFlag)
+        }
+
     }
 }

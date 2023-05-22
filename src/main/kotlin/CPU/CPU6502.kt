@@ -1289,13 +1289,65 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
+    /**
+     * Subtract with Carry
+     * Subtract accumulator with memory and carry-bit complement.
+     * negativeFlag and zeroFlag are set by the result.
+     * carry is called when unsigned values overflow 255.
+     * overflow only can occur when subtracting positive from negative and visa versa.
+     */
     inner class SBC(): Instruction() {
         fun execute(operand: UByte) {
-            TODO("Not yet implemented.")
+            val signBitMask: UByte = 0x80u
+            val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
+            val operandSignedBit = operand and signBitMask == signBitMask
+
+            val rawResult = this@CPU6502.accumulator - operand - (if (carryFlag) 0u else 1u)
+            val result = rawResult.toUByte()
+            this@CPU6502.accumulator = result
+
+            this@CPU6502.carryFlag = (rawResult shr 8) == 1u
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            if (accumulatorSignedBit == operandSignedBit) {
+                this@CPU6502.overflowFlag = false
+                return
+            }
+
+            if (accumulatorSignedBit != this@CPU6502.negativeFlag) {
+                this@CPU6502.overflowFlag = true
+                return
+            }
+
+            this@CPU6502.overflowFlag = false
         }
 
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val operand = this@CPU6502.bus.readAddress(targetAddress)
+            val signBitMask: UByte = 0x80u
+            val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
+            val operandSignedBit = operand and signBitMask == signBitMask
+
+            val rawResult = this@CPU6502.accumulator - operand - (if (carryFlag) 0u else 1u)
+            val result = rawResult.toUByte()
+            this@CPU6502.accumulator = result
+
+            this@CPU6502.carryFlag = (rawResult shr 8) == 1u
+            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            if (accumulatorSignedBit == operandSignedBit) {
+                this@CPU6502.overflowFlag = false
+                return
+            }
+
+            if (accumulatorSignedBit != this@CPU6502.negativeFlag) {
+                this@CPU6502.overflowFlag = true
+                return
+            }
+
+            this@CPU6502.overflowFlag = false
         }
     }
 

@@ -679,14 +679,49 @@ class CPU6502 (val bus: Bus) {
     }
 
     /**
-     * If an IRQ happens at the same time as a BRK instruction, the BRK instruction is ignored.
-     *
-     *
-     *
+     * Break Command
+     * performs a programed interrupt similar to IRQ
      */
     inner class BRK(): Instruction() {
         fun execute() {
-            TODO("Not yet implemented")
+            if (interruptDisableFlag) return
+
+            val vectorLeastSignificantByte = bus.readAddress(0xFFFEu)
+            val vectorMostSignificantByte = bus.readAddress(0xFFFFu)
+
+            this@CPU6502.programCounter++
+
+            bus.writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
+            stackPointer--
+
+            bus.writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
+            stackPointer--
+
+            var statusRegisterValue: UByte = 0u
+            val negativeBitMask: UByte = 0x80u
+            val overflowBitMask: UByte = 0x40u
+            val extraBitMask: UByte = 0x20u
+            val breakBitMask: UByte = 0x10u
+            val decimalBitMask: UByte = 0x08u
+            val interruptDisableBitMask: UByte = 0x04u
+            val zeroBitMask: UByte = 0x02u
+            val carryBitMask: UByte = 0x01u
+
+            if (negativeFlag) statusRegisterValue = statusRegisterValue or negativeBitMask
+            if (overflowFlag) statusRegisterValue = statusRegisterValue or overflowBitMask
+            if (extraFlag) statusRegisterValue = statusRegisterValue or extraBitMask
+            if (breakFlag) statusRegisterValue = statusRegisterValue or breakBitMask
+            if (decimalFlag) statusRegisterValue = statusRegisterValue or decimalBitMask
+            if (interruptDisableFlag) statusRegisterValue = statusRegisterValue or interruptDisableBitMask
+            if (zeroFlag) statusRegisterValue = statusRegisterValue or zeroBitMask
+            if (carryFlag) statusRegisterValue = statusRegisterValue or carryBitMask
+
+            bus.writeToAddress(stackPointer.toUShort(), statusRegisterValue)
+            stackPointer--
+
+            interruptDisableFlag = true
+
+            programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
         }
     }
 
@@ -956,13 +991,27 @@ class CPU6502 (val bus: Bus) {
 
     inner class JMP(): Instruction() {
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            this@CPU6502.programCounter = targetAddress
         }
     }
 
+
+    /**
+     * Jump to Subroutine
+     * jumps program counter to target address, but first saves last address of current instruction to stack.
+     * Decrements the stack twice in the process.
+     */
     inner class JSR(): Instruction() {
         fun execute(targetAddress: UShort) {
-            TODO("Not yet implemented")
+            val currentAddressMostSignificantByte: UByte = (this@CPU6502.programCounter.toUInt() shr 8).toUByte()
+            val currentAddressLeastSignificantByte: UByte = this@CPU6502.programCounter.toUByte()
+
+            this@CPU6502.bus.writeToAddress(stackPointer.toUShort(), currentAddressMostSignificantByte)
+            this@CPU6502.stackPointer--
+            this@CPU6502.bus.writeToAddress(stackPointer.toUShort(), currentAddressLeastSignificantByte)
+            this@CPU6502.stackPointer--
+
+            this@CPU6502.programCounter = targetAddress
         }
     }
 
@@ -1277,15 +1326,54 @@ class CPU6502 (val bus: Bus) {
         }
     }
 
+    /**
+     * Return From Interrupt
+     * restores program counter and status register from stack.
+     */
     inner class RTI(): Instruction() {
         fun execute() {
-            TODO("Not yet implemented")
+            this@CPU6502.stackPointer++
+            val statusRegisterValue = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            this@CPU6502.stackPointer++
+            val targetLeastSignificantByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            this@CPU6502.stackPointer++
+            val targetMostSignificantByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+
+            val negativeBitMask: UByte = 0x80u
+            val overflowBitMask: UByte = 0x40u
+            val extraBitMask: UByte = 0x20u
+            val breakBitMask: UByte = 0x10u
+            val decimalBitMask: UByte = 0x08u
+            val interruptDisableBitMask: UByte = 0x04u
+            val zeroBitMask: UByte = 0x02u
+            val carryBitMask: UByte = 0x01u
+
+            this@CPU6502.negativeFlag = statusRegisterValue and negativeBitMask == negativeBitMask
+            this@CPU6502.overflowFlag = statusRegisterValue and overflowBitMask == overflowBitMask
+            this@CPU6502.extraFlag = statusRegisterValue and extraBitMask == extraBitMask
+            this@CPU6502.breakFlag = statusRegisterValue and breakBitMask == breakBitMask
+            this@CPU6502.decimalFlag = statusRegisterValue and decimalBitMask == decimalBitMask
+            this@CPU6502.interruptDisableFlag = statusRegisterValue and interruptDisableBitMask == interruptDisableBitMask
+            this@CPU6502.zeroFlag = statusRegisterValue and zeroBitMask == zeroBitMask
+            this@CPU6502.carryFlag = statusRegisterValue and carryBitMask == carryBitMask
+
+            this@CPU6502.programCounter = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte).toUShort()
         }
     }
 
+    /**
+     * Return From Subroutine
+     * restores program counter from stack.
+     */
     inner class RTS(): Instruction() {
         fun execute() {
-            TODO("Not yet implemented")
+            this@CPU6502.stackPointer++
+            val targetLeastSignificantByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            this@CPU6502.stackPointer++
+            val targetMostSignificantByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+
+            this@CPU6502.programCounter = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte).toUShort()
+            this@CPU6502.programCounter++
         }
     }
 

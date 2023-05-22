@@ -818,10 +818,10 @@ class ArithmeticInstructionTests {
     }
 
     @Test
-    fun `test SBC subtract memory from accumulator with borrow`() {
-        val data: UByte = 0x23u
-        val accumulatorValue: UByte = 0x32u
-        val result: UByte = 0x55u
+        fun `test SBC subtract memory from accumulator unsigned borrow but no signed overflow`() {
+        val data: UByte = 0xF0u
+        val accumulatorValue: UByte = 0x50u
+        val result: UByte = 0x60u
 
         testCPU.apply {
             accumulator = accumulatorValue
@@ -829,7 +829,7 @@ class ArithmeticInstructionTests {
             overflowFlag = true
             negativeFlag = true
             zeroFlag = true
-            ADC().execute(data)
+            SBC().execute(data)
         }
 
         testCPU.also {

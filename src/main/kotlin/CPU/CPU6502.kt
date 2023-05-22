@@ -90,6 +90,8 @@ class CPU6502 (val bus: Bus) {
         bus.writeToAddress(stackPointer.toUShort(), statusRegisterValue)
         stackPointer--
 
+        this@CPU6502.interruptDisableFlag = true
+
         programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
     }
 

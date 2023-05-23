@@ -1,4 +1,6 @@
+import Bus.Bus
 import CPU.CPU6502
+import PPU.PPU2C02
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
@@ -12,8 +14,9 @@ class BusTests {
     init {
         val testCPU1 = CPU6502()
         val testCPU2 = CPU6502()
-        this.smallTestBus = Bus(testCPU1, UByteArray(64))
-        this.fullTestBus = Bus(testCPU2, UByteArray((0x2000u).toInt()))
+        val testPPU = PPU2C02()
+        this.smallTestBus = Bus(testCPU1, UByteArray(64), testPPU)
+        this.fullTestBus = Bus(testCPU2, UByteArray((0x2000u).toInt()), testPPU)
     }
 
 
@@ -63,6 +66,30 @@ class BusTests {
             assertEquals((0xCCu).toUByte(), it.ram[(0x0FFFu).toInt()])
             assertEquals((0xCCu).toUByte(), it.ram[(0x17FFu).toInt()])
             assertEquals((0xCCu).toUByte(), it.ram[(0x1FFFu).toInt()])
+        }
+    }
+
+    @Test
+    fun `test address mirroring from 0x2000 to 0x3FFF`() {
+        val testPPU = PPU2C02()
+        fullTestBus.writeToAddress((0x2008u).toUShort(), (0x11u).toUByte())
+        fullTestBus.writeToAddress((0x2009u).toUShort(), (0x22u).toUByte())
+        fullTestBus.writeToAddress((0x200Au).toUShort(), (0x33u).toUByte())
+        fullTestBus.writeToAddress((0x200Bu).toUShort(), (0x44u).toUByte())
+        fullTestBus.writeToAddress((0x200Cu).toUShort(), (0x55u).toUByte())
+        fullTestBus.writeToAddress((0x200Du).toUShort(), (0x66u).toUByte())
+        fullTestBus.writeToAddress((0x200Eu).toUShort(), (0x77u).toUByte())
+        fullTestBus.writeToAddress((0x200Fu).toUShort(), (0x88u).toUByte())
+
+        fullTestBus.also {
+            assertEquals((0x11u).toUByte(), it.ppu.ppuCtrlRegister)
+            assertEquals((0x22u).toUByte(), it.ppu.ppuMaskRegister)
+            assertEquals((0x33u).toUByte(), it.ppu.ppuStatusRegister)
+            assertEquals((0x44u).toUByte(), it.ppu.oamAddrRegister)
+            assertEquals((0x55u).toUByte(), it.ppu.oamDataRegister)
+            assertEquals((0x66u).toUByte(), it.ppu.ppuScrollRegister)
+            assertEquals((0x77u).toUByte(), it.ppu.ppuAddrRegister)
+            assertEquals((0x88u).toUByte(), it.ppu.ppuDataRegister)
         }
     }
 }

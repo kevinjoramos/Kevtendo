@@ -1,6 +1,6 @@
 package CPU
 
-import Bus
+import Bus.Bus
 
 /**
  * Emulation of the 6502 processor.

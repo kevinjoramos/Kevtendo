@@ -1,5 +1,6 @@
+import Bus.Bus
 import CPU.CPU6502
-import org.junit.jupiter.api.Assertions
+import PPU.PPU2C02
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -12,8 +13,9 @@ class ControlInstructionTests {
     @BeforeEach
     fun setup() {
         val testRam = UByteArray(65_536)
+        val testPPU = PPU2C02()
         testCPU = CPU6502()
-        testBus = Bus(testCPU, testRam)
+        testBus = Bus(testCPU, testRam, testPPU)
     }
 
     /**

@@ -1,7 +1,6 @@
 package CPU
 
 import Bus
-import kotlin.coroutines.coroutineContext
 
 /**
  * Emulation of the 6502 processor.
@@ -12,7 +11,8 @@ import kotlin.coroutines.coroutineContext
  *
  */
 @ExperimentalUnsignedTypes
-class CPU6502 (val bus: Bus) {
+class CPU6502 {
+    lateinit var bus: Bus
 
     /**
      * 6502 Architecture components

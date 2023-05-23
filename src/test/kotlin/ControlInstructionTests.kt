@@ -12,8 +12,8 @@ class ControlInstructionTests {
     @BeforeEach
     fun setup() {
         val testRam = UByteArray(65_536)
-        testBus = Bus(testRam)
-        testCPU = CPU6502(testBus)
+        testCPU = CPU6502()
+        testBus = Bus(testCPU, testRam)
     }
 
     /**

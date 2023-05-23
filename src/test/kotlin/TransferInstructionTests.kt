@@ -10,9 +10,9 @@ class TransferInstructionTests {
 
     @BeforeEach
     fun setup() {
-        val testRam = UByteArray(65_535)
-        testBus = Bus(testRam)
-        testCPU = CPU6502(testBus)
+        val testRam = UByteArray(65_536)
+        testCPU = CPU6502()
+        testBus = Bus(testCPU, testRam)
     }
 
     /**

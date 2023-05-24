@@ -1,0 +1,5 @@
+package Cartridge
+
+class Mapper {
+
+}

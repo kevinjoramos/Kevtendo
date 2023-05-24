@@ -1,6 +1,7 @@
 package Bus
 
 import CPU.CPU6502
+import Cartridge.Cartridge
 import PPU.PPU2C02
 
 /**
@@ -11,7 +12,8 @@ import PPU.PPU2C02
 class Bus (
     val cpu: CPU6502,
     var ram: UByteArray,
-    var ppu: PPU2C02
+    var ppu: PPU2C02,
+    var mapper: PPU2C02
 ) {
 
     init {

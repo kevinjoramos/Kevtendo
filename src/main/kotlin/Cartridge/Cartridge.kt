@@ -1,5 +1,6 @@
 package Cartridge
 
+import Bus.Bus
 import java.io.File
 
 @ExperimentalUnsignedTypes
@@ -35,4 +36,6 @@ class Cartridge(
         rightPointer += header.sizeOfCharacterRom - 1
         dataChrRom = gameByteCode.sliceArray(leftPointer..rightPointer)
     }
+
+
 }

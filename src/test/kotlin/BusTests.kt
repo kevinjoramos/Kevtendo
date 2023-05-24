@@ -82,14 +82,14 @@ class BusTests {
         fullTestBus.writeToAddress((0x200Fu).toUShort(), (0x88u).toUByte())
 
         fullTestBus.also {
-            assertEquals((0x11u).toUByte(), it.ppu.ppuCtrlRegister)
-            assertEquals((0x22u).toUByte(), it.ppu.ppuMaskRegister)
-            assertEquals((0x33u).toUByte(), it.ppu.ppuStatusRegister)
-            assertEquals((0x44u).toUByte(), it.ppu.oamAddrRegister)
+            assertEquals((0x11u).toUByte(), it.ppu.controlRegister)
+            assertEquals((0x22u).toUByte(), it.ppu.maskRegister)
+            assertEquals((0x33u).toUByte(), it.ppu.statusRegister)
+            assertEquals((0x44u).toUByte(), it.ppu.oamAddressRegister)
             assertEquals((0x55u).toUByte(), it.ppu.oamDataRegister)
-            assertEquals((0x66u).toUByte(), it.ppu.ppuScrollRegister)
-            assertEquals((0x77u).toUByte(), it.ppu.ppuAddrRegister)
-            assertEquals((0x88u).toUByte(), it.ppu.ppuDataRegister)
+            assertEquals((0x66u).toUByte(), it.ppu.scrollRegister)
+            assertEquals((0x77u).toUByte(), it.ppu.addressRegister)
+            assertEquals((0x88u).toUByte(), it.ppu.dataRegister)
         }
     }
 }

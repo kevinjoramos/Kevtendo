@@ -1,7 +1,6 @@
 package Bus
 
 import CPU.CPU6502
-import Cartridge.Cartridge
 import PPU.PPU2C02
 
 /**
@@ -32,14 +31,13 @@ class Bus (
         if (address < 0x4000u) {
             val ppuRegisterAddress = (address.mod(0x0008u) + 0x2000u).toUShort()
             when (ppuRegisterAddress) {
-                (0x2000u).toUShort() -> return ppu.ppuCtrlRegister
-                (0x2001u).toUShort() -> return ppu.ppuMaskRegister
-                (0x2002u).toUShort() -> return ppu.ppuStatusRegister
-                (0x2003u).toUShort() -> return ppu.oamAddrRegister
+                (0x2001u).toUShort() -> return ppu.maskRegister
+                (0x2002u).toUShort() -> return ppu.statusRegister
+                (0x2003u).toUShort() -> return ppu.oamAddressRegister
                 (0x2004u).toUShort() -> return ppu.oamDataRegister
-                (0x2005u).toUShort() -> return ppu.ppuScrollRegister
-                (0x2006u).toUShort() -> return ppu.ppuAddrRegister
-                (0x2007u).toUShort() -> return ppu.ppuDataRegister
+                (0x2005u).toUShort() -> return ppu.scrollRegister
+                (0x2006u).toUShort() -> return ppu.addressRegister
+                (0x2007u).toUShort() -> return ppu.dataRegister
             }
         }
 
@@ -59,14 +57,14 @@ class Bus (
         if (address < 0x4000u) {
             val ppuRegisterAddress = (address.mod(0x0008u) + 0x2000u).toUShort()
             when (ppuRegisterAddress) {
-                (0x2000u).toUShort() -> ppu.ppuCtrlRegister = data
-                (0x2001u).toUShort() -> ppu.ppuMaskRegister = data
-                (0x2002u).toUShort() -> ppu.ppuStatusRegister = data
-                (0x2003u).toUShort() -> ppu.oamAddrRegister = data
+                (0x2000u).toUShort() -> ppu.writeToControlRegister(data)
+                (0x2001u).toUShort() -> ppu.maskRegister = data
+                (0x2002u).toUShort() -> ppu.statusRegister = data
+                (0x2003u).toUShort() -> ppu.oamAddressRegister = data
                 (0x2004u).toUShort() -> ppu.oamDataRegister = data
-                (0x2005u).toUShort() -> ppu.ppuScrollRegister = data
-                (0x2006u).toUShort() -> ppu.ppuAddrRegister = data
-                (0x2007u).toUShort() -> ppu.ppuDataRegister = data
+                (0x2005u).toUShort() -> ppu.scrollRegister = data
+                (0x2006u).toUShort() -> ppu.addressRegister = data
+                (0x2007u).toUShort() -> ppu.dataRegister = data
             }
             return
         }

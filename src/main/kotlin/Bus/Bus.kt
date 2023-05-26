@@ -31,13 +31,11 @@ class Bus (
         if (address < 0x4000u) {
             val ppuRegisterAddress = (address.mod(0x0008u) + 0x2000u).toUShort()
             when (ppuRegisterAddress) {
-                (0x2001u).toUShort() -> return ppu.maskRegister
-                (0x2002u).toUShort() -> return ppu.statusRegister
+                (0x2002u).toUShort() -> return ppu.readStatusRegister()
                 (0x2003u).toUShort() -> return ppu.oamAddressRegister
                 (0x2004u).toUShort() -> return ppu.oamDataRegister
                 (0x2005u).toUShort() -> return ppu.scrollRegister
-                (0x2006u).toUShort() -> return ppu.addressRegister
-                (0x2007u).toUShort() -> return ppu.dataRegister
+                (0x2007u).toUShort() -> return ppu.readDataRegister()
             }
         }
 
@@ -58,13 +56,12 @@ class Bus (
             val ppuRegisterAddress = (address.mod(0x0008u) + 0x2000u).toUShort()
             when (ppuRegisterAddress) {
                 (0x2000u).toUShort() -> ppu.writeToControlRegister(data)
-                (0x2001u).toUShort() -> ppu.maskRegister = data
-                (0x2002u).toUShort() -> ppu.statusRegister = data
+                (0x2001u).toUShort() -> ppu.writeToMaskRegister(data)
                 (0x2003u).toUShort() -> ppu.oamAddressRegister = data
                 (0x2004u).toUShort() -> ppu.oamDataRegister = data
                 (0x2005u).toUShort() -> ppu.scrollRegister = data
-                (0x2006u).toUShort() -> ppu.addressRegister = data
-                (0x2007u).toUShort() -> ppu.dataRegister = data
+                (0x2006u).toUShort() -> ppu.writeToAddressRegister(data)
+                (0x2007u).toUShort() -> ppu.writeToDataRegister(data)
             }
             return
         }

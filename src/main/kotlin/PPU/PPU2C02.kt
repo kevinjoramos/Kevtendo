@@ -51,7 +51,7 @@ class PPU2C02 {
      * Mask Register
      */
 
-    var maskRegister: UByte = 0x00u
+    private var maskRegister: UByte = 0x00u
 
     val isGreyscale: Boolean
         get() = maskRegister and (0x01).toUByte() == (0x01u).toUByte()
@@ -68,13 +68,47 @@ class PPU2C02 {
     val showSprites: Boolean
         get() = maskRegister and (0x10).toUByte() == (0x10u).toUByte()
 
+    val emphasizeRed: Boolean
+        get() = maskRegister and (0x20).toUByte() == (0x20u).toUByte()
 
+    val emphasizeGreen: Boolean
+        get() = maskRegister and (0x40).toUByte() == (0x40u).toUByte()
 
+    val emphasizeBlue: Boolean
+        get() = maskRegister and (0x80).toUByte() == (0x80u).toUByte()
+
+    fun writeToMaskRegister(data: UByte) {
+        maskRegister = data
+    }
+
+    /**
+     * Status Register
+     */
 
     var statusRegister: UByte = 0x00u
+
+    val hasSpriteOverflow: Boolean
+        get() = statusRegister and (0x20).toUByte() == (0x20u).toUByte()
+
+    val hasSpriteHit: Boolean
+        get() = statusRegister and (0x40).toUByte() == (0x40u).toUByte()
+
+    val isInVerticalBlank: Boolean
+        get() = statusRegister and (0x80).toUByte() == (0x80u).toUByte()
+
+    fun readStatusRegister(): UByte {
+        addressLatch = 0x00u
+
+        return statusRegister and (0x7Fu).toUByte()
+    }
+
     var oamAddressRegister: UByte = 0x00u
     var oamDataRegister: UByte = 0x00u
     var scrollRegister: UByte = 0x00u
+
+    /**
+     * Address Register
+     */
 
     var addressRegister: UByte = 0x00u
     private var addressLatch: UShort = 0x0000u
@@ -86,19 +120,56 @@ class PPU2C02 {
 
 
     var dataRegister: UByte = 0x00u
+    var isDataBufferPrimed = false
     fun readDataRegister(): UByte {
+        if (addressLatch > 0x3EFFu) {
+            val data = paletteTable[(addressLatch - 0x3F00u).mod(32u).toInt()]
+            dataRegister = paletteTable[(addressLatch - 0x3F00u).mod(32u).toInt()]
+            return data
+        }
 
+        val data = dataRegister
 
+        dataRegister =
+            if ( addressLatch < (0x2000u).toUShort() ) {
+                patternTable[addressLatch.toInt()]
+            } else if ( addressLatch < (0x3000u).toUShort()) {
+                nameTable[((addressLatch - 0x2000u).mod(2048u)).toInt()]
+            } else {
+                0x0000u // this case should never occur.
+            }
 
+        addressRegister = (addressRegister + vramIncrement.toUInt()).toUByte()
+        addressLatch = (addressLatch + vramIncrement.toUInt()).toUShort()
+
+        return data
+    }
+
+    fun writeToDataRegister(data: UByte) {
+        dataRegister = data
+
+        if ( addressLatch < (0x2000u).toUShort() ) {
+            patternTable[addressLatch.toInt()] = data
+            return
+        }
+
+        if ( addressLatch < (0x3000u).toUShort()) {
+            nameTable[((addressLatch - 0x2000u).mod(2048u)).toInt()] = data
+            return
+        }
+
+        addressRegister = (addressRegister + vramIncrement.toUInt()).toUByte()
+        addressLatch = (addressLatch + vramIncrement.toUInt()).toUShort()
+
+        return
     }
 
 
     var oamDMARegister: UByte = 0x00u
 
-    val leftPatternTable: UByteArray = UByteArray((0x1000u).toInt())
-    val rightPatternTable: UByteArray = UByteArray((0x1000u).toInt())
-    val nameTable: UByteArray = UByteArray((0x2000u).toInt())
-    val paletteTable: UByteArray = UByteArray((0x0100u).toInt())
-    val objectAtrributeMemory: UByteArray = UByteArray(256)
+    val patternTable: UByteArray = UByteArray(8192)
+    val nameTable: UByteArray = UByteArray(2048)
+    val paletteTable: UByteArray = UByteArray(32)
+    val objectAttributeMemory: UByteArray = UByteArray(256)
 
 }

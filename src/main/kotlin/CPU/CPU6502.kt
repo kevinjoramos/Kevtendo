@@ -155,7 +155,8 @@ class CPU6502 {
 
     fun run() {
         val opcode: UByte = bus.readAddress(programCounter)
-        executeInstructions(opcode)
+        val instruction = fetchInstruction(opcode)
+        instruction.invoke()
         programCounter++
 
         //interruptSignalTriage.map { it.invoke() }
@@ -167,12 +168,8 @@ class CPU6502 {
      * 2. fetch operands
      * 3. call the correct instruction.
      */
-    private fun executeInstructions(opcode: UByte) {
-        val instruction = this.opcodeTable.withDefault {
-            null
-        }[opcode] ?: throw InvalidOpcodeException("Opcode $opcode not found in opcode table.")
-        instruction.invoke()
-    }
+    private fun fetchInstruction(opcode: UByte) = this.opcodeTable.getValue(opcode) //?: throw InvalidOpcodeException("Opcode $opcode not found in opcode table.")
+
 
     private val opcodeTable: Map<UByte, () -> Unit> = mapOf(
         (0x00u).toUByte() to { BRK().execute() },
@@ -686,8 +683,6 @@ class CPU6502 {
      */
     inner class BRK(): Instruction() {
         fun execute() {
-            if (interruptDisableFlag) return
-
             val vectorLeastSignificantByte = bus.readAddress(0xFFFEu)
             val vectorMostSignificantByte = bus.readAddress(0xFFFFu)
 

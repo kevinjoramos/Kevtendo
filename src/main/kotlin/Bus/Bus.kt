@@ -1,6 +1,7 @@
 package Bus
 
 import CPU.CPU6502
+import Cartridge.Mapper
 import PPU.PPU2C02
 
 /**
@@ -12,7 +13,7 @@ class Bus (
     val cpu: CPU6502,
     var ram: UByteArray,
     var ppu: PPU2C02,
-    var mapper: PPU2C02
+    var mapper: Mapper
 ) {
 
     init {
@@ -37,6 +38,21 @@ class Bus (
                 (0x2005u).toUShort() -> return ppu.scrollRegister
                 (0x2007u).toUShort() -> return ppu.readDataRegister()
             }
+        }
+
+        if (address < 0x4018u) {
+            return 0x01u
+            TODO("APU and IO memory map not implemented")
+        }
+
+        if (address < 0x4020u) {
+            return 0x01u
+            TODO("APU and IO disabled memory map not implemented")
+        }
+
+        if (address <= 0xFFFFu) {
+            return mapper.readCartridgeAddress(address)
+            TODO("Game Cartridge memory map.")
         }
 
 

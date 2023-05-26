@@ -1,5 +1,7 @@
 import Bus.Bus
 import CPU.CPU6502
+import Cartridge.Cartridge
+import Cartridge.MapperZero
 import PPU.PPU2C02
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -15,8 +17,10 @@ class BusTests {
         val testCPU1 = CPU6502()
         val testCPU2 = CPU6502()
         val testPPU = PPU2C02()
-        this.smallTestBus = Bus(testCPU1, UByteArray(64), testPPU)
-        this.fullTestBus = Bus(testCPU2, UByteArray((0x2000u).toInt()), testPPU)
+        val cartridge = Cartridge("src/main/kotlin/games/Donkey Kong.nes")
+
+        this.smallTestBus = Bus(testCPU1, UByteArray(64), testPPU, MapperZero(cartridge))
+        this.fullTestBus = Bus(testCPU2, UByteArray((0x2000u).toInt()), testPPU, MapperZero(cartridge))
     }
 
 

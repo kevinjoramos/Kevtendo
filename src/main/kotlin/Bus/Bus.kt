@@ -14,17 +14,16 @@ import mediator.Mediator
  */
 @ExperimentalUnsignedTypes
 class Bus(cartridgePath: String, ramSize: Int) : Mediator {
-    val cpu = CPU6502(this)
     var ram = UByteArray(ramSize)
     var ppu = PPU2C02(this)
     private var mapper = MapperZero(Cartridge(cartridgePath), this)
+    val cpu = CPU6502(this)
 
     override fun notify(event: Event) {
         TODO("Not yet implemented")
     }
 
     override fun readAddress(address: UShort): UByte {
-        println("READING Address: ${address.toString(16)}")
 
 
         if (address < 0x2000u) return ram[address.toInt()]
@@ -41,11 +40,15 @@ class Bus(cartridgePath: String, ramSize: Int) : Mediator {
         }
 
         if (address < 0x4018u) {
-            return 0x01u // TODO("APU and IO memory map not implemented")
+            return 0x00u // TODO("APU and IO memory map not implemented")
         }
 
         if (address < 0x4020u) {
             return 0x00u //TODO("APU and IO disabled memory map not implemented")
+        }
+
+        if (address < 0x6000u) {
+            return 0x00u
         }
 
         if (address <= 0xFFFFu) {

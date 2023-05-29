@@ -4,6 +4,8 @@ import Bus.Bus
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import util.to2DigitHexString
+import util.to4DigitHexString
 
 @ExperimentalUnsignedTypes
 class NesEmulator {
@@ -36,11 +38,11 @@ class NesEmulator {
     }
 
     private fun getCurrentCPUState(): CPUState = CPUState(
-        bus.cpu.programCounter.toString(16),
-        bus.cpu.stackPointer.toString(16),
-        bus.cpu.accumulator.toString(16),
-        bus.cpu.xRegister.toString(16),
-        bus.cpu.yRegister.toString(16),
+        bus.cpu.programCounter.to4DigitHexString(),
+        bus.cpu.stackPointer.to4DigitHexString(),
+        bus.cpu.accumulator.to2DigitHexString(),
+        bus.cpu.xRegister.to2DigitHexString(),
+        bus.cpu.yRegister.to2DigitHexString(),
         bus.cpu.negativeFlag,
         bus.cpu.overflowFlag,
         bus.cpu.extraFlag,

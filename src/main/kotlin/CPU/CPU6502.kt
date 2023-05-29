@@ -1,6 +1,7 @@
 package CPU
 
-import Bus.Bus
+import mediator.Component
+import mediator.Mediator
 
 /**
  * Emulation of the 6502 processor.
@@ -11,8 +12,8 @@ import Bus.Bus
  *
  */
 @ExperimentalUnsignedTypes
-class CPU6502 {
-    lateinit var bus: Bus
+class CPU6502(override var bus: Mediator) : Component {
+
 
     /**
      * 6502 Architecture components
@@ -59,13 +60,11 @@ class CPU6502 {
      * 6. PC is loaded with address stored at 0xFFFA 0xFFFB
      */
     fun nmi() {
-        val vectorLeastSignificantByte = bus.readAddress(0xFFFAu)
-        val vectorMostSignificantByte = bus.readAddress(0xFFFBu)
-
-        bus.writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
+        val vectorLeastSignificantByte = readAddress(0xFFFAu)
+        val vectorMostSignificantByte = readAddress(0xFFFBu)
+            writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
         stackPointer--
-
-        bus.writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
+            writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
         stackPointer--
 
         var statusRegisterValue: UByte = 0u
@@ -86,8 +85,7 @@ class CPU6502 {
         if (interruptDisableFlag) statusRegisterValue = statusRegisterValue or interruptDisableBitMask
         if (zeroFlag) statusRegisterValue = statusRegisterValue or zeroBitMask
         if (carryFlag) statusRegisterValue = statusRegisterValue or carryBitMask
-
-        bus.writeToAddress(stackPointer.toUShort(), statusRegisterValue)
+            writeToAddress(stackPointer.toUShort(), statusRegisterValue)
         stackPointer--
 
         this@CPU6502.interruptDisableFlag = true
@@ -100,8 +98,8 @@ class CPU6502 {
      * load the vector at 0xFFFC and 0xFFFD into PC
      */
     fun reset() {
-        val vectorLeastSignificantByte = bus.readAddress(0xFFFCu)
-        val vectorMostSignificantByte = bus.readAddress(0xFFFDu)
+        val vectorLeastSignificantByte = readAddress(0xFFFCu)
+        val vectorMostSignificantByte = readAddress(0xFFFDu)
         programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
     }
 
@@ -117,13 +115,11 @@ class CPU6502 {
     fun irq() {
         if (interruptDisableFlag) return
 
-        val vectorLeastSignificantByte = bus.readAddress(0xFFFEu)
-        val vectorMostSignificantByte = bus.readAddress(0xFFFFu)
-
-        bus.writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
+        val vectorLeastSignificantByte = readAddress(0xFFFEu)
+        val vectorMostSignificantByte = readAddress(0xFFFFu)
+            writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
         stackPointer--
-
-        bus.writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
+            writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
         stackPointer--
 
         var statusRegisterValue: UByte = 0u
@@ -144,8 +140,7 @@ class CPU6502 {
         if (interruptDisableFlag) statusRegisterValue = statusRegisterValue or interruptDisableBitMask
         if (zeroFlag) statusRegisterValue = statusRegisterValue or zeroBitMask
         if (carryFlag) statusRegisterValue = statusRegisterValue or carryBitMask
-
-        bus.writeToAddress(stackPointer.toUShort(), statusRegisterValue)
+            writeToAddress(stackPointer.toUShort(), statusRegisterValue)
         stackPointer--
 
         interruptDisableFlag = true
@@ -154,7 +149,7 @@ class CPU6502 {
     }
 
     fun run() {
-        val opcode: UByte = bus.readAddress(programCounter)
+        val opcode: UByte = readAddress(programCounter)
         val instruction = fetchInstruction(opcode)
         instruction.invoke()
         programCounter++
@@ -347,7 +342,7 @@ class CPU6502 {
      */
     fun immediateAddressing(): UByte {
         programCounter++
-        return bus.readAddress(programCounter)
+        return readAddress(programCounter)
     }
 
     /**
@@ -358,9 +353,9 @@ class CPU6502 {
      */
     fun absoluteAddressing(): UShort {
         programCounter++
-        val leastSignificantByte = bus.readAddress(programCounter).toUShort()
+        val leastSignificantByte = readAddress(programCounter).toUShort()
         programCounter++
-        val mostSignificantByte = bus.readAddress((programCounter)).toUInt()
+        val mostSignificantByte = readAddress((programCounter)).toUInt()
         return ((mostSignificantByte shl 8).toUShort() or leastSignificantByte)
     }
 
@@ -372,7 +367,7 @@ class CPU6502 {
      */
     fun zeroPageAddressing(): UShort {
         programCounter++
-        return bus.readAddress(programCounter).toUShort()
+        return readAddress(programCounter).toUShort()
     }
 
     /**
@@ -383,9 +378,9 @@ class CPU6502 {
      */
     fun absoluteXIndexedAddressing(): UShort {
         programCounter++
-        val leastSignificantByte = bus.readAddress(programCounter).toUShort()
+        val leastSignificantByte = readAddress(programCounter).toUShort()
         programCounter++
-        val mostSignificantByte = bus.readAddress((programCounter)).toUInt()
+        val mostSignificantByte = readAddress((programCounter)).toUInt()
         return (((mostSignificantByte shl 8).toUShort() or leastSignificantByte) + xRegister).toUShort()
     }
 
@@ -397,9 +392,9 @@ class CPU6502 {
      */
     fun absoluteYIndexedAddressing(): UShort {
         programCounter++
-        val leastSignificantByte = bus.readAddress(programCounter).toUShort()
+        val leastSignificantByte = readAddress(programCounter).toUShort()
         programCounter++
-        val mostSignificantByte = bus.readAddress((programCounter)).toUInt()
+        val mostSignificantByte = readAddress((programCounter)).toUInt()
         return (((mostSignificantByte shl 8).toUShort() or leastSignificantByte) + yRegister).toUShort()
     }
 
@@ -412,7 +407,7 @@ class CPU6502 {
      */
     fun zeroPageXIndexedAddressing(): UShort {
         programCounter++
-        val operand: UByte = bus.readAddress(programCounter)
+        val operand: UByte = readAddress(programCounter)
         val targetAddress: UByte = (operand + xRegister).toUByte()
         return targetAddress.toUShort()
     }
@@ -426,47 +421,47 @@ class CPU6502 {
      */
     fun zeroPageYIndexedAddressing(): UShort {
         programCounter++
-        val operand: UByte = bus.readAddress(programCounter)
+        val operand: UByte = readAddress(programCounter)
         val targetAddress: UByte = (operand + yRegister).toUByte()
         return targetAddress.toUShort()
     }
 
     fun indirectAddressing(): UShort {
         programCounter++
-        val leastSignificantByte: UByte = bus.readAddress(programCounter)
+        val leastSignificantByte: UByte = readAddress(programCounter)
 
         programCounter++
-        val mostSignificantByte = bus.readAddress(programCounter).toUInt()
+        val mostSignificantByte = readAddress(programCounter).toUInt()
         val indirectAddress: UShort = ((mostSignificantByte shl 8) + leastSignificantByte).toUShort()
 
-        val targetLeastSignificantByte: UByte = bus.readAddress(indirectAddress)
-        val targetMostSignificantByte = bus.readAddress((indirectAddress + 1u).toUShort()).toUInt()
+        val targetLeastSignificantByte: UByte = readAddress(indirectAddress)
+        val targetMostSignificantByte = readAddress((indirectAddress + 1u).toUShort()).toUInt()
         return ((targetMostSignificantByte shl 8) + targetLeastSignificantByte).toUShort()
     }
 
     fun xIndexedIndirectAddressing(): UShort {
         programCounter++
-        val operand: UByte = bus.readAddress(programCounter)
+        val operand: UByte = readAddress(programCounter)
         val zeroPageAddress: UShort = (operand + xRegister).toUByte().toUShort()
 
-        val targetLeastSignificantByte: UByte = bus.readAddress(zeroPageAddress)
-        val targetMostSignificantByte: UByte = bus.readAddress((zeroPageAddress + 1u).toUByte().toUShort())
+        val targetLeastSignificantByte: UByte = readAddress(zeroPageAddress)
+        val targetMostSignificantByte: UByte = readAddress((zeroPageAddress + 1u).toUByte().toUShort())
 
         return ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte).toUShort()
     }
 
     fun indirectYIndexedAddressing(): UShort {
         programCounter++
-        val zeroPageOperand: UByte = bus.readAddress(programCounter)
-        val targetLeastSignificantByte = bus.readAddress(zeroPageOperand.toUShort())
-        val targetMostSignificantByte: UByte =  bus.readAddress((zeroPageOperand + 1u).toUShort())
+        val zeroPageOperand: UByte = readAddress(programCounter)
+        val targetLeastSignificantByte = readAddress(zeroPageOperand.toUShort())
+        val targetMostSignificantByte: UByte =  readAddress((zeroPageOperand + 1u).toUShort())
 
         return ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte + yRegister).toUShort()
     }
 
     fun relativeAddressing(): UShort {
         programCounter++
-        val offset: Byte = bus.readAddress(programCounter).toByte()
+        val offset: Byte = readAddress(programCounter).toByte()
         return (programCounter.toInt() + (offset.toInt()) + 1).toUShort()
     }
 
@@ -515,7 +510,7 @@ class CPU6502 {
 
         fun execute(targetAddress: UShort) {
             val signBitMask: UByte = 0x80u
-            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddress(targetAddress)
 
             val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
             val operandSignedBit = operand and signBitMask == signBitMask
@@ -561,7 +556,7 @@ class CPU6502 {
         }
 
         fun execute(targetAddress: UShort) {
-            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddress(targetAddress)
             val result: UByte = this@CPU6502.accumulator and operand
             this@CPU6502.accumulator = result
 
@@ -590,9 +585,9 @@ class CPU6502 {
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
         }
         fun execute(targetAddress: UShort) {
-            val data: UInt = this@CPU6502.bus.readAddress(targetAddress).toUInt()
+            val data: UInt = this@CPU6502.readAddress(targetAddress).toUInt()
             val result: UByte = (data shl 1).toUByte()
-            this@CPU6502.bus.writeToAddress(targetAddress, result)
+            this@CPU6502.writeToAddress(targetAddress, result)
 
             this@CPU6502.carryFlag = (data shr 7) == 1u
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
@@ -638,7 +633,7 @@ class CPU6502 {
      */
     inner class BIT(): Instruction() {
         fun execute(targetAddress: UShort) {
-            val operand: UInt = bus.readAddress(targetAddress).toUInt()
+            val operand: UInt = readAddress(targetAddress).toUInt()
             val result: UByte = this@CPU6502.accumulator and operand.toUByte()
 
             this@CPU6502.negativeFlag = (operand shr 7) == 1u
@@ -683,15 +678,13 @@ class CPU6502 {
      */
     inner class BRK(): Instruction() {
         fun execute() {
-            val vectorLeastSignificantByte = bus.readAddress(0xFFFEu)
-            val vectorMostSignificantByte = bus.readAddress(0xFFFFu)
+            val vectorLeastSignificantByte = readAddress(0xFFFEu)
+            val vectorMostSignificantByte = readAddress(0xFFFFu)
 
             this@CPU6502.programCounter++
-
-            bus.writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
+                writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
             stackPointer--
-
-            bus.writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
+                writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
             stackPointer--
 
             var statusRegisterValue: UByte = 0u
@@ -712,8 +705,7 @@ class CPU6502 {
             if (interruptDisableFlag) statusRegisterValue = statusRegisterValue or interruptDisableBitMask
             if (zeroFlag) statusRegisterValue = statusRegisterValue or zeroBitMask
             if (carryFlag) statusRegisterValue = statusRegisterValue or carryBitMask
-
-            bus.writeToAddress(stackPointer.toUShort(), statusRegisterValue)
+                writeToAddress(stackPointer.toUShort(), statusRegisterValue)
             stackPointer--
 
             interruptDisableFlag = true
@@ -807,7 +799,7 @@ class CPU6502 {
 
         fun execute(targetAddress: UShort) {
             val signBitMask: UByte = 0x80u
-            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddress(targetAddress)
             val rawResult = (this@CPU6502.accumulator.toByte() - operand.toByte()).toUInt()
             val result = rawResult.toUByte()
 
@@ -837,7 +829,7 @@ class CPU6502 {
 
         fun execute(targetAddress: UShort) {
             val signBitMask: UByte = 0x80u
-            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddress(targetAddress)
             val rawResult = (this@CPU6502.xRegister.toByte() - operand.toByte()).toUInt()
             val result = rawResult.toUByte()
 
@@ -867,7 +859,7 @@ class CPU6502 {
 
         fun execute(targetAddress: UShort) {
             val signBitMask: UByte = 0x80u
-            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddress(targetAddress)
             val rawResult = (this@CPU6502.yRegister.toByte() - operand.toByte()).toUInt()
             val result = rawResult.toUByte()
 
@@ -878,9 +870,9 @@ class CPU6502 {
 
     inner class DEC(): Instruction() {
         fun execute(targetAddress: UShort) {
-            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddress(targetAddress)
             val result = operand.dec()
-            this@CPU6502.bus.writeToAddress(targetAddress, result)
+            this@CPU6502.writeToAddress(targetAddress, result)
 
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
@@ -921,7 +913,7 @@ class CPU6502 {
         }
 
         fun execute(targetAddress: UShort) {
-            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddress(targetAddress)
             val result: UByte = this@CPU6502.accumulator xor operand
             this@CPU6502.accumulator = result
 
@@ -940,9 +932,9 @@ class CPU6502 {
      */
     inner class INC(): Instruction() {
         fun execute(targetAddress: UShort) {
-            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddress(targetAddress)
             val result = operand.inc()
-            this@CPU6502.bus.writeToAddress(targetAddress, result)
+            this@CPU6502.writeToAddress(targetAddress, result)
 
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
@@ -1003,9 +995,9 @@ class CPU6502 {
             val currentAddressMostSignificantByte: UByte = (this@CPU6502.programCounter.toUInt() shr 8).toUByte()
             val currentAddressLeastSignificantByte: UByte = this@CPU6502.programCounter.toUByte()
 
-            this@CPU6502.bus.writeToAddress(stackPointer.toUShort(), currentAddressMostSignificantByte)
+            this@CPU6502.writeToAddress(stackPointer.toUShort(), currentAddressMostSignificantByte)
             this@CPU6502.stackPointer--
-            this@CPU6502.bus.writeToAddress(stackPointer.toUShort(), currentAddressLeastSignificantByte)
+            this@CPU6502.writeToAddress(stackPointer.toUShort(), currentAddressLeastSignificantByte)
             this@CPU6502.stackPointer--
 
             this@CPU6502.programCounter = targetAddress
@@ -1025,7 +1017,7 @@ class CPU6502 {
             this@CPU6502.negativeFlag = (operand.toUInt() shr 7) == 1u        }
 
         fun execute(targetAddress: UShort) {
-            val data: UByte = bus.readAddress(targetAddress)
+            val data: UByte = readAddress(targetAddress)
             this@CPU6502.accumulator = data
 
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
@@ -1047,7 +1039,7 @@ class CPU6502 {
         }
 
         fun execute(targetAddress: UShort) {
-            val data: UByte = bus.readAddress(targetAddress)
+            val data: UByte = readAddress(targetAddress)
             this@CPU6502.xRegister = data
 
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
@@ -1069,7 +1061,7 @@ class CPU6502 {
         }
 
         fun execute(targetAddress: UShort) {
-            val data: UByte = bus.readAddress(targetAddress)
+            val data: UByte = readAddress(targetAddress)
             this@CPU6502.yRegister = data
 
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
@@ -1100,9 +1092,9 @@ class CPU6502 {
         }
 
         fun execute(targetAddress: UShort){
-            val data: UInt = this@CPU6502.bus.readAddress(targetAddress).toUInt()
+            val data: UInt = this@CPU6502.readAddress(targetAddress).toUInt()
             val result: UByte = (data shr 1).toUByte()
-            this@CPU6502.bus.writeToAddress(targetAddress, result)
+            this@CPU6502.writeToAddress(targetAddress, result)
 
             this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
@@ -1135,7 +1127,7 @@ class CPU6502 {
         }
 
         fun execute(targetAddress: UShort) {
-            val operand: UByte = this@CPU6502.bus.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddress(targetAddress)
             val result: UByte = this@CPU6502.accumulator or operand
             this@CPU6502.accumulator = result
 
@@ -1152,7 +1144,7 @@ class CPU6502 {
      */
     inner class PHA(): Instruction() {
         fun execute() {
-            this@CPU6502.bus.writeToAddress(stackPointer.toUShort(), this@CPU6502.accumulator)
+            this@CPU6502.writeToAddress(stackPointer.toUShort(), this@CPU6502.accumulator)
             this@CPU6502.stackPointer--
         }
     }
@@ -1209,7 +1201,7 @@ class CPU6502 {
                 result = result or carryBitMask
             }
 
-            this@CPU6502.bus.writeToAddress(this@CPU6502.stackPointer.toUShort(), result)
+            this@CPU6502.writeToAddress(this@CPU6502.stackPointer.toUShort(), result)
             this@CPU6502.stackPointer--
         }
     }
@@ -1223,7 +1215,7 @@ class CPU6502 {
     inner class PLA(): Instruction() {
         fun execute() {
             this@CPU6502.stackPointer++
-            val data: UByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            val data: UByte = this@CPU6502.readAddress(stackPointer.toUShort())
             this@CPU6502.accumulator = data
 
             this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
@@ -1238,7 +1230,7 @@ class CPU6502 {
     inner class PLP(): Instruction() {
         fun execute() {
             this@CPU6502.stackPointer++
-            val data: UByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            val data: UByte = this@CPU6502.readAddress(stackPointer.toUShort())
 
             val negativeBitMask: UByte = 0x80u
             val overflowBitMask: UByte = 0x40u
@@ -1281,9 +1273,9 @@ class CPU6502 {
         }
 
         fun execute(targetAddress: UShort) {
-            val data: UInt = this@CPU6502.bus.readAddress(targetAddress).toUInt()
+            val data: UInt = this@CPU6502.readAddress(targetAddress).toUInt()
             val result: UByte = if (carryFlag) ((data shl 1) or (1u)).toUByte() else (data shl 1).toUByte()
-            this@CPU6502.bus.writeToAddress(targetAddress, result)
+            this@CPU6502.writeToAddress(targetAddress, result)
 
             this@CPU6502.carryFlag = (data shr 7).toUByte() == (1u).toUByte()
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
@@ -1313,9 +1305,9 @@ class CPU6502 {
         }
 
         fun execute(targetAddress: UShort) {
-            val data: UInt = this@CPU6502.bus.readAddress(targetAddress).toUInt()
+            val data: UInt = this@CPU6502.readAddress(targetAddress).toUInt()
             val result: UByte = if (carryFlag) ((data shr 1) or (0x80u)).toUByte() else (data shr 1).toUByte()
-            this@CPU6502.bus.writeToAddress(targetAddress, result)
+            this@CPU6502.writeToAddress(targetAddress, result)
 
             this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
@@ -1330,11 +1322,11 @@ class CPU6502 {
     inner class RTI(): Instruction() {
         fun execute() {
             this@CPU6502.stackPointer++
-            val statusRegisterValue = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            val statusRegisterValue = this@CPU6502.readAddress(stackPointer.toUShort())
             this@CPU6502.stackPointer++
-            val targetLeastSignificantByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            val targetLeastSignificantByte = this@CPU6502.readAddress(stackPointer.toUShort())
             this@CPU6502.stackPointer++
-            val targetMostSignificantByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            val targetMostSignificantByte = this@CPU6502.readAddress(stackPointer.toUShort())
 
             val negativeBitMask: UByte = 0x80u
             val overflowBitMask: UByte = 0x40u
@@ -1365,9 +1357,9 @@ class CPU6502 {
     inner class RTS(): Instruction() {
         fun execute() {
             this@CPU6502.stackPointer++
-            val targetLeastSignificantByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            val targetLeastSignificantByte = this@CPU6502.readAddress(stackPointer.toUShort())
             this@CPU6502.stackPointer++
-            val targetMostSignificantByte = this@CPU6502.bus.readAddress(stackPointer.toUShort())
+            val targetMostSignificantByte = this@CPU6502.readAddress(stackPointer.toUShort())
 
             this@CPU6502.programCounter = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte).toUShort()
             this@CPU6502.programCounter++
@@ -1409,7 +1401,7 @@ class CPU6502 {
         }
 
         fun execute(targetAddress: UShort) {
-            val operand = this@CPU6502.bus.readAddress(targetAddress)
+            val operand = this@CPU6502.readAddress(targetAddress)
             val signBitMask: UByte = 0x80u
             val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
             val operandSignedBit = operand and signBitMask == signBitMask
@@ -1477,7 +1469,7 @@ class CPU6502 {
      */
     inner class STA(): Instruction() {
         fun execute(targetAddress: UShort) {
-            this@CPU6502.bus.writeToAddress(targetAddress, this@CPU6502.accumulator)
+            this@CPU6502.writeToAddress(targetAddress, this@CPU6502.accumulator)
         }
     }
 
@@ -1488,7 +1480,7 @@ class CPU6502 {
      */
     inner class STX(): Instruction() {
         fun execute(targetAddress: UShort) {
-            this@CPU6502.bus.writeToAddress(targetAddress, this@CPU6502.xRegister)
+            this@CPU6502.writeToAddress(targetAddress, this@CPU6502.xRegister)
         }
     }
 
@@ -1499,7 +1491,7 @@ class CPU6502 {
      */
     inner class STY(): Instruction() {
         fun execute(targetAddress: UShort) {
-            this@CPU6502.bus.writeToAddress(targetAddress, this@CPU6502.yRegister)
+            this@CPU6502.writeToAddress(targetAddress, this@CPU6502.yRegister)
         }
     }
 

@@ -1,7 +1,9 @@
 package Cartridge
 
+import mediator.Mediator
+
 @ExperimentalUnsignedTypes
-class MapperZero(val cartridge: Cartridge) : Mapper(cartridge) {
+class MapperZero(private val cartridge: Cartridge, bus: Mediator) : Mapper(cartridge, bus) {
     override fun readCartridgeAddress(address: UShort): UByte {
         if (address < 0x8000u) {
             return cartridge.dataPrgRom[(address - 0x6000u).toInt()]

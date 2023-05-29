@@ -12,14 +12,10 @@ import androidx.compose.runtime.setValue
 @ExperimentalUnsignedTypes
 class NesEmulator {
     private val projectRootPath = System.getProperty("user.dir")
+    private val ramSize = 2048
 
     private val pathToGame = "$projectRootPath/src/main/kotlin/games/Donkey Kong.nes"
-    private val cpu = CPU6502()
-
-    private val ppu = PPU2C02()
-    private val cartridge = Cartridge(pathToGame)
-    private val mapper = MapperZero(cartridge)
-    private var bus = Bus(cpu, UByteArray(2048), ppu, mapper)
+    private var bus = Bus(pathToGame, ramSize)
 
     var cpuState by mutableStateOf(getCurrentCPUState())
 
@@ -42,18 +38,18 @@ class NesEmulator {
     }
 
     private fun getCurrentCPUState(): CPUState = CPUState(
-        cpu.programCounter.toString(16),
-        cpu.stackPointer.toString(16),
-        cpu.accumulator.toString(16),
-        cpu.xRegister.toString(16),
-        cpu.yRegister.toString(16),
-        cpu.negativeFlag,
-        cpu.overflowFlag,
-        cpu.extraFlag,
-        cpu.breakFlag,
-        cpu.decimalFlag,
-        cpu.interruptDisableFlag,
-        cpu.zeroFlag,
-        cpu.carryFlag,
+        bus.cpu.programCounter.toString(16),
+        bus.cpu.stackPointer.toString(16),
+        bus.cpu.accumulator.toString(16),
+        bus.cpu.xRegister.toString(16),
+        bus.cpu.yRegister.toString(16),
+        bus.cpu.negativeFlag,
+        bus.cpu.overflowFlag,
+        bus.cpu.extraFlag,
+        bus.cpu.breakFlag,
+        bus.cpu.decimalFlag,
+        bus.cpu.interruptDisableFlag,
+        bus.cpu.zeroFlag,
+        bus.cpu.carryFlag,
     )
 }

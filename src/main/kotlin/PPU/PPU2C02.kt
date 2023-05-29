@@ -1,10 +1,12 @@
 package PPU
 
 import Bus.Bus
+import mediator.Component
+import mediator.Event
+import mediator.Mediator
 
 @ExperimentalUnsignedTypes
-class PPU2C02 {
-    lateinit var bus: Bus
+class PPU2C02(override var bus: Mediator) : Component {
 
     /**
      * Control Register
@@ -171,5 +173,6 @@ class PPU2C02 {
     val nameTable: UByteArray = UByteArray(2048)
     val paletteTable: UByteArray = UByteArray(32)
     val objectAttributeMemory: UByteArray = UByteArray(256)
+
 
 }

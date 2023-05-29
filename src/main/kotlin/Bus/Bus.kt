@@ -1,32 +1,29 @@
 package Bus
 
 import CPU.CPU6502
+import Cartridge.Cartridge
 import Cartridge.Mapper
+import Cartridge.MapperZero
 import PPU.PPU2C02
+import mediator.Event
+import mediator.Mediator
 
 /**
  * The connection to all other pieces of the system.
  * @param ram is an array of memory addresses.
  */
 @ExperimentalUnsignedTypes
-class Bus (
-    val cpu: CPU6502,
-    var ram: UByteArray,
-    var ppu: PPU2C02,
-    var mapper: Mapper
-) {
+class Bus(cartridgePath: String, ramSize: Int) : Mediator {
+    val cpu = CPU6502(this)
+    var ram = UByteArray(ramSize)
+    var ppu = PPU2C02(this)
+    private var mapper = MapperZero(Cartridge(cartridgePath), this)
 
-    init {
-        registerAllComponents()
+    override fun notify(event: Event) {
+        TODO("Not yet implemented")
     }
 
-    private fun registerAllComponents() {
-        cpu.bus = this
-        ppu.bus = this
-    }
-
-
-    fun readAddress(address: UShort): UByte {
+    override fun readAddress(address: UShort): UByte {
         if (address < 0x2000u) return ram[address.toInt()]
 
         if (address < 0x4000u) {
@@ -59,7 +56,7 @@ class Bus (
         return 0x01u
     }
 
-    fun writeToAddress(address: UShort, data: UByte) {
+    override fun writeToAddress(address: UShort, data: UByte) {
         if (address < 0x2000u) {
             ram[address.toInt()] = data
             ram[(address + 0x0800u).mod(0x2000u).toInt()] = data

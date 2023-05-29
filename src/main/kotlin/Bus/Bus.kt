@@ -24,6 +24,9 @@ class Bus(cartridgePath: String, ramSize: Int) : Mediator {
     }
 
     override fun readAddress(address: UShort): UByte {
+        println("READING Address: ${address.toString(16)}")
+
+
         if (address < 0x2000u) return ram[address.toInt()]
 
         if (address < 0x4000u) {
@@ -38,30 +41,28 @@ class Bus(cartridgePath: String, ramSize: Int) : Mediator {
         }
 
         if (address < 0x4018u) {
-            return 0x01u
-            TODO("APU and IO memory map not implemented")
+            return 0x01u // TODO("APU and IO memory map not implemented")
         }
 
         if (address < 0x4020u) {
-            return 0x01u
-            TODO("APU and IO disabled memory map not implemented")
+            return 0x00u //TODO("APU and IO disabled memory map not implemented")
         }
 
         if (address <= 0xFFFFu) {
             return mapper.readCartridgeAddress(address)
-            TODO("Game Cartridge memory map.")
         }
 
 
-        return 0x01u
+        return 0x00u
     }
 
     override fun writeToAddress(address: UShort, data: UByte) {
+        println("WRITE data: ${data.toString(16)} to Address: ${address.toString(16)}")
         if (address < 0x2000u) {
             ram[address.toInt()] = data
-            ram[(address + 0x0800u).mod(0x2000u).toInt()] = data
-            ram[(address + 0x1000u).mod(0x2000u).toInt()] = data
-            ram[(address + 0x1800u).mod(0x2000u).toInt()] = data
+            ram[(address + 0x0800u).mod(0x2000u).toUShort().toInt()] = data
+            ram[(address + 0x1000u).mod(0x2000u).toUShort().toInt()] = data
+            ram[(address + 0x1800u).mod(0x2000u).toUShort().toInt()] = data
             return
         }
 
@@ -88,7 +89,7 @@ class Bus(cartridgePath: String, ramSize: Int) : Mediator {
         }
 
         if (address <= 0xFFFFu) {
-            TODO("Game Cartridge memory map.")
+            mapper.writeToCartridgeAddress(address, data)
         }
 
     }

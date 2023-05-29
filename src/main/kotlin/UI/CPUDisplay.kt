@@ -1,8 +1,6 @@
 package UI
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -11,11 +9,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
 fun CPUDisplay(
     cpuState: CPUState,
+    slidingWindowState: List<String>,
     onStart: () -> Unit,
     onStep: () -> Unit,
     modifier: Modifier = Modifier
@@ -23,7 +23,7 @@ fun CPUDisplay(
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.Start
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -130,6 +130,23 @@ fun CPUDisplay(
         Button(onStep) {
             Text("Step")
         }
+
+        Spacer(modifier.height(10.dp))
+
+        InstructionSlidingWindow(slidingWindowState)
+    }
+}
+
+@Composable
+fun InstructionSlidingWindow(slidingWindow: List<String>) {
+    for (item in slidingWindow) {
+        Text(
+            text = item,
+            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp,
+            color = Color.Black,
+            fontFamily = FontFamily.Monospace
+        )
     }
 
 }

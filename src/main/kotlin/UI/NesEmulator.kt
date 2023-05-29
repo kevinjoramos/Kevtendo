@@ -1,10 +1,6 @@
 package UI
 
 import Bus.Bus
-import CPU.CPU6502
-import Cartridge.Cartridge
-import Cartridge.MapperZero
-import PPU.PPU2C02
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -12,12 +8,13 @@ import androidx.compose.runtime.setValue
 @ExperimentalUnsignedTypes
 class NesEmulator {
     private val projectRootPath = System.getProperty("user.dir")
-    private val ramSize = 2048
+    private val ramSize = 0x2000
 
     private val pathToGame = "$projectRootPath/src/main/kotlin/games/Donkey Kong.nes"
     private var bus = Bus(pathToGame, ramSize)
 
     var cpuState by mutableStateOf(getCurrentCPUState())
+    var instructionSlidingWindowState by mutableStateOf(getCurrentInstructionsSlidingWindowState())
 
     private var isRunning = false
     var isPaused = false
@@ -31,6 +28,7 @@ class NesEmulator {
     fun step() {
         bus.cpu.run()
         cpuState = getCurrentCPUState()
+        instructionSlidingWindowState = getCurrentInstructionsSlidingWindowState()
     }
 
     fun reset() {
@@ -52,4 +50,22 @@ class NesEmulator {
         bus.cpu.zeroFlag,
         bus.cpu.carryFlag,
     )
+
+    private fun getCurrentInstructionsSlidingWindowState(): List<String> {
+        val instructionList = mutableListOf<String>()
+
+        if (bus.cpu.programCounter < 15u) {
+           for (index in 0..16) {
+               instructionList.add( "${(index).toString(16)}: ")
+           }
+
+           return instructionList
+        }
+
+        for (index in (bus.cpu.programCounter - 8u)..(bus.cpu.programCounter + 7u)) {
+            instructionList.add( "${(index).toString(16)}: ")
+        }
+
+        return instructionList
+    }
 }

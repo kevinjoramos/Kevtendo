@@ -14,6 +14,7 @@ fun App() {
         val nesEmulator = remember { NesEmulator() }
         CPUDisplay(
             cpuState = nesEmulator.cpuState,
+            slidingWindowState = nesEmulator.instructionSlidingWindowState,
             onStart = nesEmulator::start,
             onStep = nesEmulator::step,
         )

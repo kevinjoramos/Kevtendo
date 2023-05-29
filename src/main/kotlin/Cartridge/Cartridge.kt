@@ -1,6 +1,5 @@
 package Cartridge
 
-import Bus.Bus
 import java.io.File
 
 @ExperimentalUnsignedTypes
@@ -8,8 +7,8 @@ class Cartridge(
     cartridgeFilePath: String
 ) {
     val header: INESHeader
-    val dataPrgRom: UByteArray
-    val dataChrRom: UByteArray
+    var programRom: UByteArray
+    var characterRom: UByteArray
 
     /**
      * Parses the .nes file for program rom and character rom.
@@ -24,17 +23,17 @@ class Cartridge(
         header = INESHeader(gameByteCode.sliceArray(leftPointer..rightPointer))
 
         if (header.hasTrainer) {
-            leftPointer = trainerSize + 1
-            rightPointer += trainerSize - 1
+            leftPointer = rightPointer + 1
+            rightPointer += trainerSize
         }
 
         leftPointer = rightPointer + 1
-        rightPointer += header.sizeOfProgramRom - 1
-        dataPrgRom = gameByteCode.sliceArray(leftPointer..rightPointer)
+        rightPointer += header.sizeOfProgramRom
+        programRom = gameByteCode.sliceArray(leftPointer..rightPointer)
 
         leftPointer = rightPointer + 1
-        rightPointer += header.sizeOfCharacterRom - 1
-        dataChrRom = gameByteCode.sliceArray(leftPointer..rightPointer)
+        rightPointer += header.sizeOfCharacterRom
+        characterRom = gameByteCode.sliceArray(leftPointer..rightPointer)
     }
 
 

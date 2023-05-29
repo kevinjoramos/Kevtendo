@@ -4,19 +4,29 @@ import mediator.Mediator
 
 @ExperimentalUnsignedTypes
 class MapperZero(private val cartridge: Cartridge, bus: Mediator) : Mapper(cartridge, bus) {
+    init {
+        mirrorCharacterMemory() //TODO("This needs to be toggled by the header.")
+    }
     override fun readCartridgeAddress(address: UShort): UByte {
         if (address < 0x8000u) {
-            return cartridge.dataPrgRom[(address - 0x6000u).toInt()]
+            return cartridge.characterRom[(address - 0x6000u).toInt()]
         }
 
-        if (address < 0xBFFFu) {
-            return cartridge.dataChrRom[(address - 0x8000u).toInt()]
+        return cartridge.programRom[(address - 0x8000u).toInt()]
+    }
+
+   fun writeToCartridgeAddress(address: UShort, data: UByte) {
+        if (address < 0x8000u) {
+            cartridge.characterRom[(address - 0x6000u).toInt()] = data
         }
 
-        if (cartridge.header.sizeOfCharacterRom > 16384) {
-            return cartridge.dataChrRom[(address - 0xC000u).toInt()]
-        }
+        cartridge.programRom[(address - 0x8000u).toInt()] = data
+    }
 
-        return cartridge.dataChrRom[(address - 0x8000u).mod(16384u).toInt()]
+
+
+
+    private fun mirrorCharacterMemory() {
+        cartridge.programRom = cartridge.programRom + cartridge.programRom
     }
 }

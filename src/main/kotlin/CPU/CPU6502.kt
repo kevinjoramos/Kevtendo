@@ -152,7 +152,8 @@ class CPU6502(override var bus: Mediator) : Component {
         val opcode: UByte = readAddress(programCounter)
         val instruction = fetchInstruction(opcode)
         instruction.invoke()
-        programCounter++
+        
+        //programCounter++
 
         //interruptSignalTriage.map { it.invoke() }
     }
@@ -482,6 +483,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * sets negative flag if result has signed bit high.
      */
     inner class ADC(): Instruction() {
+        override val opcodeName = "ADC"
+
         fun execute(operand: UByte) {
             val signBitMask: UByte = 0x80u
             val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
@@ -547,6 +550,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * otherwise resets the negative flag.
      */
     inner class AND(): Instruction() {
+        override val opcodeName = "AND"
+
         fun execute(operand: UByte) {
             val result: UByte = this@CPU6502.accumulator and operand
             this@CPU6502.accumulator = result
@@ -575,6 +580,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * and does not change the accumulator.
      */
     inner class ASL(): Instruction() {
+        override val opcodeName = "ASL"
+
         fun execute() {
             val data: UInt = this@CPU6502.accumulator.toUInt()
             val result: UByte = (data shl 1).toUByte()
@@ -600,6 +607,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Sets program counter to target address when carryFlag = 0
      */
     inner class BCC(): Instruction() {
+        override val opcodeName = "BCC"
+
         fun execute(targetAddress: UShort) {
             if (!this@CPU6502.carryFlag) this@CPU6502.programCounter = targetAddress
         }
@@ -610,6 +619,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Sets program counter to target address when carryFlag = 1
      */
     inner class BCS(): Instruction() {
+        override val opcodeName = "BCS"
+
         fun execute(targetAddress: UShort) {
             if (this@CPU6502.carryFlag) this@CPU6502.programCounter = targetAddress
         }
@@ -620,6 +631,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Sets program counter to target address when zeroFlag = 1
      */
     inner class BEQ(): Instruction() {
+        override val opcodeName = "BEQ"
+
         fun execute(targetAddress: UShort) {
             if (this@CPU6502.zeroFlag) this@CPU6502.programCounter = targetAddress
         }
@@ -632,6 +645,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * the zero-flag is set to the result of operand AND accumulator.
      */
     inner class BIT(): Instruction() {
+        override val opcodeName = "BIT"
+
         fun execute(targetAddress: UShort) {
             val operand: UInt = readAddress(targetAddress).toUInt()
             val result: UByte = this@CPU6502.accumulator and operand.toUByte()
@@ -647,6 +662,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Sets program counter to target address when negativeFlag = 1
      */
     inner class BMI(): Instruction() {
+        override val opcodeName = "BMI"
+
         fun execute(targetAddress: UShort) {
             if (this@CPU6502.negativeFlag) this@CPU6502.programCounter = targetAddress
         }
@@ -657,6 +674,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Sets program counter to target address when zeroFlag = 0
      */
     inner class BNE(): Instruction() {
+        override val opcodeName = "BNE"
+
         fun execute(targetAddress: UShort) {
             if (!this@CPU6502.zeroFlag) this@CPU6502.programCounter = targetAddress
         }
@@ -667,6 +686,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Sets program counter to target address when negativeFlag = 0
      */
     inner class BPL(): Instruction() {
+        override val opcodeName = "BPL"
+
         fun execute(targetAddress: UShort) {
             if (!this@CPU6502.negativeFlag) this@CPU6502.programCounter = targetAddress
         }
@@ -677,6 +698,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * performs a programed interrupt similar to IRQ
      */
     inner class BRK(): Instruction() {
+        override val opcodeName = "BRK"
+
         fun execute() {
             val vectorLeastSignificantByte = readAddress(0xFFFEu)
             val vectorMostSignificantByte = readAddress(0xFFFFu)
@@ -719,6 +742,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Sets program counter to target address when overFlow = 0
      */
     inner class BVC(): Instruction() {
+        override val opcodeName = "BVC"
+
         fun execute(targetAddress: UShort) {
             if (!this@CPU6502.overflowFlag) this@CPU6502.programCounter = targetAddress
         }
@@ -729,6 +754,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Sets program counter to target address when overFlow = 1
      */
     inner class BVS(): Instruction() {
+        override val opcodeName = "BVS"
+
         fun execute(targetAddress: UShort) {
             if (this@CPU6502.overflowFlag) this@CPU6502.programCounter = targetAddress
         }
@@ -740,6 +767,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * This instruction affects no registers in the microprocessor and no flags other than the carry flag which is reset.
      */
     inner class CLC(): Instruction() {
+        override val opcodeName = "CLC"
+
         fun execute() {
             this@CPU6502.carryFlag = false
         }
@@ -751,6 +780,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * CLD affects no registers in the microprocessor and no flags other than the decimal mode flag which is set to a 0.
      */
     inner class CLD(): Instruction() {
+        override val opcodeName = "CLD"
+
         fun execute() {
             this@CPU6502.decimalFlag = false
         }
@@ -762,6 +793,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * It affects no registers in the microprocessor and no flags other than the interrupt disable which is cleared.
      */
     inner class CLI(): Instruction() {
+        override val opcodeName = "CLI"
+
         fun execute() {
             this@CPU6502.interruptDisableFlag = false
         }
@@ -774,6 +807,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * CLV affects no registers in the microprocessor and no flags other than the overflow flag which is set to a 0.
      */
     inner class CLV(): Instruction() {
+        override val opcodeName = "CLV"
+
         fun execute() {
             this@CPU6502.overflowFlag = false
         }
@@ -787,6 +822,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * carry flag set if register >= operand
      */
     inner class CMP(): Instruction() {
+        override val opcodeName = "CMP"
+
         fun execute(operand: UByte) {
             val signBitMask: UByte = 0x80u
             val rawResult = (this@CPU6502.accumulator.toByte() - operand.toByte()).toUInt()
@@ -817,6 +854,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * carry flag set if register >= operand
      */
     inner class CPX(): Instruction() {
+        override val opcodeName = "CPX"
+
         fun execute(operand: UByte) {
             val signBitMask: UByte = 0x80u
             val rawResult = (this@CPU6502.xRegister.toByte() - operand.toByte()).toUInt()
@@ -847,6 +886,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * carry flag set if register >= operand
      */
     inner class CPY(): Instruction() {
+        override val opcodeName = "CPY"
+
         fun execute(operand: UByte) {
             val signBitMask: UByte = 0x80u
             val rawResult = (this@CPU6502.yRegister.toByte() - operand.toByte()).toUInt()
@@ -869,6 +910,8 @@ class CPU6502(override var bus: Mediator) : Component {
     }
 
     inner class DEC(): Instruction() {
+        override val opcodeName = "DEC"
+
         fun execute(targetAddress: UShort) {
             val operand: UByte = this@CPU6502.readAddress(targetAddress)
             val result = operand.dec()
@@ -880,6 +923,8 @@ class CPU6502(override var bus: Mediator) : Component {
     }
 
     inner class DEX(): Instruction() {
+        override val opcodeName = "DEX"
+
         fun execute() {
             this@CPU6502.xRegister--
 
@@ -889,6 +934,8 @@ class CPU6502(override var bus: Mediator) : Component {
     }
 
     inner class DEY(): Instruction() {
+        override val opcodeName = "DEY"
+
         fun execute() {
             this@CPU6502.yRegister--
 
@@ -904,6 +951,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Zero flag toggled by result.
      */
     inner class EOR(): Instruction() {
+        override val opcodeName = "EOR"
+
         fun execute(operand: UByte) {
             val result: UByte = this@CPU6502.accumulator xor operand
             this@CPU6502.accumulator = result
@@ -931,6 +980,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * if the increment causes the result to become 0, the Z flag is set on, otherwise it is reset.
      */
     inner class INC(): Instruction() {
+        override val opcodeName = "INC"
+
         fun execute(targetAddress: UShort) {
             val operand: UByte = this@CPU6502.readAddress(targetAddress)
             val result = operand.inc()
@@ -952,6 +1003,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * INX does not affect any other register other than the X register.
      */
     inner class INX(): Instruction() {
+        override val opcodeName = "INX"
+
         fun execute() {
             this@CPU6502.xRegister++
 
@@ -970,6 +1023,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * the Z flag.
      */
     inner class INY(): Instruction() {
+        override val opcodeName = "INY"
+
         fun execute() {
             this@CPU6502.yRegister++
 
@@ -979,6 +1034,8 @@ class CPU6502(override var bus: Mediator) : Component {
     }
 
     inner class JMP(): Instruction() {
+        override val opcodeName = "JMP"
+
         fun execute(targetAddress: UShort) {
             this@CPU6502.programCounter = targetAddress
         }
@@ -991,6 +1048,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Decrements the stack twice in the process.
      */
     inner class JSR(): Instruction() {
+        override val opcodeName = "JSR"
+
         fun execute(targetAddress: UShort) {
             val currentAddressMostSignificantByte: UByte = (this@CPU6502.programCounter.toUInt() shr 8).toUByte()
             val currentAddressLeastSignificantByte: UByte = this@CPU6502.programCounter.toUByte()
@@ -1010,6 +1069,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class LDA(): Instruction() {
+        override val opcodeName = "LDA"
+
         fun execute(operand: UByte) {
             this@CPU6502.accumulator = operand
 
@@ -1031,6 +1092,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class LDX(): Instruction() {
+        override val opcodeName = "LDX"
+
         fun execute(operand: UByte) {
             this@CPU6502.xRegister = operand
 
@@ -1053,6 +1116,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class LDY(): Instruction() {
+        override val opcodeName = "LDY"
+
         fun execute(operand: UByte) {
             this@CPU6502.yRegister = operand
 
@@ -1081,6 +1146,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * The carry is set equal to bit 0 of the input.
      */
     inner class LSR(): Instruction() {
+        override val opcodeName = "LSR"
+
         fun execute() {
             val data: UInt = this@CPU6502.accumulator.toUInt()
             val result: UByte = (data shr 1).toUByte()
@@ -1106,6 +1173,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * No Operation
      */
     inner class NOP(): Instruction() {
+        override val opcodeName = "NOP"
+
         fun execute() {
             return
         }
@@ -1118,6 +1187,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Zero flag toggled by result.
      */
     inner class ORA(): Instruction() {
+        override val opcodeName = "ORA"
+
         fun execute(operand: UByte) {
             val result: UByte = this@CPU6502.accumulator or operand
             this@CPU6502.accumulator = result
@@ -1143,6 +1214,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * does not affect any flags or registers.
      */
     inner class PHA(): Instruction() {
+        override val opcodeName = "PHA"
+
         fun execute() {
             this@CPU6502.writeToAddress(stackPointer.toUShort(), this@CPU6502.accumulator)
             this@CPU6502.stackPointer--
@@ -1158,6 +1231,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * to create the register value.
      */
     inner class PHP(): Instruction() {
+        override val opcodeName = "PHP"
+
         fun execute() {
             var result: UByte = 0u
             val negativeBitMask: UByte = 0x80u
@@ -1213,6 +1288,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * -toggles zero flag if result is 0.
      */
     inner class PLA(): Instruction() {
+        override val opcodeName = "PLA"
+
         fun execute() {
             this@CPU6502.stackPointer++
             val data: UByte = this@CPU6502.readAddress(stackPointer.toUShort())
@@ -1228,6 +1305,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * increments the stack pointer, and copies the value in that address to the status register.
      */
     inner class PLP(): Instruction() {
+        override val opcodeName = "PLP"
+
         fun execute() {
             this@CPU6502.stackPointer++
             val data: UByte = this@CPU6502.readAddress(stackPointer.toUShort())
@@ -1262,6 +1341,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * sets the Z flag if the result is 0.
      */
     inner class ROL(): Instruction() {
+        override val opcodeName = "ROL"
+
         fun execute() {
             val data: UInt = this@CPU6502.accumulator.toUInt()
             val result: UByte = if (carryFlag) ((data shl 1) or (1u)).toUByte() else (data shl 1).toUByte()
@@ -1294,6 +1375,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * does not affect the overflow flag at all.
      */
     inner class ROR(): Instruction() {
+        override val opcodeName = "ROR"
+
         fun execute() {
             val data: UInt = this@CPU6502.accumulator.toUInt()
             val result: UByte = if (carryFlag) ((data shr 1) or (0x80u)).toUByte() else (data shr 1).toUByte()
@@ -1320,6 +1403,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * restores program counter and status register from stack.
      */
     inner class RTI(): Instruction() {
+        override val opcodeName = "RTI"
+
         fun execute() {
             this@CPU6502.stackPointer++
             val statusRegisterValue = this@CPU6502.readAddress(stackPointer.toUShort())
@@ -1355,6 +1440,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * restores program counter from stack.
      */
     inner class RTS(): Instruction() {
+        override val opcodeName = "RTS"
+
         fun execute() {
             this@CPU6502.stackPointer++
             val targetLeastSignificantByte = this@CPU6502.readAddress(stackPointer.toUShort())
@@ -1374,6 +1461,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * overflow only can occur when subtracting positive from negative and visa versa.
      */
     inner class SBC(): Instruction() {
+        override val opcodeName = "SBC"
+
         fun execute(operand: UByte) {
             val signBitMask: UByte = 0x80u
             val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
@@ -1434,6 +1523,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * This instruction affects no registers in the microprocessor and no flags other than the carry flag which is set.
      */
     inner class SEC(): Instruction() {
+        override val opcodeName = "SEC"
+
         fun execute() {
             this@CPU6502.carryFlag = true
         }
@@ -1445,6 +1536,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * SED affects no registers in the microprocessor and no flags other than the decimal mode which is set to a 1.
      */
     inner class SED(): Instruction() {
+        override val opcodeName = "SED"
+
         fun execute() {
             this@CPU6502.decimalFlag = true
         }
@@ -1457,6 +1550,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * It affects no registers in the microprocessor and no flags other than the interrupt disable which is set.
      */
     inner class SEI(): Instruction() {
+        override val opcodeName = "SEI"
+
         fun execute() {
             this@CPU6502.interruptDisableFlag = true
         }
@@ -1468,6 +1563,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * This instruction affects none of the flags in the processor status register and does not affect the accumulator.
      */
     inner class STA(): Instruction() {
+        override val opcodeName = "STA"
+
         fun execute(targetAddress: UShort) {
             this@CPU6502.writeToAddress(targetAddress, this@CPU6502.accumulator)
         }
@@ -1479,6 +1576,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * No flags or registers in the microprocessor are affected by the store operation.
      */
     inner class STX(): Instruction() {
+        override val opcodeName = "STX"
+
         fun execute(targetAddress: UShort) {
             this@CPU6502.writeToAddress(targetAddress, this@CPU6502.xRegister)
         }
@@ -1490,6 +1589,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * STY does not affect any flags or registers in the microprocessor.
      */
     inner class STY(): Instruction() {
+        override val opcodeName = "STY"
+
         fun execute(targetAddress: UShort) {
             this@CPU6502.writeToAddress(targetAddress, this@CPU6502.yRegister)
         }
@@ -1503,6 +1604,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TAX(): Instruction() {
+        override val opcodeName = "TAX"
+
         fun execute() {
             this@CPU6502.xRegister = this@CPU6502.accumulator
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
@@ -1518,6 +1621,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TAY(): Instruction() {
+        override val opcodeName = "TAY"
+
         fun execute() {
             this@CPU6502.yRegister = this@CPU6502.accumulator
             this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()
@@ -1533,6 +1638,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TSX(): Instruction() {
+        override val opcodeName = "TSX"
+
         fun execute() {
             this@CPU6502.xRegister = this@CPU6502.stackPointer
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
@@ -1549,6 +1656,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TXA(): Instruction() {
+        override val opcodeName = "TXA"
+
         fun execute() {
             this@CPU6502.accumulator = this@CPU6502.xRegister
             this@CPU6502.zeroFlag = this@CPU6502.accumulator == (0x00u).toUByte()
@@ -1563,6 +1672,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * register X. It does not affect any of the flags.
      */
     inner class TXS(): Instruction() {
+        override val opcodeName = "TXS"
+
         fun execute() {
             this@CPU6502.stackPointer = this@CPU6502.xRegister
         }
@@ -1576,6 +1687,8 @@ class CPU6502(override var bus: Mediator) : Component {
      * Toggles the zero flag if the value is 0, toggles negative flag if bit 7 is a 1.
      */
     inner class TYA(): Instruction() {
+        override val opcodeName = "TYA"
+
         fun execute() {
             this@CPU6502.accumulator = this@CPU6502.yRegister
             this@CPU6502.zeroFlag = this@CPU6502.accumulator == (0x00u).toUByte()

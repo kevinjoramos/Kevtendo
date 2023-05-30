@@ -17,7 +17,6 @@ import util.to4DigitHexString
 @ExperimentalUnsignedTypes
 class CPU6502(override var bus: Mediator) : Component {
 
-
     /**
      * 6502 Architecture components
      */
@@ -166,7 +165,10 @@ class CPU6502(override var bus: Mediator) : Component {
      * 2. fetch operands
      * 3. call the correct instruction.
      */
-    private fun fetchInstruction(opcode: UByte) = this.opcodeTable.getValue(opcode) //?: throw InvalidOpcodeException("Opcode $opcode not found in opcode table.")
+    private fun fetchInstruction(opcode: UByte): InstructionWrapper {
+        println(opcode.to2DigitHexString())
+        return this.opcodeTable.getValue(opcode) //?: throw InvalidOpcodeException("Opcode $opcode not found in opcode table.")
+    }
 
     private val opcodeTable: Map<UByte, InstructionWrapper> = mapOf(
         (0x00u).toUByte() to InstructionWrapper({ BRK().execute() }, BRK().opcodeName, "impl", null),
@@ -236,7 +238,7 @@ class CPU6502(override var bus: Mediator) : Component {
         (0x68u).toUByte() to InstructionWrapper({ PLA().execute() }, PLA().opcodeName, "impl"),
         (0x69u).toUByte() to InstructionWrapper({ ADC().execute(immediateAddressing()) }, ADC().opcodeName, "imm"),
         (0x6Au).toUByte() to InstructionWrapper({ ROR().execute() }, ROR().opcodeName, "A"),
-        (0x6Cu).toUByte() to InstructionWrapper({ JMP().execute(indirectAddressing()) }, JMP().opcodeName, "IND"),
+        (0x6Cu).toUByte() to InstructionWrapper({ JMP().execute(indirectAddressing()) }, JMP().opcodeName, "ind"),
         (0x6Du).toUByte() to InstructionWrapper({ ADC().execute(absoluteAddressing()) }, ADC().opcodeName, "abs"),
         (0x6Eu).toUByte() to InstructionWrapper({ ROR().execute(absoluteAddressing()) }, ROR().opcodeName, "abs"),
 
@@ -1698,8 +1700,6 @@ class CPU6502(override var bus: Mediator) : Component {
         }
     }
 
-    val disassembledProgram = disassemble()
-
 
     /**
      * Disassemble
@@ -1707,13 +1707,12 @@ class CPU6502(override var bus: Mediator) : Component {
      * This will be run once a cpu is instantiated, so you should call
      * reset() before using the cpu.
      */
-    private fun disassemble(): Map<UShort, DisassembledInstruction> {
+    fun disassemble(): Map<UShort, DisassembledInstruction> {
         val disassembledProgram = mutableMapOf<UShort, DisassembledInstruction>()
-        programCounter = 0x8000u
 
         while(programCounter.toInt() <= 0xFFFF) {
             val opcodeLocation = programCounter
-            val opcode: UByte = readAddress(programCounter)
+            val opcode: UByte = readAddress(opcodeLocation)
             val decodedInstruction = fetchInstruction(opcode)
             disassembledProgram[opcodeLocation] = DisassembledInstruction(
                 decodedInstruction.opcodeName,
@@ -1722,7 +1721,10 @@ class CPU6502(override var bus: Mediator) : Component {
             )
 
             decodedInstruction.also {
-                if (it.addressingMode == "impl") {
+                if (
+                    it.addressingMode == "impl" ||
+                    it.addressingMode == "A"
+                ) {
                     programCounter++
                     if (it.opcodeName == "BRK") programCounter++
                 }
@@ -1756,6 +1758,15 @@ class CPU6502(override var bus: Mediator) : Component {
 
         return disassembledProgram
     }
+
+    private var disassembledProgram: Map<UShort, DisassembledInstruction>
+
+    init {
+        reset()
+        disassembledProgram = disassemble()
+        reset()
+    }
+
 
 
 }

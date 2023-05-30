@@ -12,7 +12,8 @@ class NesEmulator {
     private val projectRootPath = System.getProperty("user.dir")
     private val ramSize = 0x2000
 
-    private val pathToGame = "$projectRootPath/src/main/kotlin/games/Donkey Kong.nes"
+    //private val pathToGame = "$projectRootPath/src/main/kotlin/games/Donkey Kong.nes"
+    private val pathToGame = "$projectRootPath/src/main/kotlin/games/nestest.nes"
     private var bus = Bus(pathToGame, ramSize)
 
     var cpuState by mutableStateOf(getCurrentCPUState())

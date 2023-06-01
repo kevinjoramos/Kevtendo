@@ -20,7 +20,7 @@ class CPU6502(override var bus: Mediator) : Component {
     /**
      * 6502 Architecture components
      */
-    var programCounter: UShort = 0x0000u
+    var programCounter: UShort = 0xC000u
     var stackPointer: UByte = 0xFDu
     var accumulator: UByte = 0x00u
     var xRegister: UByte = 0x00u
@@ -152,9 +152,10 @@ class CPU6502(override var bus: Mediator) : Component {
         val opcode: UByte = readAddress(programCounter)
         println("PC = ${programCounter.to4DigitHexString()}. Opcode = ${opcode.to2DigitHexString()}")
         val instruction = fetchInstruction(opcode)
+
+        disassemble(programCounter, instruction)
+
         instruction.executionFunction.invoke()
-        
-        //programCounter++
 
         //interruptSignalTriage.map { it.invoke() }
     }
@@ -503,15 +504,18 @@ class CPU6502(override var bus: Mediator) : Component {
 
             if (accumulatorSignedBit != operandSignedBit) {
                 this@CPU6502.overflowFlag = false
+                this@CPU6502.programCounter++
                 return
             }
 
             if (accumulatorSignedBit == this@CPU6502.negativeFlag) {
                 this@CPU6502.overflowFlag = false
+                this@CPU6502.programCounter++
                 return
             }
 
             this@CPU6502.overflowFlag = true
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort) {
@@ -531,15 +535,19 @@ class CPU6502(override var bus: Mediator) : Component {
 
             if (accumulatorSignedBit != operandSignedBit) {
                 this@CPU6502.overflowFlag = false
+                this@CPU6502.programCounter++
                 return
             }
 
             if (accumulatorSignedBit == this@CPU6502.negativeFlag) {
                 this@CPU6502.overflowFlag = false
+                this@CPU6502.programCounter++
                 return
             }
 
             this@CPU6502.overflowFlag = true
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -561,6 +569,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort) {
@@ -570,6 +580,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -593,7 +605,10 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = (data shr 7) == 1u
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
+
         fun execute(targetAddress: UShort) {
             val data: UInt = this@CPU6502.readAddress(targetAddress).toUInt()
             val result: UByte = (data shl 1).toUByte()
@@ -602,6 +617,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = (data shr 7) == 1u
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -614,6 +631,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute(targetAddress: UShort) {
             if (!this@CPU6502.carryFlag) this@CPU6502.programCounter = targetAddress
+            else programCounter++
         }
     }
 
@@ -626,6 +644,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute(targetAddress: UShort) {
             if (this@CPU6502.carryFlag) this@CPU6502.programCounter = targetAddress
+            else programCounter++
         }
     }
 
@@ -638,6 +657,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute(targetAddress: UShort) {
             if (this@CPU6502.zeroFlag) this@CPU6502.programCounter = targetAddress
+            else programCounter++
         }
     }
 
@@ -657,6 +677,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.negativeFlag = (operand shr 7) == 1u
             this@CPU6502.overflowFlag = (operand and 0x40u) != 0u
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -669,6 +691,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute(targetAddress: UShort) {
             if (this@CPU6502.negativeFlag) this@CPU6502.programCounter = targetAddress
+            else programCounter++
         }
     }
 
@@ -681,6 +704,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute(targetAddress: UShort) {
             if (!this@CPU6502.zeroFlag) this@CPU6502.programCounter = targetAddress
+            else programCounter++
         }
     }
 
@@ -693,6 +717,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute(targetAddress: UShort) {
             if (!this@CPU6502.negativeFlag) this@CPU6502.programCounter = targetAddress
+            else programCounter++
         }
     }
 
@@ -709,6 +734,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.programCounter++
             this@CPU6502.programCounter++
+
             writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
             stackPointer--
             writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
@@ -750,6 +776,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute(targetAddress: UShort) {
             if (!this@CPU6502.overflowFlag) this@CPU6502.programCounter = targetAddress
+            else programCounter++
         }
     }
 
@@ -762,6 +789,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute(targetAddress: UShort) {
             if (this@CPU6502.overflowFlag) this@CPU6502.programCounter = targetAddress
+            else programCounter++
         }
     }
 
@@ -775,6 +803,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute() {
             this@CPU6502.carryFlag = false
+            this@CPU6502.programCounter++
         }
     }
 
@@ -788,6 +817,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute() {
             this@CPU6502.decimalFlag = false
+            this@CPU6502.programCounter++
         }
     }
 
@@ -801,6 +831,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute() {
             this@CPU6502.interruptDisableFlag = false
+            this@CPU6502.programCounter++
         }
     }
 
@@ -815,6 +846,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute() {
             this@CPU6502.overflowFlag = false
+            this@CPU6502.programCounter++
         }
     }
 
@@ -836,6 +868,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = this@CPU6502.accumulator >= operand
             this@CPU6502.negativeFlag = result and signBitMask == signBitMask
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort) {
@@ -847,6 +881,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = this@CPU6502.accumulator >= operand
             this@CPU6502.negativeFlag = result and signBitMask == signBitMask
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -868,6 +904,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = this@CPU6502.xRegister >= operand
             this@CPU6502.negativeFlag = result and signBitMask == signBitMask
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort) {
@@ -879,6 +917,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = this@CPU6502.xRegister >= operand
             this@CPU6502.negativeFlag = result and signBitMask == signBitMask
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -900,6 +940,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = this@CPU6502.yRegister >= operand
             this@CPU6502.negativeFlag = result and signBitMask == signBitMask
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort) {
@@ -910,7 +952,10 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.carryFlag = this@CPU6502.yRegister >= operand
             this@CPU6502.negativeFlag = result and signBitMask == signBitMask
-            this@CPU6502.zeroFlag = result == (0x00u).toUByte()        }
+            this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            this@CPU6502.programCounter++
+        }
     }
 
     inner class DEC(): Instruction() {
@@ -923,6 +968,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -934,6 +981,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -945,6 +994,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.yRegister.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -963,6 +1014,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort) {
@@ -972,6 +1025,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -993,6 +1048,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1014,6 +1071,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1034,6 +1093,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.yRegister.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1079,7 +1140,10 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.accumulator = operand
 
             this@CPU6502.zeroFlag = operand == (0x00u).toUByte()
-            this@CPU6502.negativeFlag = (operand.toUInt() shr 7) == 1u        }
+            this@CPU6502.negativeFlag = (operand.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
+        }
 
         fun execute(targetAddress: UShort) {
             val data: UByte = readAddress(targetAddress)
@@ -1087,6 +1151,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1103,6 +1169,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = operand == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (operand.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort) {
@@ -1111,6 +1179,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1127,6 +1197,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = operand == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (operand.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort) {
@@ -1135,6 +1207,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1160,6 +1234,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = false
+
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort){
@@ -1170,6 +1246,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = false
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1180,7 +1258,7 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "NOP"
 
         fun execute() {
-            return
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1199,6 +1277,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort) {
@@ -1208,6 +1288,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1223,6 +1305,8 @@ class CPU6502(override var bus: Mediator) : Component {
         fun execute() {
             this@CPU6502.writeToAddress(stackPointer.toUShort(), this@CPU6502.accumulator)
             this@CPU6502.stackPointer--
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1282,6 +1366,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.writeToAddress(this@CPU6502.stackPointer.toUShort(), result)
             this@CPU6502.stackPointer--
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1301,6 +1387,8 @@ class CPU6502(override var bus: Mediator) : Component {
 
             this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1332,6 +1420,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.interruptDisableFlag = data and interruptDisableBitMask == interruptDisableBitMask
             this@CPU6502.zeroFlag = data and zeroBitMask == zeroBitMask
             this@CPU6502.carryFlag = data and carryBitMask == carryBitMask
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1355,6 +1445,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = (data shr 7).toUByte() == (1u).toUByte()
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
+
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort) {
@@ -1365,6 +1457,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = (data shr 7).toUByte() == (1u).toUByte()
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1389,6 +1483,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
+
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort) {
@@ -1399,6 +1495,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7).toUByte() == (1u).toUByte()
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1482,15 +1580,19 @@ class CPU6502(override var bus: Mediator) : Component {
 
             if (accumulatorSignedBit == operandSignedBit) {
                 this@CPU6502.overflowFlag = false
+                this@CPU6502.programCounter++
                 return
             }
 
             if (accumulatorSignedBit != this@CPU6502.negativeFlag) {
                 this@CPU6502.overflowFlag = true
+                this@CPU6502.programCounter++
                 return
             }
 
             this@CPU6502.overflowFlag = false
+
+            this@CPU6502.programCounter++
         }
 
         fun execute(targetAddress: UShort) {
@@ -1509,15 +1611,19 @@ class CPU6502(override var bus: Mediator) : Component {
 
             if (accumulatorSignedBit == operandSignedBit) {
                 this@CPU6502.overflowFlag = false
+                this@CPU6502.programCounter++
                 return
             }
 
             if (accumulatorSignedBit != this@CPU6502.negativeFlag) {
                 this@CPU6502.overflowFlag = true
+                this@CPU6502.programCounter++
                 return
             }
 
             this@CPU6502.overflowFlag = false
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1531,6 +1637,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute() {
             this@CPU6502.carryFlag = true
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1544,6 +1651,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute() {
             this@CPU6502.decimalFlag = true
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1558,6 +1666,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute() {
             this@CPU6502.interruptDisableFlag = true
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1571,6 +1680,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute(targetAddress: UShort) {
             this@CPU6502.writeToAddress(targetAddress, this@CPU6502.accumulator)
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1584,6 +1694,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute(targetAddress: UShort) {
             this@CPU6502.writeToAddress(targetAddress, this@CPU6502.xRegister)
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1597,6 +1708,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute(targetAddress: UShort) {
             this@CPU6502.writeToAddress(targetAddress, this@CPU6502.yRegister)
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1614,6 +1726,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.xRegister = this@CPU6502.accumulator
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1631,6 +1745,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.yRegister = this@CPU6502.accumulator
             this@CPU6502.zeroFlag = this@CPU6502.yRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.yRegister.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1648,6 +1764,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.xRegister = this@CPU6502.stackPointer
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1666,6 +1784,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.accumulator = this@CPU6502.xRegister
             this@CPU6502.zeroFlag = this@CPU6502.accumulator == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.accumulator.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1680,6 +1800,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         fun execute() {
             this@CPU6502.stackPointer = this@CPU6502.xRegister
+            this@CPU6502.programCounter++
         }
     }
 
@@ -1697,9 +1818,13 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.accumulator = this@CPU6502.yRegister
             this@CPU6502.zeroFlag = this@CPU6502.accumulator == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.accumulator.toUInt() shr 7) == 1u
+
+            this@CPU6502.programCounter++
         }
     }
 
+
+    val disassembledProgram: MutableMap<UShort, String> = mutableMapOf()
 
     /**
      * Disassemble
@@ -1707,66 +1832,13 @@ class CPU6502(override var bus: Mediator) : Component {
      * This will be run once a cpu is instantiated, so you should call
      * reset() before using the cpu.
      */
-    fun disassemble(): Map<UShort, DisassembledInstruction> {
-        val disassembledProgram = mutableMapOf<UShort, DisassembledInstruction>()
+    fun disassemble(opcodeLocation: UShort, instruction: InstructionWrapper): MutableMap<UShort, String> {
+        disassembledProgram[opcodeLocation] =
+            "$${opcodeLocation.to4DigitHexString()}: ${instruction.opcodeName} ${instruction.addressingMode}"
 
-        while(programCounter.toInt() <= 0xFFFF) {
-            val opcodeLocation = programCounter
-            val opcode: UByte = readAddress(opcodeLocation)
-            val decodedInstruction = fetchInstruction(opcode)
-            disassembledProgram[opcodeLocation] = DisassembledInstruction(
-                decodedInstruction.opcodeName,
-                decodedInstruction.addressingMode,
-                decodedInstruction.operand
-            )
-
-            decodedInstruction.also {
-                if (
-                    it.addressingMode == "impl" ||
-                    it.addressingMode == "A"
-                ) {
-                    programCounter++
-                    if (it.opcodeName == "BRK") programCounter++
-                }
-
-                if (
-                    it.addressingMode == "imm" ||
-                    it.addressingMode == "zpg" ||
-                    it.addressingMode == "zpg x" ||
-                    it.addressingMode == "zpg y" ||
-                    it.addressingMode == "x ind" ||
-                    it.addressingMode == "ind y" ||
-                    it.addressingMode == "rel"
-                ) {
-                    programCounter++
-                    programCounter++
-                }
-
-                if (
-                    it.addressingMode == "abs" ||
-                    it.addressingMode == "abs x" ||
-                    it.addressingMode == "abs y" ||
-                    it.addressingMode == "ind"
-                ) {
-                    programCounter++
-                    programCounter++
-                    programCounter++
-                }
-            }
-
-        }
 
         return disassembledProgram
     }
-
-    private var disassembledProgram: Map<UShort, DisassembledInstruction>
-
-    init {
-        reset()
-        disassembledProgram = disassemble()
-        reset()
-    }
-
 
 
 }

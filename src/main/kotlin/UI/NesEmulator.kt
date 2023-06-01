@@ -17,25 +17,36 @@ class NesEmulator {
     private var bus = Bus(pathToGame, ramSize)
 
     var cpuState by mutableStateOf(getCurrentCPUState())
-    var instructionSlidingWindowState by mutableStateOf(getCurrentInstructionsSlidingWindowState())
+    var currentInstruction by mutableStateOf("")
+    var zeroPageState by mutableStateOf(Array<Array<String>>(16) { Array<String>(16) {"00"} })
+    //var instructionSlidingWindowState by mutableStateOf(getCurrentInstructionsSlidingWindowState())
+
 
     private var isRunning = false
     var isPaused = false
 
     fun start() {
-        while (isRunning) {
-            bus.cpu.run()
+        try {
+            while (true) step()
+        } catch (e: Exception) {
+            println(e.toString())
+            println("Instructions cleared: ${bus.cpu.disassembledProgram.size}")
         }
     }
 
     fun step() {
+        val programCounterValue = bus.cpu.programCounter
         bus.cpu.run()
         cpuState = getCurrentCPUState()
-        instructionSlidingWindowState = getCurrentInstructionsSlidingWindowState()
+        zeroPageState = getCurrentZeroPageState()
+        currentInstruction = bus.cpu.disassembledProgram[programCounterValue] ?: "i dunno"
+
+
+        //instructionSlidingWindowState = getCurrentInstructionsSlidingWindowState()
     }
 
     fun reset() {
-
+        this.bus = Bus(pathToGame, ramSize)
     }
 
     private fun getCurrentCPUState(): CPUState = CPUState(
@@ -71,4 +82,17 @@ class NesEmulator {
 
         return instructionList
     }
+
+
+    private fun getCurrentZeroPageState(): Array<Array<String>> {
+        val zeroPageMatrix = bus.ram
+            .sliceArray(0..255)
+            .map { it.to2DigitHexString() }
+            .chunked(16)
+            .map { it.toTypedArray() }
+            .toTypedArray()
+
+        return zeroPageMatrix
+    }
+
 }

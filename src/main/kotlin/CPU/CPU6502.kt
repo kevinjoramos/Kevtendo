@@ -1,5 +1,61 @@
 package CPU
 
+import ADC
+import AND
+import ASL
+import BCC
+import BCS
+import BEQ
+import BIT
+import BMI
+import BNE
+import BPL
+import BRK
+import BVC
+import BVS
+import CLC
+import CLD
+import CLI
+import CLV
+import CMP
+import CPX
+import CPY
+import DEC
+import DEX
+import DEY
+import EOR
+import INC
+import INX
+import INY
+import JMP
+import JSR
+import LDA
+import LDX
+import LDY
+import LSR
+import NOP
+import ORA
+import PHA
+import PHP
+import PLA
+import PLP
+import ROL
+import ROR
+import RTI
+import RTS
+import SBC
+import SEC
+import SED
+import SEI
+import STA
+import STX
+import STY
+import TAX
+import TAY
+import TSX
+import TXA
+import TXS
+import TYA
 import mediator.Component
 import mediator.Mediator
 import util.to2DigitHexString
@@ -7,11 +63,8 @@ import util.to4DigitHexString
 
 /**
  * Emulation of the 6502 processor.
- * TODO("implement all opcodes")
  * TODO("implement control signals")
  * TODO("implement clock cycles")
- *
- *
  */
 @ExperimentalUnsignedTypes
 class CPU6502(override var bus: Mediator) : Component {
@@ -54,6 +107,20 @@ class CPU6502(override var bus: Mediator) : Component {
     var carryFlag = false
 
     val interruptSignalTriage: List<() -> Unit> = mutableListOf()
+
+    fun run() {
+
+        val opcodeValue: UByte = readAddress(programCounter)
+
+        val instruction = fetchInstruction(opcodeValue)
+
+        instruction.runOperation()
+
+
+
+        //interruptSignalTriage.map { it.invoke() }
+    }
+
 
     /**
      * Interrupt control signals.
@@ -157,225 +224,241 @@ class CPU6502(override var bus: Mediator) : Component {
         programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
     }
 
-    fun run() {
-        // get current state of cpu for disassembly
-        val startingProgramCounter = programCounter
-        val startingStackPointer = stackPointer
-        val startingAccumulator = accumulator
-        val startingXRegister = xRegister
-        val startingYRegister = yRegister
-        val startingStatusRegister = statusRegister
-
-        // get opcode from the memory address pointed at by program counter.
-        val opcodeValue: UByte = readAddress(startingProgramCounter)
-        //println("PC = ${programCounter.to4DigitHexString()}. Opcode = ${opcode.to2DigitHexString()}")
-
-        // get the addressing mode high order, instruction high order, and name of the opcode
-        val instruction = fetchInstruction(opcodeValue)
-
-        // execute functions
-        instruction.executionFunction.invoke()
-
-        //disassemble
-
-        //interruptSignalTriage.map { it.invoke() }
-    }
-
-    private fun disassembleInstruction(
-        programCounter: UShort,
-        opcodeHexValue: UByte,
-        operandLowByte: UByte,
-        operandHighByte: UByte,
-        opcodeName: String,
-        addressingMode: () -> Unit,
-        effectiveAddress: UShort,
-        accumulatorValue: UByte,
-        xRegisterValue: UByte,
-        yRegisterValue: UByte,
-        statusRegisterValue: UByte,
-        stackPointerValue: UByte,
-    ) {
-
-    }
-
     /**
      * Three steps
      * 1. Decode byte to addressing mode
      * 2. fetch operands
      * 3. call the correct instruction.
      */
-    private fun fetchInstruction(opcode: UByte): InstructionWrapper {
+    private fun fetchInstruction(opcode: UByte): Instruction {
         println(opcode.to2DigitHexString())
         return this.opcodeTable.getValue(opcode) //?: throw InvalidOpcodeException("Opcode $opcode not found in opcode table.")
     }
 
-    private val opcodeTable: Map<UByte, Any> = mapOf(
-        (0x00u).toUByte() to Instruction(AddressingMode.IMP, , this),
-        (0x01u).toUByte() to InstructionWrapper({ ORA().execute(xIndexedIndirectAddressing()) }, ORA().opcodeName, "x ind"),
-        (0x05u).toUByte() to InstructionWrapper({ ORA().execute(zeroPageAddressing()) }, ORA().opcodeName, "zpg"),
-        (0x06u).toUByte() to InstructionWrapper({ ASL().execute(zeroPageAddressing()) }, ASL().opcodeName, "zpg"),
-        (0x08u).toUByte() to InstructionWrapper({ PHP().execute() }, PHP().opcodeName, "impl"),
-        (0x09u).toUByte() to InstructionWrapper({ ORA().execute(immediateAddressing()) }, ORA().opcodeName, "imm"),
-        (0x0Au).toUByte() to InstructionWrapper({ ASL().execute() }, ASL().opcodeName, "A"),
-        (0x0Du).toUByte() to InstructionWrapper({ ORA().execute(absoluteAddressing()) }, ORA().opcodeName, "abs"),
-        (0x0Eu).toUByte() to InstructionWrapper({ ASL().execute(absoluteAddressing()) }, ASL().opcodeName, "abs"),
+    private val adc = ADC(this)
+    private val and = AND(this)
+    private val asl = ASL(this)
+    private val bcc = BCC(this)
+    private val bcs = BCS(this)
+    private val beq = BEQ(this)
+    private val bit = BIT(this)
+    private val bmi = BMI(this)
+    private val bne = BNE(this)
+    private val bpl = BPL(this)
+    private val brk = BRK(this)
+    private val bvc = BVC(this)
+    private val bvs = BVS(this)
+    private val clc = CLC(this)
+    private val cld = CLD(this)
+    private val cli = CLI(this)
+    private val clv = CLV(this)
+    private val cmp = CMP(this)
+    private val cpx = CPX(this)
+    private val cpy = CPY(this)
+    private val dec = DEC(this)
+    private val dex = DEX(this)
+    private val dey = DEY(this)
+    private val eor = EOR(this)
+    private val inc = INC(this)
+    private val inx = INX(this)
+    private val iny = INY(this)
+    private val jmp = JMP(this)
+    private val jsr = JSR(this)
+    private val lda = LDA(this)
+    private val ldx = LDX(this)
+    private val ldy = LDY(this)
+    private val lsr = LSR(this)
+    private val nop = NOP(this)
+    private val ora = ORA(this)
+    private val pha = PHA(this)
+    private val php = PHP(this)
+    private val pla = PLA(this)
+    private val plp = PLP(this)
+    private val rol = ROL(this)
+    private val ror = ROR(this)
+    private val rti = RTI(this)
+    private val rts = RTS(this)
+    private val sbc = SBC(this)
+    private val sec = SEC(this)
+    private val sed = SED(this)
+    private val sei = SEI(this)
+    private val sta = STA(this)
+    private val stx = STX(this)
+    private val sty = STY(this)
+    private val tax = TAX(this)
+    private val tay = TAY(this)
+    private val tsx = TSX(this)
+    private val txa = TXA(this)
+    private val txs = TXS(this)
+    private val tya = TYA(this)
 
-        (0x10u).toUByte() to InstructionWrapper({ BPL().execute(relativeAddressing()) }, BPL().opcodeName, "rel"),
-        (0x11u).toUByte() to InstructionWrapper({ ORA().execute(indirectYIndexedAddressing()) }, ORA().opcodeName, "ind y"),
-        (0x15u).toUByte() to InstructionWrapper({ ORA().execute(zeroPageXIndexedAddressing()) }, ORA().opcodeName, "zpg x"),
-        (0x16u).toUByte() to InstructionWrapper({ ASL().execute(zeroPageXIndexedAddressing()) }, ASL().opcodeName, "zpg x"),
-        (0x18u).toUByte() to InstructionWrapper({ CLC().execute() }, CLC().opcodeName, "impl"),
-        (0x19u).toUByte() to InstructionWrapper({ ORA().execute(absoluteYIndexedAddressing()) }, ORA().opcodeName, "abs y"),
-        (0x1Du).toUByte() to InstructionWrapper({ ORA().execute(absoluteXIndexedAddressing()) }, ORA().opcodeName, "abs x"),
-        (0x1Eu).toUByte() to InstructionWrapper({ ASL().execute(absoluteXIndexedAddressing()) }, ASL().opcodeName, "abs x"),
+    private val opcodeTable: Map<UByte, Instruction> = mapOf(
+        (0x00u).toUByte() to Instruction(AddressingMode.IMP, brk),
+        (0x01u).toUByte() to Instruction(AddressingMode.X_IND, ora),
+        (0x05u).toUByte() to Instruction(AddressingMode.ZPG, ora),
+        (0x06u).toUByte() to Instruction(AddressingMode.ZPG, asl),
+        (0x08u).toUByte() to Instruction(AddressingMode.IMP, php),
+        (0x09u).toUByte() to Instruction(AddressingMode.IMM, ora),
+        (0x0Au).toUByte() to Instruction(AddressingMode.A, asl),
+        (0x0Du).toUByte() to Instruction(AddressingMode.ABS, ora),
+        (0x0Eu).toUByte() to Instruction(AddressingMode.ABS, asl),
 
-        (0x20u).toUByte() to InstructionWrapper({ JSR().execute(absoluteAddressing()) }, JSR().opcodeName, "abs"),
-        (0x21u).toUByte() to InstructionWrapper({ AND().execute(xIndexedIndirectAddressing()) }, AND().opcodeName, "x ind"),
-        (0x24u).toUByte() to InstructionWrapper({ BIT().execute(zeroPageAddressing()) }, BIT().opcodeName, "zpg"),
-        (0x25u).toUByte() to InstructionWrapper({ AND().execute(zeroPageAddressing()) }, AND().opcodeName, "zpg"),
-        (0x26u).toUByte() to InstructionWrapper({ ROL().execute(zeroPageAddressing()) }, ROL().opcodeName, "zpg"),
-        (0x28u).toUByte() to InstructionWrapper({ PLP().execute() }, PLP().opcodeName, "impl"),
-        (0x29u).toUByte() to InstructionWrapper({ AND().execute(immediateAddressing()) }, AND().opcodeName, "imm"),
-        (0x2Au).toUByte() to InstructionWrapper({ ROL().execute() }, ROL().opcodeName, "A"),
-        (0x2Cu).toUByte() to InstructionWrapper({ BIT().execute(absoluteAddressing()) }, BIT().opcodeName, "abs"),
-        (0x2Du).toUByte() to InstructionWrapper({ AND().execute(absoluteAddressing()) }, AND().opcodeName, "abs"),
-        (0x2Eu).toUByte() to InstructionWrapper({ ROL().execute(absoluteAddressing()) }, ROL().opcodeName, "abs"),
+        (0x10u).toUByte() to Instruction(AddressingMode.REL, bpl),
+        (0x11u).toUByte() to Instruction(AddressingMode.IND_Y, ora),
+        (0x15u).toUByte() to Instruction(AddressingMode.ZPG_X, ora),
+        (0x16u).toUByte() to Instruction(AddressingMode.ZPG_X, asl),
+        (0x18u).toUByte() to Instruction(AddressingMode.IMP, clc),
+        (0x19u).toUByte() to Instruction(AddressingMode.ABS_Y, ora),
+        (0x1Du).toUByte() to Instruction(AddressingMode.ABS_X, ora),
+        (0x1Eu).toUByte() to Instruction(AddressingMode.ABS_X, asl),
 
-        (0x30u).toUByte() to InstructionWrapper({ BMI().execute(relativeAddressing()) }, BMI().opcodeName, "rel"),
-        (0x31u).toUByte() to InstructionWrapper({ AND().execute(indirectYIndexedAddressing()) }, AND().opcodeName, "ind y"),
-        (0x35u).toUByte() to InstructionWrapper({ AND().execute(zeroPageXIndexedAddressing()) }, AND().opcodeName, "zpg x"),
-        (0x36u).toUByte() to InstructionWrapper({ ROL().execute(zeroPageXIndexedAddressing()) }, ROL().opcodeName, "zpg x"),
-        (0x38u).toUByte() to InstructionWrapper({ SEC().execute() }, SEC().opcodeName, "impl"),
-        (0x39u).toUByte() to InstructionWrapper({ AND().execute(absoluteYIndexedAddressing()) }, AND().opcodeName, "abs y"),
-        (0x3Du).toUByte() to InstructionWrapper({ AND().execute(absoluteXIndexedAddressing()) }, AND().opcodeName, "abs x"),
-        (0x3Eu).toUByte() to InstructionWrapper({ ROL().execute(absoluteXIndexedAddressing()) }, ROL().opcodeName, "abs x"),
+        (0x20u).toUByte() to Instruction(AddressingMode.ABS, jsr),
+        (0x21u).toUByte() to Instruction(AddressingMode.X_IND, and),
+        (0x24u).toUByte() to Instruction(AddressingMode.ZPG, bit),
+        (0x25u).toUByte() to Instruction(AddressingMode.ZPG, and),
+        (0x26u).toUByte() to Instruction(AddressingMode.ZPG, rol),
+        (0x28u).toUByte() to Instruction(AddressingMode.IMP, plp),
+        (0x29u).toUByte() to Instruction(AddressingMode.IMM, and),
+        (0x2Au).toUByte() to Instruction(AddressingMode.A, rol),
+        (0x2Cu).toUByte() to Instruction(AddressingMode.ABS, bit),
+        (0x2Du).toUByte() to Instruction(AddressingMode.ABS, and),
+        (0x2Eu).toUByte() to Instruction(AddressingMode.ABS, rol),
 
-        (0x40u).toUByte() to InstructionWrapper({ RTI().execute() }, RTI().opcodeName, "impl"),
-        (0x41u).toUByte() to InstructionWrapper({ EOR().execute(xIndexedIndirectAddressing()) }, EOR().opcodeName, "x ind"),
-        (0x45u).toUByte() to InstructionWrapper({ EOR().execute(zeroPageAddressing()) }, EOR().opcodeName, "zpg"),
-        (0x46u).toUByte() to InstructionWrapper({ LSR().execute(zeroPageAddressing()) }, LSR().opcodeName, "zpg"),
-        (0x48u).toUByte() to InstructionWrapper({ PHA().execute() }, PHA().opcodeName, "impl"),
-        (0x49u).toUByte() to InstructionWrapper({ EOR().execute(immediateAddressing()) }, EOR().opcodeName, "imm"),
-        (0x4Au).toUByte() to InstructionWrapper({ LSR().execute() }, LSR().opcodeName, "A"),
-        (0x4Cu).toUByte() to InstructionWrapper({ JMP().execute(absoluteAddressing()) }, JMP().opcodeName, "abs"),
-        (0x4Du).toUByte() to InstructionWrapper({ EOR().execute(absoluteAddressing()) }, EOR().opcodeName, "abs"),
-        (0x4Eu).toUByte() to InstructionWrapper({ LSR().execute(absoluteAddressing()) }, LSR().opcodeName, "abs"),
+        (0x30u).toUByte() to Instruction(AddressingMode.REL, bmi),
+        (0x31u).toUByte() to Instruction(AddressingMode.IND_Y, and),
+        (0x35u).toUByte() to Instruction(AddressingMode.ZPG_X, and),
+        (0x36u).toUByte() to Instruction(AddressingMode.ZPG_X, rol),
+        (0x38u).toUByte() to Instruction(AddressingMode.IMP, sec),
+        (0x39u).toUByte() to Instruction(AddressingMode.ABS_Y, and),
+        (0x3Du).toUByte() to Instruction(AddressingMode.ABS_X, and),
+        (0x3Eu).toUByte() to Instruction(AddressingMode.ABS_X, rol),
 
-        (0x50u).toUByte() to InstructionWrapper({ BVC().execute(relativeAddressing()) }, BVC().opcodeName, "rel"),
-        (0x51u).toUByte() to InstructionWrapper({ EOR().execute(indirectYIndexedAddressing()) }, EOR().opcodeName, "ind y"),
-        (0x55u).toUByte() to InstructionWrapper({ EOR().execute(zeroPageXIndexedAddressing()) }, EOR().opcodeName, "zpg x"),
-        (0x56u).toUByte() to InstructionWrapper({ LSR().execute(zeroPageXIndexedAddressing()) }, LSR().opcodeName, "zpg x"),
-        (0x58u).toUByte() to InstructionWrapper({ CLI().execute() }, CLI().opcodeName, "impl"),
-        (0x59u).toUByte() to InstructionWrapper({ EOR().execute(absoluteYIndexedAddressing()) }, EOR().opcodeName, "abs y"),
-        (0x5Du).toUByte() to InstructionWrapper({ EOR().execute(absoluteXIndexedAddressing()) }, EOR().opcodeName, "abs x"),
-        (0x5Eu).toUByte() to InstructionWrapper({ LSR().execute(absoluteXIndexedAddressing()) }, LSR().opcodeName, "abs x"),
+        (0x40u).toUByte() to Instruction(AddressingMode.IMP, rti),
+        (0x41u).toUByte() to Instruction(AddressingMode.X_IND, eor),
+        (0x45u).toUByte() to Instruction(AddressingMode.ZPG, eor),
+        (0x46u).toUByte() to Instruction(AddressingMode.ZPG, lsr),
+        (0x48u).toUByte() to Instruction(AddressingMode.IMP, pha),
+        (0x49u).toUByte() to Instruction(AddressingMode.IMM, eor),
+        (0x4Au).toUByte() to Instruction(AddressingMode.A, lsr),
+        (0x4Cu).toUByte() to Instruction(AddressingMode.ABS, jmp),
+        (0x4Du).toUByte() to Instruction(AddressingMode.ABS, eor),
+        (0x4Eu).toUByte() to Instruction(AddressingMode.ABS, lsr),
 
-        (0x60u).toUByte() to InstructionWrapper({ RTS().execute() }, RTS().opcodeName, "impl"),
-        (0x61u).toUByte() to InstructionWrapper({ ADC().execute(xIndexedIndirectAddressing()) }, ADC().opcodeName, "x ind"),
-        (0x65u).toUByte() to InstructionWrapper({ ADC().execute(zeroPageAddressing()) }, ADC().opcodeName, "zpg"),
-        (0x66u).toUByte() to InstructionWrapper({ ROR().execute(zeroPageAddressing()) }, ROR().opcodeName, "zpg"),
-        (0x68u).toUByte() to InstructionWrapper({ PLA().execute() }, PLA().opcodeName, "impl"),
-        (0x69u).toUByte() to InstructionWrapper({ ADC().execute(immediateAddressing()) }, ADC().opcodeName, "imm"),
-        (0x6Au).toUByte() to InstructionWrapper({ ROR().execute() }, ROR().opcodeName, "A"),
-        (0x6Cu).toUByte() to InstructionWrapper({ JMP().execute(indirectAddressing()) }, JMP().opcodeName, "ind"),
-        (0x6Du).toUByte() to InstructionWrapper({ ADC().execute(absoluteAddressing()) }, ADC().opcodeName, "abs"),
-        (0x6Eu).toUByte() to InstructionWrapper({ ROR().execute(absoluteAddressing()) }, ROR().opcodeName, "abs"),
+        (0x50u).toUByte() to Instruction(AddressingMode.REL, bvc),
+        (0x51u).toUByte() to Instruction(AddressingMode.IND_Y, eor),
+        (0x55u).toUByte() to Instruction(AddressingMode.ZPG_X, eor),
+        (0x56u).toUByte() to Instruction(AddressingMode.ZPG_X, lsr),
+        (0x58u).toUByte() to Instruction(AddressingMode.IMP, cli),
+        (0x59u).toUByte() to Instruction(AddressingMode.ABS_Y, eor),
+        (0x5Du).toUByte() to Instruction(AddressingMode.ABS_X, eor),
+        (0x5Eu).toUByte() to Instruction(AddressingMode.ABS_X, lsr),
 
-        (0x70u).toUByte() to InstructionWrapper({ BVS().execute(relativeAddressing()) }, BVS().opcodeName, "rel"),
-        (0x71u).toUByte() to InstructionWrapper({ ADC().execute(indirectYIndexedAddressing()) }, ADC().opcodeName, "ind y"),
-        (0x75u).toUByte() to InstructionWrapper({ ADC().execute(zeroPageXIndexedAddressing()) }, ADC().opcodeName, "zpg x"),
-        (0x76u).toUByte() to InstructionWrapper({ ROR().execute(zeroPageXIndexedAddressing()) }, ROR().opcodeName, "zpg x"),
-        (0x78u).toUByte() to InstructionWrapper({ SEI().execute() }, SEI().opcodeName, "impl"),
-        (0x79u).toUByte() to InstructionWrapper({ ADC().execute(absoluteYIndexedAddressing()) }, ADC().opcodeName, "abs y"),
-        (0x7Du).toUByte() to InstructionWrapper({ ADC().execute(absoluteXIndexedAddressing()) }, ADC().opcodeName, "abs x"),
-        (0x7Eu).toUByte() to InstructionWrapper({ ROR().execute(absoluteXIndexedAddressing()) }, ROR().opcodeName, "abs x"),
+        (0x60u).toUByte() to Instruction(AddressingMode.IMP, rts),
+        (0x61u).toUByte() to Instruction(AddressingMode.X_IND, adc),
+        (0x65u).toUByte() to Instruction(AddressingMode.ZPG, adc),
+        (0x66u).toUByte() to Instruction(AddressingMode.ZPG, ror),
+        (0x68u).toUByte() to Instruction(AddressingMode.IMP, pla),
+        (0x69u).toUByte() to Instruction(AddressingMode.IMM, adc),
+        (0x6Au).toUByte() to Instruction(AddressingMode.A, ror),
+        (0x6Cu).toUByte() to Instruction(AddressingMode.IND, jmp),
+        (0x6Du).toUByte() to Instruction(AddressingMode.ABS, adc),
+        (0x6Eu).toUByte() to Instruction(AddressingMode.ABS, ror),
 
-        (0x81u).toUByte() to InstructionWrapper({ STA().execute(xIndexedIndirectAddressing()) }, STA().opcodeName, "x ind"),
-        (0x84u).toUByte() to InstructionWrapper({ STY().execute(zeroPageAddressing()) }, STY().opcodeName, "zpg"),
-        (0x85u).toUByte() to InstructionWrapper({ STA().execute(zeroPageAddressing()) }, STA().opcodeName, "zpg"),
-        (0x86u).toUByte() to InstructionWrapper({ STX().execute(zeroPageAddressing()) }, STX().opcodeName, "zpg"),
-        (0x88u).toUByte() to InstructionWrapper({ DEY().execute() }, DEY().opcodeName, "impl"),
-        (0x8Au).toUByte() to InstructionWrapper({ TXA().execute() }, TXA().opcodeName, "impl"),
-        (0x8Cu).toUByte() to InstructionWrapper({ STY().execute(absoluteAddressing()) }, STY().opcodeName, "abs"),
-        (0x8Du).toUByte() to InstructionWrapper({ STA().execute(absoluteAddressing()) }, STA().opcodeName, "abs"),
-        (0x8Eu).toUByte() to InstructionWrapper({ STX().execute(absoluteAddressing()) }, STX().opcodeName, "abs"),
+        (0x70u).toUByte() to Instruction(AddressingMode.REL, bvs),
+        (0x71u).toUByte() to Instruction(AddressingMode.IND_Y, adc),
+        (0x75u).toUByte() to Instruction(AddressingMode.ZPG_X, adc),
+        (0x76u).toUByte() to Instruction(AddressingMode.ZPG_X, ror),
+        (0x78u).toUByte() to Instruction(AddressingMode.IMP, sei),
+        (0x79u).toUByte() to Instruction(AddressingMode.ABS_Y, adc),
+        (0x7Du).toUByte() to Instruction(AddressingMode.ABS_X, adc),
+        (0x7Eu).toUByte() to Instruction(AddressingMode.ABS_X, ror),
 
-        (0x90u).toUByte() to InstructionWrapper({ BCC().execute(relativeAddressing()) }, BCC().opcodeName, "rel"),
-        (0x91u).toUByte() to InstructionWrapper({ STA().execute(indirectYIndexedAddressing()) }, STA().opcodeName, "ind y"),
-        (0x94u).toUByte() to InstructionWrapper({ STY().execute(zeroPageXIndexedAddressing()) }, STY().opcodeName, "zpg x"),
-        (0x95u).toUByte() to InstructionWrapper({ STA().execute(zeroPageXIndexedAddressing()) }, STA().opcodeName, "zpg x"),
-        (0x96u).toUByte() to InstructionWrapper({ STX().execute(zeroPageYIndexedAddressing()) }, STX().opcodeName, "zpg y"),
-        (0x98u).toUByte() to InstructionWrapper({ TYA().execute() }, TYA().opcodeName, "impl"),
-        (0x99u).toUByte() to InstructionWrapper({ STA().execute(absoluteYIndexedAddressing()) }, STA().opcodeName, "abs y"),
-        (0x9Au).toUByte() to InstructionWrapper({ TXS().execute() }, TXS().opcodeName, "impl"),
-        (0x9Du).toUByte() to InstructionWrapper({ STA().execute(absoluteXIndexedAddressing()) }, STA().opcodeName, "abs x"),
+        (0x81u).toUByte() to Instruction(AddressingMode.X_IND, sta),
+        (0x84u).toUByte() to Instruction(AddressingMode.ZPG, sty),
+        (0x85u).toUByte() to Instruction(AddressingMode.ZPG, sta),
+        (0x86u).toUByte() to Instruction(AddressingMode.ZPG, stx),
+        (0x88u).toUByte() to Instruction(AddressingMode.IMP, dey),
+        (0x8Au).toUByte() to Instruction(AddressingMode.IMP, txa),
+        (0x8Cu).toUByte() to Instruction(AddressingMode.ABS, sty),
+        (0x8Du).toUByte() to Instruction(AddressingMode.ABS, sta),
+        (0x8Eu).toUByte() to Instruction(AddressingMode.ABS, stx),
 
-        (0xA0u).toUByte() to InstructionWrapper({ LDY().execute(immediateAddressing()) }, LDY().opcodeName, "imm"),
-        (0xA1u).toUByte() to InstructionWrapper({ LDA().execute(xIndexedIndirectAddressing()) }, LDA().opcodeName, "x ind"),
-        (0xA2u).toUByte() to InstructionWrapper({ LDX().execute(immediateAddressing()) }, LDX().opcodeName, "imm"),
-        (0xA4u).toUByte() to InstructionWrapper({ LDY().execute(zeroPageAddressing()) }, LDY().opcodeName, "zpg"),
-        (0xA5u).toUByte() to InstructionWrapper({ LDA().execute(zeroPageAddressing()) }, LDA().opcodeName, "zpg"),
-        (0xA6u).toUByte() to InstructionWrapper({ LDX().execute(zeroPageAddressing()) }, LDX().opcodeName, "zpg"),
-        (0xA8u).toUByte() to InstructionWrapper({ TAY().execute() }, TAY().opcodeName, "impl"),
-        (0xA9u).toUByte() to InstructionWrapper({ LDA().execute(immediateAddressing()) }, LDA().opcodeName, "imm"),
-        (0xAAu).toUByte() to InstructionWrapper({ TAX().execute() }, TAX().opcodeName, "impl"),
-        (0xACu).toUByte() to InstructionWrapper({ LDY().execute(absoluteAddressing()) }, LDY().opcodeName, "abs"),
-        (0xADu).toUByte() to InstructionWrapper({ LDA().execute(absoluteAddressing()) }, LDA().opcodeName, "abs"),
-        (0xAEu).toUByte() to InstructionWrapper({ LDX().execute(absoluteAddressing()) }, LDX().opcodeName, "abs"),
+        (0x90u).toUByte() to Instruction(AddressingMode.REL, bcc),
+        (0x91u).toUByte() to Instruction(AddressingMode.IND_Y, sta),
+        (0x94u).toUByte() to Instruction(AddressingMode.ZPG_X, sty),
+        (0x95u).toUByte() to Instruction(AddressingMode.ZPG_X, sta),
+        (0x96u).toUByte() to Instruction(AddressingMode.ZPG_Y, stx),
+        (0x98u).toUByte() to Instruction(AddressingMode.IMP, tya),
+        (0x99u).toUByte() to Instruction(AddressingMode.ABS_Y, sta),
+        (0x9Au).toUByte() to Instruction(AddressingMode.IMP, txs),
+        (0x9Du).toUByte() to Instruction(AddressingMode.ABS_X, sta),
 
-        (0xB0u).toUByte() to InstructionWrapper({ BCS().execute(relativeAddressing()) }, BCS().opcodeName, "rel"),
-        (0xB1u).toUByte() to InstructionWrapper({ LDA().execute(indirectYIndexedAddressing()) }, LDA().opcodeName, "ind y"),
-        (0xB4u).toUByte() to InstructionWrapper({ LDY().execute(zeroPageXIndexedAddressing()) }, LDY().opcodeName, "zpg x"),
-        (0xB5u).toUByte() to InstructionWrapper({ LDA().execute(zeroPageXIndexedAddressing()) }, LDA().opcodeName, "zpg x"),
-        (0xB6u).toUByte() to InstructionWrapper({ LDX().execute(zeroPageYIndexedAddressing()) }, LDX().opcodeName, "zpg y"),
-        (0xB8u).toUByte() to InstructionWrapper({ CLV().execute() }, CLV().opcodeName, "impl"),
-        (0xB9u).toUByte() to InstructionWrapper({ LDA().execute(absoluteYIndexedAddressing()) }, LDA().opcodeName, "abs y"),
-        (0xBAu).toUByte() to InstructionWrapper({ TSX().execute() }, TSX().opcodeName, "impl"),
-        (0xBCu).toUByte() to InstructionWrapper({ LDY().execute(absoluteXIndexedAddressing()) }, LDY().opcodeName, "abs x"),
-        (0xBDu).toUByte() to InstructionWrapper({ LDA().execute(absoluteXIndexedAddressing()) }, LDA().opcodeName, "abs x"),
-        (0xBEu).toUByte() to InstructionWrapper({ LDX().execute(absoluteYIndexedAddressing()) }, LDX().opcodeName, "abs y"),
+        (0xA0u).toUByte() to Instruction(AddressingMode.IMM, ldy),
+        (0xA1u).toUByte() to Instruction(AddressingMode.X_IND, lda),
+        (0xA2u).toUByte() to Instruction(AddressingMode.IMM, ldx),
+        (0xA4u).toUByte() to Instruction(AddressingMode.ZPG, ldy),
+        (0xA5u).toUByte() to Instruction(AddressingMode.ZPG, lda),
+        (0xA6u).toUByte() to Instruction(AddressingMode.ZPG, ldx),
+        (0xA8u).toUByte() to Instruction(AddressingMode.IMP, tay),
+        (0xA9u).toUByte() to Instruction(AddressingMode.IMM, lda),
+        (0xAAu).toUByte() to Instruction(AddressingMode.IMP, tax),
+        (0xACu).toUByte() to Instruction(AddressingMode.ABS, ldy),
+        (0xADu).toUByte() to Instruction(AddressingMode.ABS, lda),
+        (0xAEu).toUByte() to Instruction(AddressingMode.ABS, ldx),
 
-        (0xC0u).toUByte() to InstructionWrapper({ CPY().execute(immediateAddressing()) }, CPY().opcodeName, "imm"),
-        (0xC1u).toUByte() to InstructionWrapper({ CMP().execute(xIndexedIndirectAddressing()) }, CMP().opcodeName, "x ind"),
-        (0xC4u).toUByte() to InstructionWrapper({ CPY().execute(zeroPageAddressing()) }, CPY().opcodeName, "zpg"),
-        (0xC5u).toUByte() to InstructionWrapper({ CMP().execute(zeroPageAddressing()) }, CMP().opcodeName, "zpg"),
-        (0xC6u).toUByte() to InstructionWrapper({ DEC().execute(zeroPageAddressing()) }, DEC().opcodeName, "zpg"),
-        (0xC8u).toUByte() to InstructionWrapper({ INY().execute() }, INY().opcodeName, "impl"),
-        (0xC9u).toUByte() to InstructionWrapper({ CMP().execute(immediateAddressing()) }, CMP().opcodeName, "imm"),
-        (0xCAu).toUByte() to InstructionWrapper({ DEX().execute() }, DEX().opcodeName, "impl"),
-        (0xCCu).toUByte() to InstructionWrapper({ CPY().execute(absoluteAddressing()) }, CPY().opcodeName, "abs"),
-        (0xCDu).toUByte() to InstructionWrapper({ CMP().execute(absoluteAddressing()) }, CMP().opcodeName, "abs"),
-        (0xCEu).toUByte() to InstructionWrapper({ DEC().execute(absoluteAddressing()) }, DEC().opcodeName, "abs"),
+        (0xB0u).toUByte() to Instruction(AddressingMode.REL, bcs),
+        (0xB1u).toUByte() to Instruction(AddressingMode.IND_Y, lda),
+        (0xB4u).toUByte() to Instruction(AddressingMode.ZPG_X, ldy),
+        (0xB5u).toUByte() to Instruction(AddressingMode.ZPG_X, lda),
+        (0xB6u).toUByte() to Instruction(AddressingMode.ZPG_Y, ldx),
+        (0xB8u).toUByte() to Instruction(AddressingMode.IMP, clv),
+        (0xB9u).toUByte() to Instruction(AddressingMode.ABS_Y, lda),
+        (0xBAu).toUByte() to Instruction(AddressingMode.IMP, tsx),
+        (0xBCu).toUByte() to Instruction(AddressingMode.ABS_X, ldy),
+        (0xBDu).toUByte() to Instruction(AddressingMode.ABS_X, lda),
+        (0xBEu).toUByte() to Instruction(AddressingMode.ABS_Y, ldx),
 
-        (0xD0u).toUByte() to InstructionWrapper({ BNE().execute(relativeAddressing()) }, BNE().opcodeName, "rel"),
-        (0xD1u).toUByte() to InstructionWrapper({ CMP().execute(indirectYIndexedAddressing()) }, CMP().opcodeName, "ind y"),
-        (0xD5u).toUByte() to InstructionWrapper({ CMP().execute(zeroPageXIndexedAddressing()) }, CMP().opcodeName, "zpg x"),
-        (0xD6u).toUByte() to InstructionWrapper({ DEC().execute(zeroPageXIndexedAddressing()) }, DEC().opcodeName, "zpg x"),
-        (0xD8u).toUByte() to InstructionWrapper({ CLD().execute() }, CLD().opcodeName, "impl"),
-        (0xD9u).toUByte() to InstructionWrapper({ CMP().execute(absoluteYIndexedAddressing()) }, CMP().opcodeName, "abs y"),
-        (0xDDu).toUByte() to InstructionWrapper({ CMP().execute(absoluteXIndexedAddressing()) }, CMP().opcodeName, "abs x"),
-        (0xDEu).toUByte() to InstructionWrapper({ DEC().execute(absoluteXIndexedAddressing()) }, DEC().opcodeName, "abs x"),
+        (0xC0u).toUByte() to Instruction(AddressingMode.IMM, cpy),
+        (0xC1u).toUByte() to Instruction(AddressingMode.X_IND, cmp),
+        (0xC4u).toUByte() to Instruction(AddressingMode.ZPG, cpy),
+        (0xC5u).toUByte() to Instruction(AddressingMode.ZPG, cmp),
+        (0xC6u).toUByte() to Instruction(AddressingMode.ZPG, dec),
+        (0xC8u).toUByte() to Instruction(AddressingMode.IMP, iny),
+        (0xC9u).toUByte() to Instruction(AddressingMode.IMM, cmp),
+        (0xCAu).toUByte() to Instruction(AddressingMode.IMP, dex),
+        (0xCCu).toUByte() to Instruction(AddressingMode.ABS, cpy),
+        (0xCDu).toUByte() to Instruction(AddressingMode.ABS, cmp),
+        (0xCEu).toUByte() to Instruction(AddressingMode.ABS, dec),
 
-        (0xE0u).toUByte() to InstructionWrapper({ CPX().execute(immediateAddressing()) }, CPX().opcodeName, "imm"),
-        (0xE1u).toUByte() to InstructionWrapper({ SBC().execute(xIndexedIndirectAddressing()) }, SBC().opcodeName, "x ind"),
-        (0xE4u).toUByte() to InstructionWrapper({ CPX().execute(zeroPageAddressing()) }, CPX().opcodeName, "zpg"),
-        (0xE5u).toUByte() to InstructionWrapper({ SBC().execute(zeroPageAddressing()) }, SBC().opcodeName, "zpg"),
-        (0xE6u).toUByte() to InstructionWrapper({ INC().execute(zeroPageAddressing()) }, INC().opcodeName, "zpg"),
-        (0xE8u).toUByte() to InstructionWrapper({ INX().execute() }, INX().opcodeName, "impl"),
-        (0xE9u).toUByte() to InstructionWrapper({ SBC().execute(immediateAddressing()) }, SBC().opcodeName, "imm"),
-        (0xEAu).toUByte() to InstructionWrapper({ NOP().execute() }, NOP().opcodeName, "impl"),
-        (0xECu).toUByte() to InstructionWrapper({ CPX().execute(absoluteAddressing()) }, CPX().opcodeName, "abs"),
-        (0xEDu).toUByte() to InstructionWrapper({ SBC().execute(absoluteAddressing()) }, SBC().opcodeName, "abs"),
-        (0xEEu).toUByte() to InstructionWrapper({ INC().execute(absoluteAddressing()) }, INC().opcodeName, "abs"),
+        (0xD0u).toUByte() to Instruction(AddressingMode.REL, bne),
+        (0xD1u).toUByte() to Instruction(AddressingMode.IND_Y, cmp),
+        (0xD5u).toUByte() to Instruction(AddressingMode.ZPG_X, cmp),
+        (0xD6u).toUByte() to Instruction(AddressingMode.ZPG_X, dec),
+        (0xD8u).toUByte() to Instruction(AddressingMode.IMP, cld),
+        (0xD9u).toUByte() to Instruction(AddressingMode.ABS_Y, cmp),
+        (0xDDu).toUByte() to Instruction(AddressingMode.ABS_X, cmp),
+        (0xDEu).toUByte() to Instruction(AddressingMode.ABS_X, dec),
 
-        (0xF0u).toUByte() to InstructionWrapper({ BEQ().execute(relativeAddressing()) }, BEQ().opcodeName, "rel"),
-        (0xF1u).toUByte() to InstructionWrapper({ SBC().execute(indirectYIndexedAddressing()) }, SBC().opcodeName, "ind y"),
-        (0xF5u).toUByte() to InstructionWrapper({ SBC().execute(zeroPageXIndexedAddressing()) }, SBC().opcodeName, "zpg x"),
-        (0xF6u).toUByte() to InstructionWrapper({ INC().execute(zeroPageXIndexedAddressing()) }, INC().opcodeName, "zpg x"),
-        (0xF8u).toUByte() to InstructionWrapper({ SED().execute() }, SED().opcodeName, "impl"),
-        (0xF9u).toUByte() to InstructionWrapper({ SBC().execute(absoluteYIndexedAddressing()) }, SBC().opcodeName, "abs y"),
-        (0xFDu).toUByte() to InstructionWrapper({ SBC().execute(absoluteXIndexedAddressing()) }, SBC().opcodeName, "abs x"),
-        (0xFEu).toUByte() to InstructionWrapper({ INC().execute(absoluteXIndexedAddressing()) }, INC().opcodeName, "abs x"),
+        (0xE0u).toUByte() to Instruction(AddressingMode.IMM, cpx),
+        (0xE1u).toUByte() to Instruction(AddressingMode.X_IND, sbc),
+        (0xE4u).toUByte() to Instruction(AddressingMode.ZPG, cpx),
+        (0xE5u).toUByte() to Instruction(AddressingMode.ZPG, sbc),
+        (0xE6u).toUByte() to Instruction(AddressingMode.ZPG, inc),
+        (0xE8u).toUByte() to Instruction(AddressingMode.IMP, inx),
+        (0xE9u).toUByte() to Instruction(AddressingMode.IMM, sbc),
+        (0xEAu).toUByte() to Instruction(AddressingMode.IMP, nop),
+        (0xECu).toUByte() to Instruction(AddressingMode.ABS, cpx),
+        (0xEDu).toUByte() to Instruction(AddressingMode.ABS, sbc),
+        (0xEEu).toUByte() to Instruction(AddressingMode.ABS, inc),
+
+        (0xF0u).toUByte() to Instruction(AddressingMode.REL, beq),
+        (0xF1u).toUByte() to Instruction(AddressingMode.IND_Y, sbc),
+        (0xF5u).toUByte() to Instruction(AddressingMode.ZPG_X, sbc),
+        (0xF6u).toUByte() to Instruction(AddressingMode.ZPG_X, inc),
+        (0xF8u).toUByte() to Instruction(AddressingMode.IMP, sed),
+        (0xF9u).toUByte() to Instruction(AddressingMode.ABS_Y, sbc),
+        (0xFDu).toUByte() to Instruction(AddressingMode.ABS_X, sbc),
+        (0xFEu).toUByte() to Instruction(AddressingMode.ABS_X, inc),
     )
 
     /**
@@ -394,12 +477,16 @@ class CPU6502(override var bus: Mediator) : Component {
      * This address is provided in the next 2 bytes after the opcode; little-endian.
      * Total instruction length is: Opcode + LSB + MSB = 3 bytes.
      */
-    fun absoluteAddressing(): UShort {
+    fun absoluteAddressing(): Triple<UByte, UByte, UShort> {
         programCounter++
-        val leastSignificantByte = readAddress(programCounter).toUShort()
+        val leastSignificantByte = readAddress(programCounter)
+
         programCounter++
-        val mostSignificantByte = readAddress((programCounter)).toUInt()
-        return ((mostSignificantByte shl 8).toUShort() or leastSignificantByte)
+        val mostSignificantByte = readAddress((programCounter))
+
+        val targetAddress: UShort = (mostSignificantByte.toUInt() shl 8).toUShort() or leastSignificantByte.toUShort()
+
+        return Triple(leastSignificantByte, mostSignificantByte, targetAddress)
     }
 
     /**
@@ -508,24 +595,8 @@ class CPU6502(override var bus: Mediator) : Component {
         return (programCounter.toInt() + (offset.toInt()) + 1).toUShort()
     }
 
+    companion object {
 
-
-
-
-    val disassembledProgram: MutableMap<UShort, String> = mutableMapOf()
-
-    /**
-     * Disassemble
-     * Traverses program code and disassembles it for ui viewing.
-     * This will be run once a cpu is instantiated, so you should call
-     * reset() before using the cpu.
-     */
-    fun disassemble(opcodeLocation: UShort, instruction: InstructionWrapper): MutableMap<UShort, String> {
-        disassembledProgram[opcodeLocation] =
-            "$${opcodeLocation.to4DigitHexString()}: ${instruction.opcodeName} ${instruction.addressingMode}"
-
-
-        return disassembledProgram
     }
 
 

@@ -1,5 +1,6 @@
 package CPU
 
+@ExperimentalUnsignedTypes
 interface AssemblyCode {
     val cpuReference: CPU6502
     val opcodeName: String

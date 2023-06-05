@@ -2,6 +2,7 @@ package CPU
 
 import mediator.Component
 import mediator.Mediator
+import util.Logger
 
 /**
  * Emulation of the 6502 processor.
@@ -41,6 +42,7 @@ class CPU6502(override var bus: Mediator) : Component {
     private var operandLowByte: UByte? = null
     private var operandHighByte: UByte? = null
     private var targetAddress: UShort? = null
+    private var immediateOperand: UByte? = null
 
     val interruptSignalTriage: List<() -> Unit> = mutableListOf()
 
@@ -238,21 +240,20 @@ class CPU6502(override var bus: Mediator) : Component {
 
     fun executeOperation(addressingMode: AddressingMode, operation: Operation) {
         // Get current state for logs.
-        /*val currentProgramCounter = operation.cpuReference.programCounter
-        val currentOpcodeValue = operation.cpuReference.opcodeValue
+        val currentProgramCounter = programCounter
         var targetLowByteValue = null
         var targetHighByteValue = null
         var targetAddressValue = null
-        val accumulatorValue = operation.cpuReference.accumulator
-        val xRegisterValue = operation.cpuReference.xRegister
-        val yRegisterValue = operation.cpuReference.yRegister
-        val statusRegisterValue = operation.cpuReference.statusRegister
-        val stackPointerValue = operation.cpuReference.stackPointer*/
+        val accumulatorValue = accumulator
+        val xRegisterValue = xRegister
+        val yRegisterValue = yRegister
+        val statusRegisterValue = statusRegister
+        val stackPointerValue = stackPointer
 
         when (addressingMode) {
             AddressingMode.IMM -> {
                 immediateAddressing()
-                operation.execute(operandLowByte!!) // If null, bug is in program rom.
+                operation.execute(immediateOperand!!) // If null, bug is in program rom.
             }
             AddressingMode.ABS -> {
                 absoluteAddressing()
@@ -300,6 +301,20 @@ class CPU6502(override var bus: Mediator) : Component {
             AddressingMode.IMP->
                 operation.execute()
         }
+
+        Logger.addLog(
+            currentProgramCounter,
+            opcodeValue,
+            operandLowByte,
+            operandHighByte,
+            operation.opcodeName,
+            targetAddress,
+            accumulatorValue,
+            xRegisterValue,
+            yRegisterValue,
+            statusRegisterValue,
+            stackPointerValue
+        )
     }
 
     /**
@@ -310,6 +325,7 @@ class CPU6502(override var bus: Mediator) : Component {
     fun immediateAddressing() {
         programCounter++
         operandLowByte = readAddress(programCounter)
+        immediateOperand  = operandLowByte
     }
 
     /**

@@ -13,7 +13,6 @@ class MapperZero(private val cartridge: Cartridge, bus: Mediator) : Mapper(cartr
         if (address < 0x8000u) {
             return cartridge.characterRom[(address - 0x6000u).toInt()]
         }
-        println("READING Address: ${address.to4DigitHexString()}. Value = ${cartridge.programRom[(address - 0x8000u).toInt()].to2DigitHexString()}")
 
         return cartridge.programRom[(address - 0x8000u).toInt()]
     }

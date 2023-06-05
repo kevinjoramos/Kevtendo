@@ -4,6 +4,7 @@ import Bus.Bus
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import util.Logger
 import util.to2DigitHexString
 import util.to4DigitHexString
 
@@ -30,7 +31,7 @@ class NesEmulator {
             while (true) step()
         } catch (e: Exception) {
             println(e.toString())
-            //println("Instructions cleared: ${bus.cpu.disassembledProgram.size}")
+            Logger.writeLogsToFile()
         }
     }
 

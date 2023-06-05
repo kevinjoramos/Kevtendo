@@ -7,6 +7,7 @@ import Cartridge.MapperZero
 import PPU.PPU2C02
 import mediator.Event
 import mediator.Mediator
+import util.Logger
 
 /**
  * The connection to all other pieces of the system.
@@ -60,7 +61,6 @@ class Bus(cartridgePath: String, ramSize: Int) : Mediator {
     }
 
     override fun writeToAddress(address: UShort, data: UByte) {
-        println("WRITE data: ${data.toString(16)} to Address: ${address.toString(16)}")
         if (address < 0x2000u) {
             ram[address.toInt()] = data
             ram[(address + 0x0800u).mod(0x2000u).toUShort().toInt()] = data

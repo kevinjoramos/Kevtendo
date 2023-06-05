@@ -1,8 +1,7 @@
 package CPU
 
 @ExperimentalUnsignedTypes
-interface AssemblyCode {
-    val cpuReference: CPU6502
+interface Operation {
     val opcodeName: String
     val cycleCount: Map<AddressingMode, Int>
 

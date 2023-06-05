@@ -30,7 +30,7 @@ class NesEmulator {
             while (true) step()
         } catch (e: Exception) {
             println(e.toString())
-            println("Instructions cleared: ${bus.cpu.disassembledProgram.size}")
+            //println("Instructions cleared: ${bus.cpu.disassembledProgram.size}")
         }
     }
 
@@ -39,7 +39,7 @@ class NesEmulator {
         bus.cpu.run()
         cpuState = getCurrentCPUState()
         zeroPageState = getCurrentZeroPageState()
-        currentInstruction = bus.cpu.disassembledProgram[programCounterValue] ?: "i dunno"
+        //currentInstruction = bus.cpu.disassembledProgram[programCounterValue] ?: "i dunno"
 
 
         //instructionSlidingWindowState = getCurrentInstructionsSlidingWindowState()

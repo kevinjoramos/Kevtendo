@@ -21,6 +21,7 @@ fun CPUDisplay(
     onStart: () -> Unit,
     onStep: () -> Unit,
     onReset: () -> Unit,
+    onStop: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -154,8 +155,9 @@ fun CPUDisplay(
             Text("Reset")
         }
 
-
-
+        Button(onStop) {
+            Text("Stop")
+        }
 
     }
 }

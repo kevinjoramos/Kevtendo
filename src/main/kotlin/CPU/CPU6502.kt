@@ -20,20 +20,51 @@ class CPU6502(override var bus: Mediator) : Component {
      * 6502 Architecture components
      */
     var programCounter: UShort = 0xC000u
-    var stackPointer: UByte = 0xFDu
+    var stackPointer: UShort = 0x01FDu
+        set(value: UShort) { field = (0x0100u).toUShort() or value }
+
     var accumulator: UByte = 0x00u
     var xRegister: UByte = 0x00u
     var yRegister: UByte = 0x00u
-    var statusRegister: UByte = 0x00u
+    var statusRegister: UByte = 0x24u
 
-    var negativeFlag = false
-    var overflowFlag = false
-    var extraFlag = true
-    var breakFlag = true
-    var decimalFlag = false
-    var interruptDisableFlag = true
-    var zeroFlag = false
-    var carryFlag = false
+    var negativeFlag: Boolean
+        get() = getFlagValue(NEGATIVE_BITMASK)
+        set(value) = setFlagValue(value, NEGATIVE_BITMASK)
+
+    var overflowFlag: Boolean
+        get() = getFlagValue(OVERFLOW_BITMASK)
+        set(value) = setFlagValue(value, OVERFLOW_BITMASK)
+
+    var extraFlag: Boolean
+        get() = getFlagValue(EXTRA_BITMASK)
+        set(value) = setFlagValue(value, EXTRA_BITMASK)
+
+    var breakFlag: Boolean
+        get() = getFlagValue(BREAK_BITMASK)
+        set(value) = setFlagValue(value, BREAK_BITMASK)
+
+    var decimalFlag: Boolean
+        get() = getFlagValue(DECIMAL_BITMASK)
+        set(value) = setFlagValue(value, DECIMAL_BITMASK)
+
+    var interruptDisableFlag: Boolean
+        get() = getFlagValue(INTERRUPT_DISABLE_BITMASK)
+        set(value) = setFlagValue(value, INTERRUPT_DISABLE_BITMASK)
+
+    var zeroFlag: Boolean
+        get() = getFlagValue(ZERO_BITMASK)
+        set(value) = setFlagValue(value, ZERO_BITMASK)
+
+    var carryFlag: Boolean
+        get() = getFlagValue(CARRY_BITMASK)
+        set(value) = setFlagValue(value, CARRY_BITMASK)
+
+    private fun getFlagValue(bitMask: UByte): Boolean = (statusRegister and bitMask) == bitMask
+
+    private fun setFlagValue(value: Boolean, bitMask: UByte) {
+        statusRegister = if (value) statusRegister or bitMask else statusRegister and bitMask.inv()
+    }
 
     /**
      * Other member variables for developer convenience
@@ -43,6 +74,8 @@ class CPU6502(override var bus: Mediator) : Component {
     private var operandHighByte: UByte? = null
     private var targetAddress: UShort? = null
     private var immediateOperand: UByte? = null
+
+
 
     val interruptSignalTriage: List<() -> Unit> = mutableListOf()
 
@@ -223,6 +256,11 @@ class CPU6502(override var bus: Mediator) : Component {
 
         executeOperation(addressingMode, operation)
 
+        operandLowByte = null
+        operandHighByte = null
+        targetAddress = null
+        immediateOperand = null
+
 
 
         //interruptSignalTriage.map { it.invoke() }
@@ -309,6 +347,7 @@ class CPU6502(override var bus: Mediator) : Component {
             operandHighByte,
             operation.opcodeName,
             targetAddress,
+            immediateOperand,
             accumulatorValue,
             xRegisterValue,
             yRegisterValue,
@@ -439,7 +478,14 @@ class CPU6502(override var bus: Mediator) : Component {
         val indirectAddress: UShort = ((operandHighByte.toUInt() shl 8) + operandLowByte.toUInt()).toUShort()
 
         val targetLeastSignificantByte: UByte = readAddress(indirectAddress)
-        val targetMostSignificantByte = readAddress((indirectAddress + 1u).toUShort()).toUInt()
+
+        // this wonkyness is here because of the original JMP bug in the 6502.
+        val targetMostSignificantByte =
+            if (indirectAddress.toUByte() == (0xFFu).toUByte()) {
+                readAddress((indirectAddress - 0xFFu).toUShort()).toUInt()
+            } else {
+                readAddress((indirectAddress + 1u).toUShort()).toUInt()
+            }
 
         this.targetAddress = ((targetMostSignificantByte shl 8) + targetLeastSignificantByte).toUShort()
     }
@@ -463,7 +509,7 @@ class CPU6502(override var bus: Mediator) : Component {
         this.operandLowByte = operandLowByte
 
         val targetLeastSignificantByte = readAddress(operandLowByte.toUShort())
-        val targetMostSignificantByte: UByte =  readAddress((operandLowByte + 1u).toUShort())
+        val targetMostSignificantByte: UByte =  readAddress((operandLowByte + 1u).toUByte().toUShort())
 
         this.targetAddress = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte + yRegister).toUShort()
     }
@@ -748,30 +794,15 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.programCounter++
             this@CPU6502.programCounter++
 
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer.toUShort(), (this@CPU6502.programCounter.toInt() shr 8).toUByte())
-            this@CPU6502.stackPointer--
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer.toUShort(), this@CPU6502.programCounter.toUByte())
+            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, (this@CPU6502.programCounter.toInt() shr 8).toUByte())
             this@CPU6502.stackPointer--
 
-            var statusRegisterValue: UByte = 0u
-            val negativeBitMask: UByte = 0x80u
-            val overflowBitMask: UByte = 0x40u
-            val extraBitMask: UByte = 0x20u
-            val breakBitMask: UByte = 0x10u
-            val decimalBitMask: UByte = 0x08u
-            val interruptDisableBitMask: UByte = 0x04u
-            val zeroBitMask: UByte = 0x02u
-            val carryBitMask: UByte = 0x01u
+            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, this@CPU6502.programCounter.toUByte())
+            this@CPU6502.stackPointer--
 
-            if (this@CPU6502.negativeFlag) statusRegisterValue = statusRegisterValue or negativeBitMask
-            if (this@CPU6502.overflowFlag) statusRegisterValue = statusRegisterValue or overflowBitMask
-            if (this@CPU6502.extraFlag) statusRegisterValue = statusRegisterValue or extraBitMask
-            if (this@CPU6502.breakFlag) statusRegisterValue = statusRegisterValue or breakBitMask
-            if (this@CPU6502.decimalFlag) statusRegisterValue = statusRegisterValue or decimalBitMask
-            if (this@CPU6502.interruptDisableFlag) statusRegisterValue = statusRegisterValue or interruptDisableBitMask
-            if (this@CPU6502.zeroFlag) statusRegisterValue = statusRegisterValue or zeroBitMask
-            if (this@CPU6502.carryFlag) statusRegisterValue = statusRegisterValue or carryBitMask
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer.toUShort(), statusRegisterValue)
+            val statusRegisterValue = this@CPU6502.statusRegister or EXTRA_BITMASK or BREAK_BITMASK
+
+            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, statusRegisterValue)
             this@CPU6502.stackPointer--
 
             this@CPU6502.interruptDisableFlag = true
@@ -1150,9 +1181,9 @@ class CPU6502(override var bus: Mediator) : Component {
             val currentAddressMostSignificantByte: UByte = (this@CPU6502.programCounter.toUInt() shr 8).toUByte()
             val currentAddressLeastSignificantByte: UByte = this@CPU6502.programCounter.toUByte()
 
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer.toUShort(), currentAddressMostSignificantByte)
+            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, currentAddressMostSignificantByte)
             this@CPU6502.stackPointer--
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer.toUShort(), currentAddressLeastSignificantByte)
+            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, currentAddressLeastSignificantByte)
             this@CPU6502.stackPointer--
 
             this@CPU6502.programCounter = targetAddress
@@ -1341,7 +1372,7 @@ class CPU6502(override var bus: Mediator) : Component {
         override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer.toUShort(), this@CPU6502.accumulator)
+            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, this@CPU6502.accumulator)
             this@CPU6502.stackPointer--
 
             this@CPU6502.programCounter++
@@ -1361,49 +1392,9 @@ class CPU6502(override var bus: Mediator) : Component {
         override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
-            var result: UByte = 0u
-            val negativeBitMask: UByte = 0x80u
-            val overflowBitMask: UByte = 0x40u
-            val extraBitMask: UByte = 0x20u
-            val breakBitMask: UByte = 0x10u
-            val decimalBitMask: UByte = 0x08u
-            val interruptDisableBitMask: UByte = 0x04u
-            val zeroBitMask: UByte = 0x02u
-            val carryBitMask: UByte = 0x01u
+            val statusRegisterValue = this@CPU6502.statusRegister or EXTRA_BITMASK or BREAK_BITMASK
 
-            if (this@CPU6502.negativeFlag) {
-                result = result or negativeBitMask
-            }
-
-            if (this@CPU6502.overflowFlag) {
-                result = result or overflowBitMask
-            }
-
-            if (this@CPU6502.extraFlag) {
-                result = result or extraBitMask
-            }
-
-            if (this@CPU6502.breakFlag) {
-                result = result or breakBitMask
-            }
-
-            if (this@CPU6502.decimalFlag) {
-                result = result or decimalBitMask
-            }
-
-            if (this@CPU6502.interruptDisableFlag) {
-                result = result or interruptDisableBitMask
-            }
-
-            if (this@CPU6502.zeroFlag) {
-                result = result or zeroBitMask
-            }
-
-            if (this@CPU6502.carryFlag) {
-                result = result or carryBitMask
-            }
-
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer.toUShort(), result)
+            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, statusRegisterValue)
             this@CPU6502.stackPointer--
 
             this@CPU6502.programCounter++
@@ -1422,7 +1413,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         override fun execute() {
             this@CPU6502.stackPointer++
-            val data: UByte = this@CPU6502.readAddress(this@CPU6502.stackPointer.toUShort())
+            val data: UByte = this@CPU6502.readAddress(this@CPU6502.stackPointer)
             this@CPU6502.accumulator = data
 
             this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
@@ -1442,25 +1433,15 @@ class CPU6502(override var bus: Mediator) : Component {
 
         override fun execute() {
             this@CPU6502.stackPointer++
-            val data: UByte = this@CPU6502.readAddress(this@CPU6502.stackPointer.toUShort())
 
-            val negativeBitMask: UByte = 0x80u
-            val overflowBitMask: UByte = 0x40u
-            val extraBitMask: UByte = 0x20u
-            val breakBitMask: UByte = 0x10u
-            val decimalBitMask: UByte = 0x08u
-            val interruptDisableBitMask: UByte = 0x04u
-            val zeroBitMask: UByte = 0x02u
-            val carryBitMask: UByte = 0x01u
+            val extraFlagValue = this@CPU6502.extraFlag
+            val breakFlagValue = this@CPU6502.breakFlag
 
-            this@CPU6502.negativeFlag = data and negativeBitMask == negativeBitMask
-            this@CPU6502.overflowFlag = data and overflowBitMask == overflowBitMask
-            this@CPU6502.extraFlag = data and extraBitMask == extraBitMask
-            this@CPU6502.breakFlag = data and breakBitMask == breakBitMask
-            this@CPU6502.decimalFlag = data and decimalBitMask == decimalBitMask
-            this@CPU6502.interruptDisableFlag = data and interruptDisableBitMask == interruptDisableBitMask
-            this@CPU6502.zeroFlag = data and zeroBitMask == zeroBitMask
-            this@CPU6502.carryFlag = data and carryBitMask == carryBitMask
+            val data: UByte = this@CPU6502.readAddress(this@CPU6502.stackPointer)
+            this@CPU6502.statusRegister = data
+
+            this@CPU6502.extraFlag = extraFlagValue
+            this@CPU6502.breakFlag = breakFlagValue
 
             this@CPU6502.programCounter++
         }
@@ -1552,30 +1533,20 @@ class CPU6502(override var bus: Mediator) : Component {
         override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
-            this@CPU6502.stackPointer++
-            val statusRegisterValue = this@CPU6502.readAddress(this@CPU6502.stackPointer.toUShort())
-            this@CPU6502.stackPointer++
-            val targetLeastSignificantByte = this@CPU6502.readAddress(this@CPU6502.stackPointer.toUShort())
-            this@CPU6502.stackPointer++
-            val targetMostSignificantByte = this@CPU6502.readAddress(this@CPU6502.stackPointer.toUShort())
+            val extraFlagValue = this@CPU6502.extraFlag
+            val breakFlagValue = this@CPU6502.breakFlag
 
-            val negativeBitMask: UByte = 0x80u
-            val overflowBitMask: UByte = 0x40u
-            val extraBitMask: UByte = 0x20u
-            val breakBitMask: UByte = 0x10u
-            val decimalBitMask: UByte = 0x08u
-            val interruptDisableBitMask: UByte = 0x04u
-            val zeroBitMask: UByte = 0x02u
-            val carryBitMask: UByte = 0x01u
+            this@CPU6502.stackPointer++
+            val statusRegisterValue = this@CPU6502.readAddress(this@CPU6502.stackPointer)
+            this@CPU6502.statusRegister = statusRegisterValue
+            this@CPU6502.extraFlag = extraFlagValue
+            this@CPU6502.breakFlag = breakFlagValue
 
-            this@CPU6502.negativeFlag = statusRegisterValue and negativeBitMask == negativeBitMask
-            this@CPU6502.overflowFlag = statusRegisterValue and overflowBitMask == overflowBitMask
-            this@CPU6502.extraFlag = statusRegisterValue and extraBitMask == extraBitMask
-            this@CPU6502.breakFlag = statusRegisterValue and breakBitMask == breakBitMask
-            this@CPU6502.decimalFlag = statusRegisterValue and decimalBitMask == decimalBitMask
-            this@CPU6502.interruptDisableFlag = statusRegisterValue and interruptDisableBitMask == interruptDisableBitMask
-            this@CPU6502.zeroFlag = statusRegisterValue and zeroBitMask == zeroBitMask
-            this@CPU6502.carryFlag = statusRegisterValue and carryBitMask == carryBitMask
+            this@CPU6502.stackPointer++
+            val targetLeastSignificantByte = this@CPU6502.readAddress(this@CPU6502.stackPointer)
+
+            this@CPU6502.stackPointer++
+            val targetMostSignificantByte = this@CPU6502.readAddress(this@CPU6502.stackPointer)
 
             this@CPU6502.programCounter = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte).toUShort()
         }
@@ -1591,9 +1562,9 @@ class CPU6502(override var bus: Mediator) : Component {
 
         override fun execute() {
             this@CPU6502.stackPointer++
-            val targetLeastSignificantByte = this@CPU6502.readAddress(this@CPU6502.stackPointer.toUShort())
+            val targetLeastSignificantByte = this@CPU6502.readAddress(this@CPU6502.stackPointer)
             this@CPU6502.stackPointer++
-            val targetMostSignificantByte = this@CPU6502.readAddress(this@CPU6502.stackPointer.toUShort())
+            val targetMostSignificantByte = this@CPU6502.readAddress(this@CPU6502.stackPointer)
 
             this@CPU6502.programCounter = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte).toUShort()
             this@CPU6502.programCounter++
@@ -1612,16 +1583,15 @@ class CPU6502(override var bus: Mediator) : Component {
         override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(operand: UByte) {
-            val signBitMask: UByte = 0x80u
-            val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
-            val operandSignedBit = operand and signBitMask == signBitMask
+            val accumulatorSignedBit = this@CPU6502.accumulator and NEGATIVE_BITMASK == NEGATIVE_BITMASK
+            val operandSignedBit = operand and NEGATIVE_BITMASK == NEGATIVE_BITMASK
 
             val rawResult = this@CPU6502.accumulator - operand - (if (this@CPU6502.carryFlag) 0u else 1u)
             val result = rawResult.toUByte()
             this@CPU6502.accumulator = result
 
-            this@CPU6502.carryFlag = (rawResult shr 8) == 1u
-            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.carryFlag = result.toByte() >= 0
+            this@CPU6502.negativeFlag = result and NEGATIVE_BITMASK == NEGATIVE_BITMASK
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
 
             if (accumulatorSignedBit == operandSignedBit) {
@@ -1643,16 +1613,15 @@ class CPU6502(override var bus: Mediator) : Component {
 
         override fun execute(targetAddress: UShort) {
             val operand = this@CPU6502.readAddress(targetAddress)
-            val signBitMask: UByte = 0x80u
-            val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
-            val operandSignedBit = operand and signBitMask == signBitMask
+            val accumulatorSignedBit = this@CPU6502.accumulator and NEGATIVE_BITMASK == NEGATIVE_BITMASK
+            val operandSignedBit = operand and NEGATIVE_BITMASK == NEGATIVE_BITMASK
 
             val rawResult = this@CPU6502.accumulator - operand - (if (this@CPU6502.carryFlag) 0u else 1u)
             val result = rawResult.toUByte()
             this@CPU6502.accumulator = result
 
-            this@CPU6502.carryFlag = (rawResult shr 8) == 1u
-            this@CPU6502.negativeFlag = result and signBitMask == signBitMask
+            this@CPU6502.carryFlag = result.toByte() >= 0
+            this@CPU6502.negativeFlag = result and NEGATIVE_BITMASK == NEGATIVE_BITMASK
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
 
             if (accumulatorSignedBit == operandSignedBit) {
@@ -1816,7 +1785,7 @@ class CPU6502(override var bus: Mediator) : Component {
         override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
-            this@CPU6502.xRegister = this@CPU6502.stackPointer
+            this@CPU6502.xRegister = this@CPU6502.stackPointer.toUByte()
             this@CPU6502.zeroFlag = this@CPU6502.xRegister == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (this@CPU6502.xRegister.toUInt() shr 7) == 1u
 
@@ -1856,7 +1825,7 @@ class CPU6502(override var bus: Mediator) : Component {
         override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
-            this@CPU6502.stackPointer = this@CPU6502.xRegister
+            this@CPU6502.stackPointer = this@CPU6502.xRegister.toUShort()
             this@CPU6502.programCounter++
         }
     }
@@ -1897,30 +1866,16 @@ class CPU6502(override var bus: Mediator) : Component {
     fun nmi() {
         val vectorLeastSignificantByte = readAddress(0xFFFAu)
         val vectorMostSignificantByte = readAddress(0xFFFBu)
-        writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
-        stackPointer--
-        writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
+
+        writeToAddress(stackPointer, (programCounter.toInt() shr 8).toUByte())
         stackPointer--
 
-        var statusRegisterValue: UByte = 0u
-        val negativeBitMask: UByte = 0x80u
-        val overflowBitMask: UByte = 0x40u
-        val extraBitMask: UByte = 0x20u
-        val breakBitMask: UByte = 0x10u
-        val decimalBitMask: UByte = 0x08u
-        val interruptDisableBitMask: UByte = 0x04u
-        val zeroBitMask: UByte = 0x02u
-        val carryBitMask: UByte = 0x01u
+        writeToAddress(stackPointer, programCounter.toUByte())
+        stackPointer--
 
-        if (negativeFlag) statusRegisterValue = statusRegisterValue or negativeBitMask
-        if (overflowFlag) statusRegisterValue = statusRegisterValue or overflowBitMask
-        if (extraFlag) statusRegisterValue = statusRegisterValue or extraBitMask
-        if (breakFlag) statusRegisterValue = statusRegisterValue or breakBitMask
-        if (decimalFlag) statusRegisterValue = statusRegisterValue or decimalBitMask
-        if (interruptDisableFlag) statusRegisterValue = statusRegisterValue or interruptDisableBitMask
-        if (zeroFlag) statusRegisterValue = statusRegisterValue or zeroBitMask
-        if (carryFlag) statusRegisterValue = statusRegisterValue or carryBitMask
-        writeToAddress(stackPointer.toUShort(), statusRegisterValue)
+        val statusRegisterValue = (this@CPU6502.statusRegister or EXTRA_BITMASK) and BREAK_BITMASK.inv()
+
+        writeToAddress(stackPointer, statusRegisterValue)
         stackPointer--
 
         this@CPU6502.interruptDisableFlag = true
@@ -1952,30 +1907,16 @@ class CPU6502(override var bus: Mediator) : Component {
 
         val vectorLeastSignificantByte = readAddress(0xFFFEu)
         val vectorMostSignificantByte = readAddress(0xFFFFu)
-        writeToAddress(stackPointer.toUShort(), (programCounter.toInt() shr 8).toUByte())
-        stackPointer--
-        writeToAddress(stackPointer.toUShort(), programCounter.toUByte())
+
+        writeToAddress(stackPointer, (programCounter.toInt() shr 8).toUByte())
         stackPointer--
 
-        var statusRegisterValue: UByte = 0u
-        val negativeBitMask: UByte = 0x80u
-        val overflowBitMask: UByte = 0x40u
-        val extraBitMask: UByte = 0x20u
-        val breakBitMask: UByte = 0x10u
-        val decimalBitMask: UByte = 0x08u
-        val interruptDisableBitMask: UByte = 0x04u
-        val zeroBitMask: UByte = 0x02u
-        val carryBitMask: UByte = 0x01u
+        writeToAddress(stackPointer, programCounter.toUByte())
+        stackPointer--
 
-        if (negativeFlag) statusRegisterValue = statusRegisterValue or negativeBitMask
-        if (overflowFlag) statusRegisterValue = statusRegisterValue or overflowBitMask
-        if (extraFlag) statusRegisterValue = statusRegisterValue or extraBitMask
-        if (breakFlag) statusRegisterValue = statusRegisterValue or breakBitMask
-        if (decimalFlag) statusRegisterValue = statusRegisterValue or decimalBitMask
-        if (interruptDisableFlag) statusRegisterValue = statusRegisterValue or interruptDisableBitMask
-        if (zeroFlag) statusRegisterValue = statusRegisterValue or zeroBitMask
-        if (carryFlag) statusRegisterValue = statusRegisterValue or carryBitMask
-        writeToAddress(stackPointer.toUShort(), statusRegisterValue)
+        val statusRegisterValue = (this@CPU6502.statusRegister or EXTRA_BITMASK) and BREAK_BITMASK.inv()
+
+        writeToAddress(stackPointer, statusRegisterValue)
         stackPointer--
 
         interruptDisableFlag = true
@@ -1983,4 +1924,14 @@ class CPU6502(override var bus: Mediator) : Component {
         programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
     }
 
+    companion object {
+        private const val NEGATIVE_BITMASK: UByte = 0x80u
+        private const val OVERFLOW_BITMASK: UByte = 0x40u
+        private const val EXTRA_BITMASK: UByte = 0x20u
+        private const val BREAK_BITMASK: UByte = 0x10u
+        private const val DECIMAL_BITMASK: UByte = 0x08u
+        private const val INTERRUPT_DISABLE_BITMASK: UByte = 0x04u
+        private const val ZERO_BITMASK: UByte = 0x02u
+        private const val CARRY_BITMASK: UByte = 0x01u
+    }
 }

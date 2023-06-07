@@ -37,6 +37,7 @@ fun App() {
                 onStart = nesEmulator::start,
                 onStep = nesEmulator::step,
                 onReset = nesEmulator::reset,
+                onStop = nesEmulator::stop,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxSize()

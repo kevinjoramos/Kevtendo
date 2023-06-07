@@ -4,6 +4,7 @@ import Bus.Bus
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.*
 import util.Logger
 import util.to2DigitHexString
 import util.to4DigitHexString
@@ -26,12 +27,24 @@ class NesEmulator {
     private var isRunning = false
     var isPaused = false
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun start() {
-        try {
-            while (true) step()
-        } catch (e: Exception) {
-            println(e.toString())
-            Logger.writeLogsToFile()
+        GlobalScope.launch {
+            try {
+                isRunning = true
+                while (isRunning) {
+                    step()
+                    cpuState = getCurrentCPUState()
+                    zeroPageState = getCurrentZeroPageState()
+                }
+                
+            } catch (e: Exception) {
+                isRunning = false
+                println(e.toString())
+                Logger.writeLogsToFile()
+                println(bus.cpu.readAddress(0x02FFu))
+                println(bus.cpu.readAddress(0x0300u))
+            }
         }
     }
 
@@ -48,6 +61,11 @@ class NesEmulator {
 
     fun reset() {
         this.bus = Bus(pathToGame, ramSize)
+    }
+
+    fun stop() {
+        isRunning = false
+        Logger.writeLogsToFile()
     }
 
     private fun getCurrentCPUState(): CPUState = CPUState(

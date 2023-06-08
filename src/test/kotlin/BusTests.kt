@@ -1,8 +1,8 @@
-import Bus.Bus
-import CPU.CPU6502
-import Cartridge.Cartridge
-import Cartridge.MapperZero
-import PPU.PPU2C02
+import bus.Bus
+import cpu.CPU6502
+import cartridge.Cartridge
+import cartridge.MapperZero
+import ppu.PPU2C02
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test

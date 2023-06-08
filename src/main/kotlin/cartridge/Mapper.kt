@@ -1,4 +1,4 @@
-package Cartridge
+package cartridge
 
 import mediator.Component
 import mediator.Mediator

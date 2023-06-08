@@ -1,4 +1,4 @@
-package Cartridge
+package cartridge
 
 import java.io.File
 

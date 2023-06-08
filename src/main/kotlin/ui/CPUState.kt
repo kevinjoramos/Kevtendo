@@ -1,4 +1,4 @@
-package UI
+package ui
 
 data class CPUState(
     var programCounter: String,

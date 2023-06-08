@@ -1,8 +1,6 @@
-package PPU
+package ppu
 
-import Bus.Bus
 import mediator.Component
-import mediator.Event
 import mediator.Mediator
 
 @ExperimentalUnsignedTypes

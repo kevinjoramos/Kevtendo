@@ -1,4 +1,4 @@
-package CPU
+package cpu
 
 data class CPUState(
     val programCounter: UShort,

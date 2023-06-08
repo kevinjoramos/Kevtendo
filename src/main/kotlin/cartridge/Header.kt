@@ -1,4 +1,4 @@
-package Cartridge
+package cartridge
 
 @ExperimentalUnsignedTypes
 class INESHeader(val headerByteCode: UByteArray)  {

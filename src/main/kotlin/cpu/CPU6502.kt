@@ -1,4 +1,4 @@
-package CPU
+package cpu
 
 import mediator.Component
 import mediator.Mediator

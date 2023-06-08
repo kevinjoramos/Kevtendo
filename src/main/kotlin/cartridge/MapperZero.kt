@@ -1,8 +1,6 @@
-package Cartridge
+package cartridge
 
 import mediator.Mediator
-import util.to2DigitHexString
-import util.to4DigitHexString
 
 @ExperimentalUnsignedTypes
 class MapperZero(private val cartridge: Cartridge, bus: Mediator) : Mapper(cartridge, bus) {

@@ -1,6 +1,6 @@
 package debugger
 
-import CPU.CPUState
+import cpu.CPUState
 import mediator.Component
 import mediator.Mediator
 

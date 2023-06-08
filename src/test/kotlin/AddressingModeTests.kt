@@ -1,7 +1,6 @@
-import Bus.Bus
-import Bus.TestBus
-import CPU.CPU6502
-import PPU.PPU2C02
+import bus.Bus
+import bus.TestBus
+import cpu.CPU6502
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

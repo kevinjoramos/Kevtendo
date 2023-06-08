@@ -1,13 +1,11 @@
-package Bus
+package bus
 
-import CPU.CPU6502
-import Cartridge.Cartridge
-import Cartridge.Mapper
-import Cartridge.MapperZero
-import PPU.PPU2C02
+import cpu.CPU6502
+import cartridge.Cartridge
+import cartridge.MapperZero
+import ppu.PPU2C02
 import mediator.Event
 import mediator.Mediator
-import util.Logger
 
 /**
  * The connection to all other pieces of the system.

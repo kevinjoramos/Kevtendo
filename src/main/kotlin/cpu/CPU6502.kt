@@ -20,13 +20,13 @@ class CPU6502(override var bus: Mediator) : Component {
      * 6502 Architecture components
      */
     var programCounter: UShort = 0xC000u
-    var stackPointer: UShort = 0x01FDu
-        set(value: UShort) { field = (0x0100u).toUShort() or value }
+    var stackPointer: UShort = 0x0000u
+        set(value: UShort) { field = (0x0100u).toUShort() or value.toUByte().toUShort() }
 
     var accumulator: UByte = 0x00u
     var xRegister: UByte = 0x00u
     var yRegister: UByte = 0x00u
-    var statusRegister: UByte = 0x24u
+    var statusRegister: UByte = 0x34u
 
     var negativeFlag: Boolean
         get() = getFlagValue(NEGATIVE_BITMASK)
@@ -247,6 +247,10 @@ class CPU6502(override var bus: Mediator) : Component {
         (0xFDu).toUByte() to Pair(AddressingMode.ABS_X, SBC()),
         (0xFEu).toUByte() to Pair(AddressingMode.ABS_X, INC()),
     )
+
+    init {
+        reset()
+    }
 
     fun run() {
 
@@ -1888,6 +1892,9 @@ class CPU6502(override var bus: Mediator) : Component {
      * load the vector at 0xFFFC and 0xFFFD into PC
      */
     fun reset() {
+        stackPointer--
+        stackPointer--
+        stackPointer--
         val vectorLeastSignificantByte = readAddress(0xFFFCu)
         val vectorMostSignificantByte = readAddress(0xFFFDu)
         programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())

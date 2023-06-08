@@ -95,6 +95,9 @@ class Bus(cartridgePath: String, ramSize: Int) : Mediator {
 
     }
 
+    fun reset() {
+        cpu.reset()
+    }
 
     fun clearRam() {
         val size = this.ram.size

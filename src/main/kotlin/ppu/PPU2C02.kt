@@ -1,51 +1,14 @@
 package ppu
 
+import androidx.compose.ui.graphics.Color
 import mediator.Component
 import mediator.Mediator
 
 @ExperimentalUnsignedTypes
 class PPU2C02(override var bus: Mediator) : Component {
 
-    /**
-     * Control Register
-     */
+    val controllerRegister = ControllerRegister()
 
-    private var controlRegister: UByte = 0x00u
-    val baseNameTableAddress: UShort
-        get() {
-            return when (controlRegister and 0x03u) {
-                (0u).toUByte() -> 0x2000u
-                (1u).toUByte() -> 0x2400u
-                (2u).toUByte() -> 0x2800u
-                else -> 0x2C00u
-            }
-        }
-
-    val vramIncrement: Int
-        get() = if (controlRegister and (0x04u).toUByte() == (0x04u).toUByte()) 32 else 1
-
-    val spritePatternTableAddress8x8: UShort
-        get() = if (controlRegister and (0x08).toUByte() == (0x80u).toUByte()) 0x1000u else 0x0000u
-
-    val backgroundPatternTableAddress: UShort
-        get() = if (controlRegister and (0x10).toUByte() == (0x10u).toUByte()) 0x1000u else 0x0000u
-
-    val spriteSize: SpriteSize
-        get() = if (controlRegister and (0x20).toUByte() == (0x10u).toUByte())
-            SpriteSize.EIGHT_X_SIXTEEN else SpriteSize.EIGHT_X_EIGHT
-    enum class SpriteSize {
-        EIGHT_X_EIGHT, EIGHT_X_SIXTEEN
-    }
-
-    val masterSlaveSelect: Boolean
-        get() = controlRegister and (0x40).toUByte() == (0x40u).toUByte()
-
-    val generateNMIAtStartVBlank: Boolean
-        get() = controlRegister and (0x80).toUByte() == (0x80u).toUByte()
-
-    fun writeToControlRegister(data: UByte) {
-        controlRegister = data
-    }
 
     /**
      * Mask Register
@@ -167,10 +130,84 @@ class PPU2C02(override var bus: Mediator) : Component {
 
     var oamDMARegister: UByte = 0x00u
 
-    val patternTable: UByteArray = UByteArray(8192)
-    val nameTable: UByteArray = UByteArray(2048)
-    val paletteTable: UByteArray = UByteArray(32)
-    val objectAttributeMemory: UByteArray = UByteArray(256)
+    private val nameTable: UByteArray = UByteArray(NAMETABLE_MEMORY_SIZE)
+    private val objectAttributeMemory: UByteArray = UByteArray(OAM_MEMORY_SIZE)
+    private val paletteTable = UByteArray(PALETTE_TABLE_MEMORY_SIZE)
+
+    companion object {
+        const val NAMETABLE_MEMORY_SIZE = 0x2000
+        const val OAM_MEMORY_SIZE = 0x100
+        const val PALETTE_TABLE_MEMORY_SIZE = 0x20
+
+        val colorLookUpTable = listOf(
+            Color(0x626262),
+            Color(0x0D226B),
+            Color(0x241476),
+            Color(0x3B0A6B),
+            Color(0x4C074D),
+            Color(0x520C24),
+            Color(0x4C1700),
+            Color(0x3B2600),
+            Color(0x243400),
+            Color(0x0D3D00),
+            Color(0x004000),
+            Color(0x003B24),
+            Color(0x00304D),
+            Color(0x000000),
+            Color(0x000000),
+            Color(0x000000),
+            Color(0xABABAB),
+            Color(0x3156B1),
+            Color(0x5043C5),
+            Color(0x7034BB),
+            Color(0x892F95),
+            Color(0x94345F),
+            Color(0x8E4226),
+            Color(0x795500),
+            Color(0x5B6800),
+            Color(0x3B7700),
+            Color(0x227C15),
+            Color(0x17774C),
+            Color(0x1D6985),
+            Color(0x000000),
+            Color(0x000000),
+            Color(0x000000),
+            Color(0xFFFFFF),
+            Color(0x7CAAFF),
+            Color(0x9B96FF),
+            Color(0xBD86FF),
+            Color(0xD87EF1),
+            Color(0xE682BA),
+            Color(0xE38F7F),
+            Color(0xD0A24E),
+            Color(0xB2B734),
+            Color(0x90C739),
+            Color(0x74CE5C),
+            Color(0x66CB92),
+            Color(0x69BECE),
+            Color(0x4E4E4E),
+            Color(0x000000),
+            Color(0x000000),
+            Color(0x000000),
+            Color(0xFFFFFF),
+            Color(0xC9DEFC),
+            Color(0xD5D6FF),
+            Color(0xE2CFFF),
+            Color(0xEECCFC),
+            Color(0xF5CCE7),
+            Color(0xF5D1CF),
+            Color(0xEED8BB),
+            Color(0xE2E1AE),
+            Color(0xD5E8AE),
+            Color(0xC9EBBB),
+            Color(0xC2EBCF),
+            Color(0xC2E6E7),
+            Color(0xB8B8B8),
+            Color(0x000000),
+            Color(0x000000)
+        )
+
+    }
 
 
 }

@@ -7,10 +7,12 @@ import mediator.Mediator
 @ExperimentalUnsignedTypes
 class PPU2C02(override var bus: Mediator) : Component {
 
+    var ioBusLatch = 0u
+
     private val controllerRegister = ControllerRegister()
     private val maskRegister = MaskRegister()
     private val statusRegister = StatusRegister()
-    private val objectAttributeMemoryAddressRegister = ObjectAttributeMemoryAddressRegister()
+    private val objectAttributeMemoryAddressRegister: UInt = 0u
     private val objectAttributeMemoryDataRegister = ObjectAttributeMemoryDataRegister()
     private val scrollRegister = ScrollRegister()
     private val addressRegister = AddressRegister()
@@ -19,8 +21,16 @@ class PPU2C02(override var bus: Mediator) : Component {
 
     private val nameTableMirroringState = NameTableMirroring.HORIZONTAL
 
+    fun readControllerRegister(): UInt {
+        return 0u
+    }
+
     fun writeToControllerRegister(data: UInt) {
         controllerRegister.value = data
+    }
+
+    fun readMaskRegister(): UInt {
+        return 0u
     }
 
     fun writeToMaskRegister(data: UInt) {
@@ -34,29 +44,16 @@ class PPU2C02(override var bus: Mediator) : Component {
         return value
     }
 
+    fun writeToStatusRegister(data: UInt){
+
+    }
+
+    fun readAddressRegister(): UInt {
+        return 0u
+    }
+
     fun writeToAddressRegister(data: UInt) {
-        dataRegister = data
-
-        when (val address = addressRegister.readAddressFromLatch()) {
-            in PATTERN_TABLE_ADDRESS_RANGE -> {
-                writeToAddress((address + 0x6000u).toUShort(), data.toUByte())
-            }
-            in NAME_TABLE_ADDRESS_RANGE -> {
-                val nameTableAddress = computeNameTableAddress(address)
-                nameTable[nameTableAddress.toInt()] = data.toUByte()
-            }
-            in NAME_TABLE_MIRROR_ADDRESS_RANGE -> {
-                val nameTableAddress = computeNameTableAddress(address - MIRROR_OFFSET_FROM_NAMETABLE)
-                nameTable[nameTableAddress.toInt()] = data.toUByte()
-            }
-            in PALETTE_TABLE_ADDRESS_RANGE -> {
-                val paletteAddress = (address - PALETTE_TABLE_ADDRESS_OFFSET)
-                    .mod(PALETTE_TABLE_MEMORY_SIZE.toUInt()).toInt()
-
-                paletteTable[paletteAddress] = data.toUByte()
-            }
-        }
-        addressRegister.incrementAddressLatch(controllerRegister.vRamAddressIncrement)
+        addressRegister.writeToAddressLatch(data)
     }
 
     fun readDataRegister(): UInt {
@@ -86,6 +83,31 @@ class PPU2C02(override var bus: Mediator) : Component {
 
         addressRegister.incrementAddressLatch(controllerRegister.vRamAddressIncrement)
         return data
+    }
+
+    fun writeToDataRegister(data: UInt) {
+        dataRegister = data
+
+        when (val address = addressRegister.readAddressFromLatch()) {
+            in PATTERN_TABLE_ADDRESS_RANGE -> {
+                writeToAddress((address + 0x6000u).toUShort(), data.toUByte())
+            }
+            in NAME_TABLE_ADDRESS_RANGE -> {
+                val nameTableAddress = computeNameTableAddress(address)
+                nameTable[nameTableAddress.toInt()] = data.toUByte()
+            }
+            in NAME_TABLE_MIRROR_ADDRESS_RANGE -> {
+                val nameTableAddress = computeNameTableAddress(address - MIRROR_OFFSET_FROM_NAMETABLE)
+                nameTable[nameTableAddress.toInt()] = data.toUByte()
+            }
+            in PALETTE_TABLE_ADDRESS_RANGE -> {
+                val paletteAddress = (address - PALETTE_TABLE_ADDRESS_OFFSET)
+                    .mod(PALETTE_TABLE_MEMORY_SIZE.toUInt()).toInt()
+
+                paletteTable[paletteAddress] = data.toUByte()
+            }
+        }
+        addressRegister.incrementAddressLatch(controllerRegister.vRamAddressIncrement)
     }
 
     private fun computeNameTableAddress(unmappedAddress: UInt): UInt {
@@ -126,8 +148,35 @@ class PPU2C02(override var bus: Mediator) : Component {
         }
     }
 
+    fun readObjectAttributeMemoryAddressRegister(): UInt {
+        return 0u
+    }
 
-    fun writeToDataRegister(data: UInt) {
+    fun writeToObjectAttributeMemoryAddressRegister(data: UInt) {
+
+    }
+
+    fun readObjectAttributeMemoryDataRegister(): UInt {
+        return 0u
+    }
+
+    fun writeToObjectAttributeMemoryDataRegister(data: UInt) {
+
+    }
+
+    fun readScrollRegister(): UInt {
+        return 0u
+    }
+
+    fun writeToScrollRegister(data: UInt) {
+
+    }
+
+    fun readObjectAttributeMemoryDirectMemoryAccessRegister(): UInt {
+        return 0u
+    }
+
+    fun writeToObjectAttributeMemoryDirectMemoryAccessRegister(data: UInt) {
 
     }
 

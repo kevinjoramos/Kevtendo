@@ -31,7 +31,7 @@ class Bus(cartridgePath: String, ramSize: Int) : Mediator {
             val ppuRegisterAddress = (address.mod(0x0008u) + 0x2000u).toUShort()
             when (ppuRegisterAddress) {
                 (0x2002u).toUShort() -> return ppu.readStatusRegister()
-                (0x2003u).toUShort() -> return ppu.oamAddressRegister
+                (0x2003u).toUShort() -> return 0u
                 (0x2004u).toUShort() -> return ppu.oamDataRegister
                 (0x2005u).toUShort() -> return ppu.scrollRegister
                 (0x2007u).toUShort() -> return ppu.readDataRegister()

@@ -7,8 +7,8 @@ package ppu
  * TODO "After power/reset, writes to this register are ignored for about 30,000 cycles."
  */
 class ControllerRegister {
-    private val value = 0x00u
 
+    var value = 0x00u
 
     /**
      * Base nametable address

@@ -1,0 +1,5 @@
+package ppu
+
+class ObjectAttributeMemoryAddressRegister {
+
+}

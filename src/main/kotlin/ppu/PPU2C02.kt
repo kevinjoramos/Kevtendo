@@ -14,8 +14,10 @@ class PPU2C02(override var bus: Mediator) : Component {
     private val objectAttributeMemoryDataRegister = ObjectAttributeMemoryDataRegister()
     private val scrollRegister = ScrollRegister()
     private val addressRegister = AddressRegister()
-    private val dataRegister: UInt = 0u
+    private var dataRegister: UInt = 0u
     private val objectAttributeMemoryDirectMemoryAccess = ObjectAttributeMemoryDirectMemoryAccess()
+
+    private val nameTableMirroringState = NameTableMirroring.HORIZONTAL
 
     fun writeToControllerRegister(data: UInt) {
         controllerRegister.value = data
@@ -33,12 +35,97 @@ class PPU2C02(override var bus: Mediator) : Component {
     }
 
     fun writeToAddressRegister(data: UInt) {
-        addressRegister.writeToAddressLatch(data)
+        dataRegister = data
+
+        when (val address = addressRegister.readAddressFromLatch()) {
+            in PATTERN_TABLE_ADDRESS_RANGE -> {
+                writeToAddress((address + 0x6000u).toUShort(), data.toUByte())
+            }
+            in NAME_TABLE_ADDRESS_RANGE -> {
+                val nameTableAddress = computeNameTableAddress(address)
+                nameTable[nameTableAddress.toInt()] = data.toUByte()
+            }
+            in NAME_TABLE_MIRROR_ADDRESS_RANGE -> {
+                val nameTableAddress = computeNameTableAddress(address - MIRROR_OFFSET_FROM_NAMETABLE)
+                nameTable[nameTableAddress.toInt()] = data.toUByte()
+            }
+            in PALETTE_TABLE_ADDRESS_RANGE -> {
+                val paletteAddress = (address - PALETTE_TABLE_ADDRESS_OFFSET)
+                    .mod(PALETTE_TABLE_MEMORY_SIZE.toUInt()).toInt()
+
+                paletteTable[paletteAddress] = data.toUByte()
+            }
+        }
+        addressRegister.incrementAddressLatch(controllerRegister.vRamAddressIncrement)
     }
 
     fun readDataRegister(): UInt {
-        return 0u
+
+        var data = dataRegister
+
+        when (val address = addressRegister.readAddressFromLatch()) {
+            in PATTERN_TABLE_ADDRESS_RANGE -> {
+                dataRegister = readAddress((address + 0x6000u).toUShort()).toUInt()
+            }
+            in NAME_TABLE_ADDRESS_RANGE -> {
+                val nameTableAddress = computeNameTableAddress(address)
+                dataRegister = nameTable[nameTableAddress.toInt()].toUInt()
+            }
+            in NAME_TABLE_MIRROR_ADDRESS_RANGE -> {
+                val nameTableAddress = computeNameTableAddress(address - MIRROR_OFFSET_FROM_NAMETABLE)
+                dataRegister = nameTable[nameTableAddress.toInt()].toUInt()
+            }
+            in PALETTE_TABLE_ADDRESS_RANGE -> {
+                val paletteAddress = (address - PALETTE_TABLE_ADDRESS_OFFSET)
+                    .mod(PALETTE_TABLE_MEMORY_SIZE.toUInt()).toInt()
+
+                dataRegister = paletteTable[paletteAddress].toUInt()
+                data = dataRegister
+            }
+        }
+
+        addressRegister.incrementAddressLatch(controllerRegister.vRamAddressIncrement)
+        return data
     }
+
+    private fun computeNameTableAddress(unmappedAddress: UInt): UInt {
+
+        return when (nameTableMirroringState) {
+            NameTableMirroring.HORIZONTAL -> {
+                when (unmappedAddress) {
+                    in NAME_TABLE_0_ADDRESS_RANGE -> {
+                        unmappedAddress - 0x2000u
+                    }
+                    in NAME_TABLE_1_ADDRESS_RANGE -> {
+                        unmappedAddress - 0x2400u
+                    }
+                    in NAME_TABLE_2_ADDRESS_RANGE -> {
+                        (unmappedAddress - 0x2800u) + 0x400u
+                    }
+                    else -> {
+                        (unmappedAddress - 0x2C00u) + 0x400u
+                    }
+                }
+            }
+            NameTableMirroring.VERTICAL -> {
+                when (unmappedAddress) {
+                    in NAME_TABLE_0_ADDRESS_RANGE -> {
+                        unmappedAddress - NAME_TABLE_1_ADDRESS_OFFSET
+                    }
+                    in NAME_TABLE_1_ADDRESS_RANGE -> {
+                        (unmappedAddress - 0x2400u) + 0x400u
+                    }
+                    in NAME_TABLE_2_ADDRESS_RANGE -> {
+                        unmappedAddress - 0x2800u
+                    }
+                    else -> {
+                        (unmappedAddress - 0x2C00u) + 0x400u
+                    }
+                }
+            }
+        }
+    }
+
 
     fun writeToDataRegister(data: UInt) {
 
@@ -49,9 +136,29 @@ class PPU2C02(override var bus: Mediator) : Component {
     private val paletteTable = UByteArray(PALETTE_TABLE_MEMORY_SIZE)
 
     companion object {
-        const val NAMETABLE_MEMORY_SIZE = 0x2000
+        const val NAMETABLE_MEMORY_SIZE = 0x800
         const val OAM_MEMORY_SIZE = 0x100
         const val PALETTE_TABLE_MEMORY_SIZE = 0x20
+
+        private val PATTERN_TABLE_ADDRESS_RANGE = 0x0000u..0x1FFFu
+        private val NAME_TABLE_ADDRESS_RANGE = 0x2000u..0x2FFFu
+        private val NAME_TABLE_MIRROR_ADDRESS_RANGE = 0x3000u..0x3EFFu
+        private val PALETTE_TABLE_ADDRESS_RANGE =  0x3F00u..0x3FFFu
+        private val NAME_TABLE_0_ADDRESS_RANGE = 0x2000u..0x23FFu
+        private val NAME_TABLE_1_ADDRESS_RANGE = 0x2400u..0x27FFu
+        private val NAME_TABLE_2_ADDRESS_RANGE = 0x2800u..0x2BFFu
+        private val NAME_TABLE_3_ADDRESS_RANGE = 0x2C00u..0x2FFFu
+
+        private val NAME_TABLE_1_ADDRESS_OFFSET = 0x2000u
+        private val MIRROR_OFFSET_FROM_NAMETABLE = 0x1000u
+        private val EXTRA_NAME_TABLE_1_ADDRESS_OFFSET = 0x3000
+        private val PALETTE_TABLE_ADDRESS_OFFSET = 0x3F00u
+
+        enum class NameTableMirroring {
+            HORIZONTAL,
+            VERTICAL
+        }
+
 
         val colorLookUpTable = listOf(
             Color(0x626262),

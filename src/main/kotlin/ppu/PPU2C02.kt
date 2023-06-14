@@ -21,6 +21,10 @@ class PPU2C02(override var bus: Mediator) : Component {
 
     private val nameTableMirroringState = NameTableMirroring.HORIZONTAL
 
+    fun run() {
+        TODO("RENDER A PIXEL!!!!")
+    }
+
     fun readControllerRegister(): UInt {
         return 0u
     }

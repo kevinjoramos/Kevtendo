@@ -75,177 +75,162 @@ class CPU6502(override var bus: Mediator) : Component {
     private var targetAddress: UShort? = null
     private var immediateOperand: UByte? = null
 
-
+    private var cycleCount: Int = 0
 
     val interruptSignalTriage: List<() -> Unit> = mutableListOf()
 
-    private val opcodeTable: Map<UByte, Pair<AddressingMode, Operation>> = mapOf(
-        (0x00u).toUByte() to Pair(AddressingMode.IMP, BRK()),
-        (0x01u).toUByte() to Pair(AddressingMode.X_IND, ORA()),
-        (0x05u).toUByte() to Pair(AddressingMode.ZPG, ORA()),
-        (0x06u).toUByte() to Pair(AddressingMode.ZPG, ASL()),
-        (0x08u).toUByte() to Pair(AddressingMode.IMP, PHP()),
-        (0x09u).toUByte() to Pair(AddressingMode.IMM, ORA()),
-        (0x0Au).toUByte() to Pair(AddressingMode.A, ASL()),
-        (0x0Du).toUByte() to Pair(AddressingMode.ABS, ORA()),
-        (0x0Eu).toUByte() to Pair(AddressingMode.ABS, ASL()),
-
-        (0x10u).toUByte() to Pair(AddressingMode.REL, BPL()),
-        (0x11u).toUByte() to Pair(AddressingMode.IND_Y, ORA()),
-        (0x15u).toUByte() to Pair(AddressingMode.ZPG_X, ORA()),
-        (0x16u).toUByte() to Pair(AddressingMode.ZPG_X, ASL()),
-        (0x18u).toUByte() to Pair(AddressingMode.IMP, CLC()),
-        (0x19u).toUByte() to Pair(AddressingMode.ABS_Y, ORA()),
-        (0x1Du).toUByte() to Pair(AddressingMode.ABS_X, ORA()),
-        (0x1Eu).toUByte() to Pair(AddressingMode.ABS_X, ASL()),
-
-        (0x20u).toUByte() to Pair(AddressingMode.ABS, JSR()),
-        (0x21u).toUByte() to Pair(AddressingMode.X_IND, AND()),
-        (0x24u).toUByte() to Pair(AddressingMode.ZPG, BIT()),
-        (0x25u).toUByte() to Pair(AddressingMode.ZPG, AND()),
-        (0x26u).toUByte() to Pair(AddressingMode.ZPG, ROL()),
-        (0x28u).toUByte() to Pair(AddressingMode.IMP, PLP()),
-        (0x29u).toUByte() to Pair(AddressingMode.IMM, AND()),
-        (0x2Au).toUByte() to Pair(AddressingMode.A, ROL()),
-        (0x2Cu).toUByte() to Pair(AddressingMode.ABS, BIT()),
-        (0x2Du).toUByte() to Pair(AddressingMode.ABS, AND()),
-        (0x2Eu).toUByte() to Pair(AddressingMode.ABS, ROL()),
-
-        (0x30u).toUByte() to Pair(AddressingMode.REL, BMI()),
-        (0x31u).toUByte() to Pair(AddressingMode.IND_Y, AND()),
-        (0x35u).toUByte() to Pair(AddressingMode.ZPG_X, AND()),
-        (0x36u).toUByte() to Pair(AddressingMode.ZPG_X, ROL()),
-        (0x38u).toUByte() to Pair(AddressingMode.IMP, SEC()),
-        (0x39u).toUByte() to Pair(AddressingMode.ABS_Y, AND()),
-        (0x3Du).toUByte() to Pair(AddressingMode.ABS_X, AND()),
-        (0x3Eu).toUByte() to Pair(AddressingMode.ABS_X, ROL()),
-
-        (0x40u).toUByte() to Pair(AddressingMode.IMP, RTI()),
-        (0x41u).toUByte() to Pair(AddressingMode.X_IND, EOR()),
-        (0x45u).toUByte() to Pair(AddressingMode.ZPG, EOR()),
-        (0x46u).toUByte() to Pair(AddressingMode.ZPG, LSR()),
-        (0x48u).toUByte() to Pair(AddressingMode.IMP, PHA()),
-        (0x49u).toUByte() to Pair(AddressingMode.IMM, EOR()),
-        (0x4Au).toUByte() to Pair(AddressingMode.A, LSR()),
-        (0x4Cu).toUByte() to Pair(AddressingMode.ABS, JMP()),
-        (0x4Du).toUByte() to Pair(AddressingMode.ABS, EOR()),
-        (0x4Eu).toUByte() to Pair(AddressingMode.ABS, LSR()),
-
-        (0x50u).toUByte() to Pair(AddressingMode.REL, BVC()),
-        (0x51u).toUByte() to Pair(AddressingMode.IND_Y, EOR()),
-        (0x55u).toUByte() to Pair(AddressingMode.ZPG_X, EOR()),
-        (0x56u).toUByte() to Pair(AddressingMode.ZPG_X, LSR()),
-        (0x58u).toUByte() to Pair(AddressingMode.IMP, CLI()),
-        (0x59u).toUByte() to Pair(AddressingMode.ABS_Y, EOR()),
-        (0x5Du).toUByte() to Pair(AddressingMode.ABS_X, EOR()),
-        (0x5Eu).toUByte() to Pair(AddressingMode.ABS_X, LSR()),
-
-        (0x60u).toUByte() to Pair(AddressingMode.IMP, RTS()),
-        (0x61u).toUByte() to Pair(AddressingMode.X_IND, ADC()),
-        (0x65u).toUByte() to Pair(AddressingMode.ZPG, ADC()),
-        (0x66u).toUByte() to Pair(AddressingMode.ZPG, ROR()),
-        (0x68u).toUByte() to Pair(AddressingMode.IMP, PLA()),
-        (0x69u).toUByte() to Pair(AddressingMode.IMM, ADC()),
-        (0x6Au).toUByte() to Pair(AddressingMode.A, ROR()),
-        (0x6Cu).toUByte() to Pair(AddressingMode.IND, JMP()),
-        (0x6Du).toUByte() to Pair(AddressingMode.ABS, ADC()),
-        (0x6Eu).toUByte() to Pair(AddressingMode.ABS, ROR()),
-
-        (0x70u).toUByte() to Pair(AddressingMode.REL, BVS()),
-        (0x71u).toUByte() to Pair(AddressingMode.IND_Y, ADC()),
-        (0x75u).toUByte() to Pair(AddressingMode.ZPG_X, ADC()),
-        (0x76u).toUByte() to Pair(AddressingMode.ZPG_X, ROR()),
-        (0x78u).toUByte() to Pair(AddressingMode.IMP, SEI()),
-        (0x79u).toUByte() to Pair(AddressingMode.ABS_Y, ADC()),
-        (0x7Du).toUByte() to Pair(AddressingMode.ABS_X, ADC()),
-        (0x7Eu).toUByte() to Pair(AddressingMode.ABS_X, ROR()),
-
-        (0x81u).toUByte() to Pair(AddressingMode.X_IND, STA()),
-        (0x84u).toUByte() to Pair(AddressingMode.ZPG, STY()),
-        (0x85u).toUByte() to Pair(AddressingMode.ZPG, STA()),
-        (0x86u).toUByte() to Pair(AddressingMode.ZPG, STX()),
-        (0x88u).toUByte() to Pair(AddressingMode.IMP, DEY()),
-        (0x8Au).toUByte() to Pair(AddressingMode.IMP, TXA()),
-        (0x8Cu).toUByte() to Pair(AddressingMode.ABS, STY()),
-        (0x8Du).toUByte() to Pair(AddressingMode.ABS, STA()),
-        (0x8Eu).toUByte() to Pair(AddressingMode.ABS, STX()),
-
-        (0x90u).toUByte() to Pair(AddressingMode.REL, BCC()),
-        (0x91u).toUByte() to Pair(AddressingMode.IND_Y, STA()),
-        (0x94u).toUByte() to Pair(AddressingMode.ZPG_X, STY()),
-        (0x95u).toUByte() to Pair(AddressingMode.ZPG_X, STA()),
-        (0x96u).toUByte() to Pair(AddressingMode.ZPG_Y, STX()),
-        (0x98u).toUByte() to Pair(AddressingMode.IMP, TYA()),
-        (0x99u).toUByte() to Pair(AddressingMode.ABS_Y, STA()),
-        (0x9Au).toUByte() to Pair(AddressingMode.IMP, TXS()),
-        (0x9Du).toUByte() to Pair(AddressingMode.ABS_X, STA()),
-
-        (0xA0u).toUByte() to Pair(AddressingMode.IMM, LDY()),
-        (0xA1u).toUByte() to Pair(AddressingMode.X_IND, LDA()),
-        (0xA2u).toUByte() to Pair(AddressingMode.IMM, LDX()),
-        (0xA4u).toUByte() to Pair(AddressingMode.ZPG, LDY()),
-        (0xA5u).toUByte() to Pair(AddressingMode.ZPG, LDA()),
-        (0xA6u).toUByte() to Pair(AddressingMode.ZPG, LDX()),
-        (0xA8u).toUByte() to Pair(AddressingMode.IMP, TAY()),
-        (0xA9u).toUByte() to Pair(AddressingMode.IMM, LDA()),
-        (0xAAu).toUByte() to Pair(AddressingMode.IMP, TAX()),
-        (0xACu).toUByte() to Pair(AddressingMode.ABS, LDY()),
-        (0xADu).toUByte() to Pair(AddressingMode.ABS, LDA()),
-        (0xAEu).toUByte() to Pair(AddressingMode.ABS, LDX()),
-
-        (0xB0u).toUByte() to Pair(AddressingMode.REL, BCS()),
-        (0xB1u).toUByte() to Pair(AddressingMode.IND_Y, LDA()),
-        (0xB4u).toUByte() to Pair(AddressingMode.ZPG_X, LDY()),
-        (0xB5u).toUByte() to Pair(AddressingMode.ZPG_X, LDA()),
-        (0xB6u).toUByte() to Pair(AddressingMode.ZPG_Y, LDX()),
-        (0xB8u).toUByte() to Pair(AddressingMode.IMP, CLV()),
-        (0xB9u).toUByte() to Pair(AddressingMode.ABS_Y, LDA()),
-        (0xBAu).toUByte() to Pair(AddressingMode.IMP, TSX()),
-        (0xBCu).toUByte() to Pair(AddressingMode.ABS_X, LDY()),
-        (0xBDu).toUByte() to Pair(AddressingMode.ABS_X, LDA()),
-        (0xBEu).toUByte() to Pair(AddressingMode.ABS_Y, LDX()),
-
-        (0xC0u).toUByte() to Pair(AddressingMode.IMM, CPY()),
-        (0xC1u).toUByte() to Pair(AddressingMode.X_IND, CMP()),
-        (0xC4u).toUByte() to Pair(AddressingMode.ZPG, CPY()),
-        (0xC5u).toUByte() to Pair(AddressingMode.ZPG, CMP()),
-        (0xC6u).toUByte() to Pair(AddressingMode.ZPG, DEC()),
-        (0xC8u).toUByte() to Pair(AddressingMode.IMP, INY()),
-        (0xC9u).toUByte() to Pair(AddressingMode.IMM, CMP()),
-        (0xCAu).toUByte() to Pair(AddressingMode.IMP, DEX()),
-        (0xCCu).toUByte() to Pair(AddressingMode.ABS, CPY()),
-        (0xCDu).toUByte() to Pair(AddressingMode.ABS, CMP()),
-        (0xCEu).toUByte() to Pair(AddressingMode.ABS, DEC()),
-
-        (0xD0u).toUByte() to Pair(AddressingMode.REL, BNE()),
-        (0xD1u).toUByte() to Pair(AddressingMode.IND_Y, CMP()),
-        (0xD5u).toUByte() to Pair(AddressingMode.ZPG_X, CMP()),
-        (0xD6u).toUByte() to Pair(AddressingMode.ZPG_X, DEC()),
-        (0xD8u).toUByte() to Pair(AddressingMode.IMP, CLD()),
-        (0xD9u).toUByte() to Pair(AddressingMode.ABS_Y, CMP()),
-        (0xDDu).toUByte() to Pair(AddressingMode.ABS_X, CMP()),
-        (0xDEu).toUByte() to Pair(AddressingMode.ABS_X, DEC()),
-
-        (0xE0u).toUByte() to Pair(AddressingMode.IMM, CPX()),
-        (0xE1u).toUByte() to Pair(AddressingMode.X_IND, SBC()),
-        (0xE4u).toUByte() to Pair(AddressingMode.ZPG, CPX()),
-        (0xE5u).toUByte() to Pair(AddressingMode.ZPG, SBC()),
-        (0xE6u).toUByte() to Pair(AddressingMode.ZPG, INC()),
-        (0xE8u).toUByte() to Pair(AddressingMode.IMP, INX()),
-        (0xE9u).toUByte() to Pair(AddressingMode.IMM, SBC()),
-        (0xEAu).toUByte() to Pair(AddressingMode.IMP, NOP()),
-        (0xECu).toUByte() to Pair(AddressingMode.ABS, CPX()),
-        (0xEDu).toUByte() to Pair(AddressingMode.ABS, SBC()),
-        (0xEEu).toUByte() to Pair(AddressingMode.ABS, INC()),
-
-        (0xF0u).toUByte() to Pair(AddressingMode.REL, BEQ()),
-        (0xF1u).toUByte() to Pair(AddressingMode.IND_Y, SBC()),
-        (0xF5u).toUByte() to Pair(AddressingMode.ZPG_X, SBC()),
-        (0xF6u).toUByte() to Pair(AddressingMode.ZPG_X, INC()),
-        (0xF8u).toUByte() to Pair(AddressingMode.IMP, SED()),
-        (0xF9u).toUByte() to Pair(AddressingMode.ABS_Y, SBC()),
-        (0xFDu).toUByte() to Pair(AddressingMode.ABS_X, SBC()),
-        (0xFEu).toUByte() to Pair(AddressingMode.ABS_X, INC()),
+    private val opcodeTable: Map<UByte, Triple<AddressingMode, Operation, Int?>> = mapOf(
+        (0x00u).toUByte() to Triple(AddressingMode.IMP, BRK(), 7),
+        (0x01u).toUByte() to Triple(AddressingMode.X_IND, ORA(), null),
+        (0x05u).toUByte() to Triple(AddressingMode.ZPG, ORA(), null),
+        (0x06u).toUByte() to Triple(AddressingMode.ZPG, ASL(), null),
+        (0x08u).toUByte() to Triple(AddressingMode.IMP, PHP(), 3),
+        (0x09u).toUByte() to Triple(AddressingMode.IMM, ORA(), null),
+        (0x0Au).toUByte() to Triple(AddressingMode.A, ASL(), null),
+        (0x0Du).toUByte() to Triple(AddressingMode.ABS, ORA(), null),
+        (0x0Eu).toUByte() to Triple(AddressingMode.ABS, ASL(), null),
+        (0x10u).toUByte() to Triple(AddressingMode.REL, BPL(), null),
+        (0x11u).toUByte() to Triple(AddressingMode.IND_Y, ORA(), null),
+        (0x15u).toUByte() to Triple(AddressingMode.ZPG_X, ORA(), null),
+        (0x16u).toUByte() to Triple(AddressingMode.ZPG_X, ASL(), null),
+        (0x18u).toUByte() to Triple(AddressingMode.IMP, CLC(), null),
+        (0x19u).toUByte() to Triple(AddressingMode.ABS_Y, ORA(), null),
+        (0x1Du).toUByte() to Triple(AddressingMode.ABS_X, ORA(), null),
+        (0x1Eu).toUByte() to Triple(AddressingMode.ABS_X, ASL(), null),
+        (0x20u).toUByte() to Triple(AddressingMode.ABS, JSR(), null),
+        (0x21u).toUByte() to Triple(AddressingMode.X_IND, AND(), 6),
+        (0x24u).toUByte() to Triple(AddressingMode.ZPG, BIT(), null),
+        (0x25u).toUByte() to Triple(AddressingMode.ZPG, AND(), 3),
+        (0x26u).toUByte() to Triple(AddressingMode.ZPG, ROL(), 5),
+        (0x28u).toUByte() to Triple(AddressingMode.IMP, PLP(), 4),
+        (0x29u).toUByte() to Triple(AddressingMode.IMM, AND(), 2),
+        (0x2Au).toUByte() to Triple(AddressingMode.A, ROL(), 2),
+        (0x2Cu).toUByte() to Triple(AddressingMode.ABS, BIT(), null),
+        (0x2Du).toUByte() to Triple(AddressingMode.ABS, AND(), 4),
+        (0x2Eu).toUByte() to Triple(AddressingMode.ABS, ROL(), 6),
+        (0x30u).toUByte() to Triple(AddressingMode.REL, BMI(), null),
+        (0x31u).toUByte() to Triple(AddressingMode.IND_Y, AND(), null),
+        (0x35u).toUByte() to Triple(AddressingMode.ZPG_X, AND(), 4),
+        (0x36u).toUByte() to Triple(AddressingMode.ZPG_X, ROL(), 6),
+        (0x38u).toUByte() to Triple(AddressingMode.IMP, SEC(), 2),
+        (0x39u).toUByte() to Triple(AddressingMode.ABS_Y, AND(), null),
+        (0x3Du).toUByte() to Triple(AddressingMode.ABS_X, AND(), null),
+        (0x3Eu).toUByte() to Triple(AddressingMode.ABS_X, ROL(), 7),
+        (0x40u).toUByte() to Triple(AddressingMode.IMP, RTI(), 6),
+        (0x41u).toUByte() to Triple(AddressingMode.X_IND, EOR(), null),
+        (0x45u).toUByte() to Triple(AddressingMode.ZPG, EOR(), null),
+        (0x46u).toUByte() to Triple(AddressingMode.ZPG, LSR(), null),
+        (0x48u).toUByte() to Triple(AddressingMode.IMP, PHA(), 3),
+        (0x49u).toUByte() to Triple(AddressingMode.IMM, EOR(), null),
+        (0x4Au).toUByte() to Triple(AddressingMode.A, LSR(), null),
+        (0x4Cu).toUByte() to Triple(AddressingMode.ABS, JMP(), null),
+        (0x4Du).toUByte() to Triple(AddressingMode.ABS, EOR(), null),
+        (0x4Eu).toUByte() to Triple(AddressingMode.ABS, LSR(), null),
+        (0x50u).toUByte() to Triple(AddressingMode.REL, BVC(), null),
+        (0x51u).toUByte() to Triple(AddressingMode.IND_Y, EOR(), null),
+        (0x55u).toUByte() to Triple(AddressingMode.ZPG_X, EOR(), null),
+        (0x56u).toUByte() to Triple(AddressingMode.ZPG_X, LSR(), null),
+        (0x58u).toUByte() to Triple(AddressingMode.IMP, CLI(), null),
+        (0x59u).toUByte() to Triple(AddressingMode.ABS_Y, EOR(), null),
+        (0x5Du).toUByte() to Triple(AddressingMode.ABS_X, EOR(), null),
+        (0x5Eu).toUByte() to Triple(AddressingMode.ABS_X, LSR(), null),
+        (0x60u).toUByte() to Triple(AddressingMode.IMP, RTS(), 6),
+        (0x61u).toUByte() to Triple(AddressingMode.X_IND, ADC(), 6),
+        (0x65u).toUByte() to Triple(AddressingMode.ZPG, ADC(), 3),
+        (0x66u).toUByte() to Triple(AddressingMode.ZPG, ROR(), 5),
+        (0x68u).toUByte() to Triple(AddressingMode.IMP, PLA(), 4),
+        (0x69u).toUByte() to Triple(AddressingMode.IMM, ADC(), 2),
+        (0x6Au).toUByte() to Triple(AddressingMode.A, ROR(), 2),
+        (0x6Cu).toUByte() to Triple(AddressingMode.IND, JMP(), null),
+        (0x6Du).toUByte() to Triple(AddressingMode.ABS, ADC(), 4),
+        (0x6Eu).toUByte() to Triple(AddressingMode.ABS, ROR(), 6),
+        (0x70u).toUByte() to Triple(AddressingMode.REL, BVS(), null),
+        (0x71u).toUByte() to Triple(AddressingMode.IND_Y, ADC(), null),
+        (0x75u).toUByte() to Triple(AddressingMode.ZPG_X, ADC(), 4),
+        (0x76u).toUByte() to Triple(AddressingMode.ZPG_X, ROR(), 6),
+        (0x78u).toUByte() to Triple(AddressingMode.IMP, SEI(), 2),
+        (0x79u).toUByte() to Triple(AddressingMode.ABS_Y, ADC(), null),
+        (0x7Du).toUByte() to Triple(AddressingMode.ABS_X, ADC(), null),
+        (0x7Eu).toUByte() to Triple(AddressingMode.ABS_X, ROR(), 7),
+        (0x81u).toUByte() to Triple(AddressingMode.X_IND, STA(), null),
+        (0x84u).toUByte() to Triple(AddressingMode.ZPG, STY(), null),
+        (0x85u).toUByte() to Triple(AddressingMode.ZPG, STA(), null),
+        (0x86u).toUByte() to Triple(AddressingMode.ZPG, STX(), null),
+        (0x88u).toUByte() to Triple(AddressingMode.IMP, DEY(), null),
+        (0x8Au).toUByte() to Triple(AddressingMode.IMP, TXA(), null),
+        (0x8Cu).toUByte() to Triple(AddressingMode.ABS, STY(), null),
+        (0x8Du).toUByte() to Triple(AddressingMode.ABS, STA(), null),
+        (0x8Eu).toUByte() to Triple(AddressingMode.ABS, STX(), null),
+        (0x90u).toUByte() to Triple(AddressingMode.REL, BCC(), null),
+        (0x91u).toUByte() to Triple(AddressingMode.IND_Y, STA(), null),
+        (0x94u).toUByte() to Triple(AddressingMode.ZPG_X, STY(), null),
+        (0x95u).toUByte() to Triple(AddressingMode.ZPG_X, STA(), null),
+        (0x96u).toUByte() to Triple(AddressingMode.ZPG_Y, STX(), null),
+        (0x98u).toUByte() to Triple(AddressingMode.IMP, TYA(), null),
+        (0x99u).toUByte() to Triple(AddressingMode.ABS_Y, STA(), null),
+        (0x9Au).toUByte() to Triple(AddressingMode.IMP, TXS(), null),
+        (0x9Du).toUByte() to Triple(AddressingMode.ABS_X, STA(), null),
+        (0xA0u).toUByte() to Triple(AddressingMode.IMM, LDY(), null),
+        (0xA1u).toUByte() to Triple(AddressingMode.X_IND, LDA(), null),
+        (0xA2u).toUByte() to Triple(AddressingMode.IMM, LDX(), null),
+        (0xA4u).toUByte() to Triple(AddressingMode.ZPG, LDY(), null),
+        (0xA5u).toUByte() to Triple(AddressingMode.ZPG, LDA(), null),
+        (0xA6u).toUByte() to Triple(AddressingMode.ZPG, LDX(), null),
+        (0xA8u).toUByte() to Triple(AddressingMode.IMP, TAY(), null),
+        (0xA9u).toUByte() to Triple(AddressingMode.IMM, LDA(), null),
+        (0xAAu).toUByte() to Triple(AddressingMode.IMP, TAX(), null),
+        (0xACu).toUByte() to Triple(AddressingMode.ABS, LDY(), null),
+        (0xADu).toUByte() to Triple(AddressingMode.ABS, LDA(), null),
+        (0xAEu).toUByte() to Triple(AddressingMode.ABS, LDX(), null),
+        (0xB0u).toUByte() to Triple(AddressingMode.REL, BCS(), null),
+        (0xB1u).toUByte() to Triple(AddressingMode.IND_Y, LDA(), null),
+        (0xB4u).toUByte() to Triple(AddressingMode.ZPG_X, LDY(), null),
+        (0xB5u).toUByte() to Triple(AddressingMode.ZPG_X, LDA(), null),
+        (0xB6u).toUByte() to Triple(AddressingMode.ZPG_Y, LDX(), null),
+        (0xB8u).toUByte() to Triple(AddressingMode.IMP, CLV(), null),
+        (0xB9u).toUByte() to Triple(AddressingMode.ABS_Y, LDA(), null),
+        (0xBAu).toUByte() to Triple(AddressingMode.IMP, TSX(), null),
+        (0xBCu).toUByte() to Triple(AddressingMode.ABS_X, LDY(), null),
+        (0xBDu).toUByte() to Triple(AddressingMode.ABS_X, LDA(), null),
+        (0xBEu).toUByte() to Triple(AddressingMode.ABS_Y, LDX(), null),
+        (0xC0u).toUByte() to Triple(AddressingMode.IMM, CPY(), null),
+        (0xC1u).toUByte() to Triple(AddressingMode.X_IND, CMP(), null),
+        (0xC4u).toUByte() to Triple(AddressingMode.ZPG, CPY(), null),
+        (0xC5u).toUByte() to Triple(AddressingMode.ZPG, CMP(), null),
+        (0xC6u).toUByte() to Triple(AddressingMode.ZPG, DEC(), null),
+        (0xC8u).toUByte() to Triple(AddressingMode.IMP, INY(), null),
+        (0xC9u).toUByte() to Triple(AddressingMode.IMM, CMP(), null),
+        (0xCAu).toUByte() to Triple(AddressingMode.IMP, DEX(), null),
+        (0xCCu).toUByte() to Triple(AddressingMode.ABS, CPY(), null),
+        (0xCDu).toUByte() to Triple(AddressingMode.ABS, CMP(), null),
+        (0xCEu).toUByte() to Triple(AddressingMode.ABS, DEC(), null),
+        (0xD0u).toUByte() to Triple(AddressingMode.REL, BNE(), null),
+        (0xD1u).toUByte() to Triple(AddressingMode.IND_Y, CMP(), null),
+        (0xD5u).toUByte() to Triple(AddressingMode.ZPG_X, CMP(), null),
+        (0xD6u).toUByte() to Triple(AddressingMode.ZPG_X, DEC(), null),
+        (0xD8u).toUByte() to Triple(AddressingMode.IMP, CLD(), null),
+        (0xD9u).toUByte() to Triple(AddressingMode.ABS_Y, CMP(), null),
+        (0xDDu).toUByte() to Triple(AddressingMode.ABS_X, CMP(), null),
+        (0xDEu).toUByte() to Triple(AddressingMode.ABS_X, DEC(), null),
+        (0xE0u).toUByte() to Triple(AddressingMode.IMM, CPX(), null),
+        (0xE1u).toUByte() to Triple(AddressingMode.X_IND, SBC(), 6),
+        (0xE4u).toUByte() to Triple(AddressingMode.ZPG, CPX(), null),
+        (0xE5u).toUByte() to Triple(AddressingMode.ZPG, SBC(), 3),
+        (0xE6u).toUByte() to Triple(AddressingMode.ZPG, INC(), null),
+        (0xE8u).toUByte() to Triple(AddressingMode.IMP, INX(), null),
+        (0xE9u).toUByte() to Triple(AddressingMode.IMM, SBC(), 2),
+        (0xEAu).toUByte() to Triple(AddressingMode.IMP, NOP(), null),
+        (0xECu).toUByte() to Triple(AddressingMode.ABS, CPX(), null),
+        (0xEDu).toUByte() to Triple(AddressingMode.ABS, SBC(), 4),
+        (0xEEu).toUByte() to Triple(AddressingMode.ABS, INC(), null),
+        (0xF0u).toUByte() to Triple(AddressingMode.REL, BEQ(), null),
+        (0xF1u).toUByte() to Triple(AddressingMode.IND_Y, SBC(), null),
+        (0xF5u).toUByte() to Triple(AddressingMode.ZPG_X, SBC(), 4),
+        (0xF6u).toUByte() to Triple(AddressingMode.ZPG_X, INC(), null),
+        (0xF8u).toUByte() to Triple(AddressingMode.IMP, SED(), 2),
+        (0xF9u).toUByte() to Triple(AddressingMode.ABS_Y, SBC(), null),
+        (0xFDu).toUByte() to Triple(AddressingMode.ABS_X, SBC(), null),
+        (0xFEu).toUByte() to Triple(AddressingMode.ABS_X, INC(), null),
     )
 
     init {
@@ -256,7 +241,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         this.opcodeValue = readAddress(programCounter)
 
-        val (addressingMode, operation) = fetchInstruction(opcodeValue)
+        val (addressingMode, operation, cycleDebt) = fetchInstruction(opcodeValue)
 
         executeOperation(addressingMode, operation)
 
@@ -276,7 +261,7 @@ class CPU6502(override var bus: Mediator) : Component {
      * 2. fetch operands
      * 3. call the correct instruction.
      */
-    private fun fetchInstruction(opcode: UByte): Pair<AddressingMode, Operation> {
+    private fun fetchInstruction(opcode: UByte): Triple<AddressingMode, Operation, Int?> {
         return this.opcodeTable.getValue(opcode) //?: throw InvalidOpcodeException("Opcode $opcode not found in opcode table.")
     }
 
@@ -540,7 +525,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class ADC(): Operation {
         override val opcodeName = "ADC"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(operand: UByte) {
             val signBitMask: UByte = 0x80u
@@ -615,7 +599,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class AND(): Operation {
         override val opcodeName = "AND"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(operand: UByte) {
             val result: UByte = this@CPU6502.accumulator and operand
@@ -650,7 +633,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class ASL(): Operation {
         override val opcodeName = "ASL"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             val data: UInt = this@CPU6502.accumulator.toUInt()
@@ -683,7 +665,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class BCC(): Operation {
         override val opcodeName = "BCC"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             if (!this@CPU6502.carryFlag) this@CPU6502.programCounter = targetAddress
@@ -697,7 +678,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class BCS(): Operation {
         override val opcodeName = "BCS"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             if (this@CPU6502.carryFlag) this@CPU6502.programCounter = targetAddress
@@ -711,7 +691,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class BEQ(): Operation {
         override val opcodeName = "BEQ"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             if (this@CPU6502.zeroFlag) this@CPU6502.programCounter = targetAddress
@@ -727,7 +706,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class BIT(): Operation {
         override val opcodeName = "BIT"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             val operand: UInt = this@CPU6502.readAddress(targetAddress).toUInt()
@@ -747,7 +725,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class BMI(): Operation {
         override val opcodeName = "BMI"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             if (this@CPU6502.negativeFlag) this@CPU6502.programCounter = targetAddress
@@ -761,7 +738,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class BNE(): Operation {
         override val opcodeName = "BNE"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             if (!this@CPU6502.zeroFlag) this@CPU6502.programCounter = targetAddress
@@ -775,7 +751,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class BPL(): Operation {
         override val opcodeName = "BPL"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             if (!this@CPU6502.negativeFlag) this@CPU6502.programCounter = targetAddress
@@ -789,7 +764,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class BRK(): Operation {
         override val opcodeName = "BRK"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             val vectorLeastSignificantByte = this@CPU6502.readAddress(0xFFFEu)
@@ -821,7 +795,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class BVC(): Operation {
         override val opcodeName = "BVC"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             if (!this@CPU6502.overflowFlag) this@CPU6502.programCounter = targetAddress
@@ -835,7 +808,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class BVS(): Operation {
         override val opcodeName = "BVS"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             if (this@CPU6502.overflowFlag) this@CPU6502.programCounter = targetAddress
@@ -850,7 +822,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class CLC(): Operation {
         override val opcodeName = "CLC"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.carryFlag = false
@@ -865,7 +836,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class CLD(): Operation {
         override val opcodeName = "CLD"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.decimalFlag = false
@@ -880,7 +850,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class CLI(): Operation {
         override val opcodeName = "CLI"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.interruptDisableFlag = false
@@ -896,7 +865,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class CLV(): Operation {
         override val opcodeName = "CLV"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.overflowFlag = false
@@ -913,7 +881,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class CMP(): Operation {
         override val opcodeName = "CMP"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(operand: UByte) {
             val signBitMask: UByte = 0x80u
@@ -950,7 +917,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class CPX(): Operation {
         override val opcodeName = "CPX"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(operand: UByte) {
             val signBitMask: UByte = 0x80u
@@ -987,7 +953,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class CPY(): Operation {
         override val opcodeName = "CPY"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(operand: UByte) {
             val signBitMask: UByte = 0x80u
@@ -1017,7 +982,6 @@ class CPU6502(override var bus: Mediator) : Component {
 
     inner class DEC(): Operation {
         override val opcodeName = "DEC"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             val operand: UByte = this@CPU6502.readAddress(targetAddress)
@@ -1033,7 +997,6 @@ class CPU6502(override var bus: Mediator) : Component {
 
     inner class DEX(): Operation {
         override val opcodeName = "DEX"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.xRegister--
@@ -1047,7 +1010,6 @@ class CPU6502(override var bus: Mediator) : Component {
 
     inner class DEY(): Operation {
         override val opcodeName = "DEY"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.yRegister--
@@ -1067,7 +1029,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class EOR(): Operation {
         override val opcodeName = "EOR"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(operand: UByte) {
             val result: UByte = this@CPU6502.accumulator xor operand
@@ -1101,7 +1062,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class INC(): Operation {
         override val opcodeName = "INC"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             val operand: UByte = this@CPU6502.readAddress(targetAddress)
@@ -1127,7 +1087,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class INX(): Operation {
         override val opcodeName = "INX"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.xRegister++
@@ -1150,7 +1109,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class INY(): Operation {
         override val opcodeName = "INY"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.yRegister++
@@ -1164,7 +1122,6 @@ class CPU6502(override var bus: Mediator) : Component {
 
     inner class JMP(): Operation {
         override val opcodeName = "JMP"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             this@CPU6502.programCounter = targetAddress
@@ -1179,7 +1136,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class JSR(): Operation {
         override val opcodeName = "JSR"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             val currentAddressMostSignificantByte: UByte = (this@CPU6502.programCounter.toUInt() shr 8).toUByte()
@@ -1201,7 +1157,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class LDA(): Operation {
         override val opcodeName = "LDA"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(operand: UByte) {
             this@CPU6502.accumulator = operand
@@ -1230,7 +1185,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class LDX(): Operation {
         override val opcodeName = "LDX"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(operand: UByte) {
             this@CPU6502.xRegister = operand
@@ -1259,7 +1213,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class LDY(): Operation {
         override val opcodeName = "LDY"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(operand: UByte) {
             this@CPU6502.yRegister = operand
@@ -1294,7 +1247,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class LSR(): Operation {
         override val opcodeName = "LSR"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             val data: UInt = this@CPU6502.accumulator.toUInt()
@@ -1326,7 +1278,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class NOP(): Operation {
         override val opcodeName = "NOP"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.programCounter++
@@ -1341,7 +1292,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class ORA(): Operation {
         override val opcodeName = "ORA"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(operand: UByte) {
             val result: UByte = this@CPU6502.accumulator or operand
@@ -1373,13 +1323,14 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class PHA(): Operation {
         override val opcodeName = "PHA"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
+        val baseCycleCost = 3
 
         override fun execute() {
             this@CPU6502.writeToAddress(this@CPU6502.stackPointer, this@CPU6502.accumulator)
             this@CPU6502.stackPointer--
 
             this@CPU6502.programCounter++
+            cycleCount = baseCycleCost
         }
     }
 
@@ -1393,7 +1344,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class PHP(): Operation {
         override val opcodeName = "PHP"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             val statusRegisterValue = this@CPU6502.statusRegister or EXTRA_BITMASK or BREAK_BITMASK
@@ -1413,7 +1363,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class PLA(): Operation {
         override val opcodeName = "PLA"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.stackPointer++
@@ -1433,7 +1382,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class PLP(): Operation {
         override val opcodeName = "PLP"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.stackPointer++
@@ -1462,7 +1410,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class ROL(): Operation {
         override val opcodeName = "ROL"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             val data: UInt = this@CPU6502.accumulator.toUInt()
@@ -1501,7 +1448,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class ROR(): Operation {
         override val opcodeName = "ROR"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             val data: UInt = this@CPU6502.accumulator.toUInt()
@@ -1534,7 +1480,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class RTI(): Operation {
         override val opcodeName = "RTI"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             val extraFlagValue = this@CPU6502.extraFlag
@@ -1562,7 +1507,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class RTS(): Operation {
         override val opcodeName = "RTS"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.stackPointer++
@@ -1584,7 +1528,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class SBC(): Operation {
         override val opcodeName = "SBC"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(operand: UByte) {
             val accumulatorSignedBit = this@CPU6502.accumulator and NEGATIVE_BITMASK == NEGATIVE_BITMASK
@@ -1653,7 +1596,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class SEC(): Operation {
         override val opcodeName = "SEC"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.carryFlag = true
@@ -1668,7 +1610,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class SED(): Operation {
         override val opcodeName = "SED"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.decimalFlag = true
@@ -1684,7 +1625,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class SEI(): Operation {
         override val opcodeName = "SEI"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.interruptDisableFlag = true
@@ -1699,7 +1639,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class STA(): Operation {
         override val opcodeName = "STA"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             this@CPU6502.writeToAddress(targetAddress, this@CPU6502.accumulator)
@@ -1714,7 +1653,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class STX(): Operation {
         override val opcodeName = "STX"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             this@CPU6502.writeToAddress(targetAddress, this@CPU6502.xRegister)
@@ -1729,7 +1667,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class STY(): Operation {
         override val opcodeName = "STY"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute(targetAddress: UShort) {
             this@CPU6502.writeToAddress(targetAddress, this@CPU6502.yRegister)
@@ -1746,7 +1683,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class TAX(): Operation {
         override val opcodeName = "TAX"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.xRegister = this@CPU6502.accumulator
@@ -1766,7 +1702,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class TAY(): Operation {
         override val opcodeName = "TAY"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.yRegister = this@CPU6502.accumulator
@@ -1786,7 +1721,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class TSX(): Operation {
         override val opcodeName = "TSX"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.xRegister = this@CPU6502.stackPointer.toUByte()
@@ -1807,7 +1741,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class TXA(): Operation {
         override val opcodeName = "TXA"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.accumulator = this@CPU6502.xRegister
@@ -1826,7 +1759,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class TXS(): Operation {
         override val opcodeName = "TXS"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.stackPointer = this@CPU6502.xRegister.toUShort()
@@ -1843,7 +1775,6 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     inner class TYA(): Operation {
         override val opcodeName = "TYA"
-        override val cycleCount: Map<AddressingMode, Int> = mapOf()
 
         override fun execute() {
             this@CPU6502.accumulator = this@CPU6502.yRegister

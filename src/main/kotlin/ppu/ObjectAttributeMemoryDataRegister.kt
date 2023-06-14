@@ -1,5 +1,0 @@
-package ppu
-
-class ObjectAttributeMemoryDataRegister {
-
-}

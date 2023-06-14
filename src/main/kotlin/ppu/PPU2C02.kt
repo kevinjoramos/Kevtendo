@@ -12,12 +12,12 @@ class PPU2C02(override var bus: Mediator) : Component {
     private val controllerRegister = ControllerRegister()
     private val maskRegister = MaskRegister()
     private val statusRegister = StatusRegister()
-    private val objectAttributeMemoryAddressRegister: UInt = 0u
-    private val objectAttributeMemoryDataRegister = ObjectAttributeMemoryDataRegister()
+    private var objectAttributeMemoryAddressRegister = ObjectAttributeMemoryAddressRegister()
+    private var objectAttributeMemoryDataRegister: UInt = 0u
     private val scrollRegister = ScrollRegister()
     private val addressRegister = AddressRegister()
     private var dataRegister: UInt = 0u
-    private val objectAttributeMemoryDirectMemoryAccess = ObjectAttributeMemoryDirectMemoryAccess()
+    private val directMemoryAccessRegister = ObjectAttributeMemoryDirectMemoryAccess()
 
     private val nameTableMirroringState = NameTableMirroring.HORIZONTAL
 
@@ -153,15 +153,17 @@ class PPU2C02(override var bus: Mediator) : Component {
     }
 
     fun writeToObjectAttributeMemoryAddressRegister(data: UInt) {
-
+        objectAttributeMemoryAddressRegister.value = data
     }
 
     fun readObjectAttributeMemoryDataRegister(): UInt {
-        return 0u
+        return objectAttributeMemory[objectAttributeMemoryAddressRegister.value.toInt()].toUInt()
     }
 
     fun writeToObjectAttributeMemoryDataRegister(data: UInt) {
-
+        objectAttributeMemoryDataRegister = data
+        objectAttributeMemory[objectAttributeMemoryAddressRegister.value.toInt()] = data.toUByte()
+        objectAttributeMemoryAddressRegister.increment()
     }
 
     fun readScrollRegister(): UInt {
@@ -172,12 +174,13 @@ class PPU2C02(override var bus: Mediator) : Component {
 
     }
 
-    fun readObjectAttributeMemoryDirectMemoryAccessRegister(): UInt {
+    fun readDirectMemoryAccessRegister(): UInt {
         return 0u
     }
 
-    fun writeToObjectAttributeMemoryDirectMemoryAccessRegister(data: UInt) {
-
+    fun writeToDirectMemoryAccessRegister(data: UInt) {
+        directMemoryAccessRegister.value = data
+        //TODO copy over page from cpu memory into oam.
     }
 
     private val nameTable: UByteArray = UByteArray(NAMETABLE_MEMORY_SIZE)

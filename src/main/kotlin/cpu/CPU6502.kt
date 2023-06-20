@@ -681,7 +681,10 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "BCC"
 
         override fun execute(targetAddress: UShort) {
-            if (!this@CPU6502.carryFlag) this@CPU6502.programCounter = targetAddress
+            if (!this@CPU6502.carryFlag) {
+                this@CPU6502.programCounter = targetAddress
+                this@CPU6502.cycleCount++
+            }
             else this@CPU6502.programCounter++
         }
     }
@@ -694,7 +697,10 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "BCS"
 
         override fun execute(targetAddress: UShort) {
-            if (this@CPU6502.carryFlag) this@CPU6502.programCounter = targetAddress
+            if (this@CPU6502.carryFlag) {
+                this@CPU6502.programCounter = targetAddress
+                this@CPU6502.cycleCount++
+            }
             else this@CPU6502.programCounter++
         }
     }
@@ -707,7 +713,10 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "BEQ"
 
         override fun execute(targetAddress: UShort) {
-            if (this@CPU6502.zeroFlag) this@CPU6502.programCounter = targetAddress
+            if (this@CPU6502.zeroFlag) {
+                this@CPU6502.programCounter = targetAddress
+                this@CPU6502.cycleCount++
+            }
             else this@CPU6502.programCounter++
         }
     }
@@ -741,7 +750,10 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "BMI"
 
         override fun execute(targetAddress: UShort) {
-            if (this@CPU6502.negativeFlag) this@CPU6502.programCounter = targetAddress
+            if (this@CPU6502.negativeFlag) {
+                this@CPU6502.programCounter = targetAddress
+                this@CPU6502.cycleCount++
+            }
             else this@CPU6502.programCounter++
         }
     }
@@ -754,7 +766,10 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "BNE"
 
         override fun execute(targetAddress: UShort) {
-            if (!this@CPU6502.zeroFlag) this@CPU6502.programCounter = targetAddress
+            if (!this@CPU6502.zeroFlag) {
+                this@CPU6502.programCounter = targetAddress
+                this@CPU6502.cycleCount++
+            }
             else this@CPU6502.programCounter++
         }
     }
@@ -767,7 +782,10 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "BPL"
 
         override fun execute(targetAddress: UShort) {
-            if (!this@CPU6502.negativeFlag) this@CPU6502.programCounter = targetAddress
+            if (!this@CPU6502.negativeFlag) {
+                this@CPU6502.programCounter = targetAddress
+                this@CPU6502.cycleCount++
+            }
             else this@CPU6502.programCounter++
         }
     }
@@ -811,7 +829,10 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "BVC"
 
         override fun execute(targetAddress: UShort) {
-            if (!this@CPU6502.overflowFlag) this@CPU6502.programCounter = targetAddress
+            if (!this@CPU6502.overflowFlag) {
+                this@CPU6502.programCounter = targetAddress
+                this@CPU6502.cycleCount++
+            }
             else this@CPU6502.programCounter++
         }
     }
@@ -824,7 +845,10 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "BVS"
 
         override fun execute(targetAddress: UShort) {
-            if (this@CPU6502.overflowFlag) this@CPU6502.programCounter = targetAddress
+            if (this@CPU6502.overflowFlag) {
+                this@CPU6502.programCounter = targetAddress
+                this@CPU6502.cycleCount++
+            }
             else this@CPU6502.programCounter++
         }
     }

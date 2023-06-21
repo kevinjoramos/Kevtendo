@@ -76,6 +76,7 @@ class CPU6502(override var bus: Mediator) : Component {
     private var immediateOperand: UByte? = null
 
     private var cycleCount: Int = 0
+    private var hasOverflowCycle = false
 
     val interruptSignalTriage: List<() -> Unit> = mutableListOf()
 
@@ -255,7 +256,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         this.opcodeValue = readAddress(programCounter)
 
-        val (addressingMode, operation, cycleDebt) = fetchInstruction(opcodeValue)
+        val (addressingMode, operation, cycles) = fetchInstruction(opcodeValue)
 
         executeOperation(addressingMode, operation)
 
@@ -282,9 +283,6 @@ class CPU6502(override var bus: Mediator) : Component {
     fun executeOperation(addressingMode: AddressingMode, operation: Operation) {
         // Get current state for logs.
         val currentProgramCounter = programCounter
-        var targetLowByteValue = null
-        var targetHighByteValue = null
-        var targetAddressValue = null
         val accumulatorValue = accumulator
         val xRegisterValue = xRegister
         val yRegisterValue = yRegister
@@ -418,7 +416,13 @@ class CPU6502(override var bus: Mediator) : Component {
         val operandHighByte = readAddress(programCounter)
         this.operandHighByte = operandHighByte
 
-        this.targetAddress = ((operandHighByte.toUInt() shl 8) + operandLowByte.toUInt() + xRegister.toUInt()).toUShort()
+        val targetAddress = ((operandHighByte.toUInt() shl 8) + operandLowByte.toUInt() + xRegister.toUInt()).toUShort()
+
+        if ((targetAddress.toUInt() shr 8).toUByte() != operandHighByte) {
+            hasOverflowCycle = true
+        }
+
+        this.targetAddress = targetAddress
     }
 
     /**
@@ -436,7 +440,13 @@ class CPU6502(override var bus: Mediator) : Component {
         val operandHighByte = readAddress(programCounter)
         this.operandHighByte = operandHighByte
 
-        this.targetAddress = ((operandHighByte.toUInt() shl 8) + operandLowByte.toUInt() + yRegister.toUInt()).toUShort()
+        val targetAddress = ((operandHighByte.toUInt() shl 8) + operandLowByte.toUInt() + yRegister.toUInt()).toUShort()
+
+        if ((targetAddress.toUInt() shr 8).toUByte() != operandHighByte) {
+            hasOverflowCycle = true
+        }
+
+        this.targetAddress = targetAddress
     }
 
     /**
@@ -514,12 +524,25 @@ class CPU6502(override var bus: Mediator) : Component {
         val targetLeastSignificantByte = readAddress(operandLowByte.toUShort())
         val targetMostSignificantByte: UByte =  readAddress((operandLowByte + 1u).toUByte().toUShort())
 
-        this.targetAddress = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte + yRegister).toUShort()
+        val targetAddress = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte + yRegister).toUShort()
+
+        if ((targetAddress.toUInt() shr 8).toUByte() != targetMostSignificantByte) {
+            hasOverflowCycle = true
+        }
+
+        this.targetAddress = targetAddress
     }
 
     fun relativeAddressing() {
         programCounter++
         val offset: Byte = readAddress(programCounter).toByte()
+        val nextInstructionAddress = (programCounter.toInt() + 1).toUShort()
+        val targetAddress = (nextInstructionAddress.toInt() + offset.toInt()).toUShort()
+
+        if ((targetAddress.toUInt() shr 8).toUByte() != (nextInstructionAddress.toUInt() shr 8).toUByte()) {
+            hasOverflowCycle = true
+        }
+
         this.targetAddress = (programCounter.toInt() + (offset.toInt()) + 1).toUShort()
     }
 
@@ -584,6 +607,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.negativeFlag = result and signBitMask == signBitMask
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
 
+            if (hasOverflowCycle) this@CPU6502.cycleCount++
+
             if (accumulatorSignedBit != operandSignedBit) {
                 this@CPU6502.overflowFlag = false
                 this@CPU6502.programCounter++
@@ -632,6 +657,7 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
 
+            if (hasOverflowCycle) this@CPU6502.cycleCount++
             this@CPU6502.programCounter++
         }
     }
@@ -684,6 +710,7 @@ class CPU6502(override var bus: Mediator) : Component {
             if (!this@CPU6502.carryFlag) {
                 this@CPU6502.programCounter = targetAddress
                 this@CPU6502.cycleCount++
+                if (hasOverflowCycle) this@CPU6502.cycleCount++
             }
             else this@CPU6502.programCounter++
         }
@@ -700,6 +727,7 @@ class CPU6502(override var bus: Mediator) : Component {
             if (this@CPU6502.carryFlag) {
                 this@CPU6502.programCounter = targetAddress
                 this@CPU6502.cycleCount++
+                if (hasOverflowCycle) this@CPU6502.cycleCount++
             }
             else this@CPU6502.programCounter++
         }
@@ -716,6 +744,7 @@ class CPU6502(override var bus: Mediator) : Component {
             if (this@CPU6502.zeroFlag) {
                 this@CPU6502.programCounter = targetAddress
                 this@CPU6502.cycleCount++
+                if (hasOverflowCycle) this@CPU6502.cycleCount++
             }
             else this@CPU6502.programCounter++
         }
@@ -753,6 +782,7 @@ class CPU6502(override var bus: Mediator) : Component {
             if (this@CPU6502.negativeFlag) {
                 this@CPU6502.programCounter = targetAddress
                 this@CPU6502.cycleCount++
+                if (hasOverflowCycle) this@CPU6502.cycleCount++
             }
             else this@CPU6502.programCounter++
         }
@@ -769,6 +799,7 @@ class CPU6502(override var bus: Mediator) : Component {
             if (!this@CPU6502.zeroFlag) {
                 this@CPU6502.programCounter = targetAddress
                 this@CPU6502.cycleCount++
+                if (hasOverflowCycle) this@CPU6502.cycleCount++
             }
             else this@CPU6502.programCounter++
         }
@@ -785,6 +816,7 @@ class CPU6502(override var bus: Mediator) : Component {
             if (!this@CPU6502.negativeFlag) {
                 this@CPU6502.programCounter = targetAddress
                 this@CPU6502.cycleCount++
+                if (hasOverflowCycle) this@CPU6502.cycleCount++
             }
             else this@CPU6502.programCounter++
         }
@@ -832,6 +864,7 @@ class CPU6502(override var bus: Mediator) : Component {
             if (!this@CPU6502.overflowFlag) {
                 this@CPU6502.programCounter = targetAddress
                 this@CPU6502.cycleCount++
+                if (hasOverflowCycle) this@CPU6502.cycleCount++
             }
             else this@CPU6502.programCounter++
         }
@@ -848,6 +881,7 @@ class CPU6502(override var bus: Mediator) : Component {
             if (this@CPU6502.overflowFlag) {
                 this@CPU6502.programCounter = targetAddress
                 this@CPU6502.cycleCount++
+                if (hasOverflowCycle) this@CPU6502.cycleCount++
             }
             else this@CPU6502.programCounter++
         }

@@ -254,20 +254,24 @@ class CPU6502(override var bus: Mediator) : Component {
 
     fun run() {
 
-        this.opcodeValue = readAddress(programCounter)
+        if (cycleCount == 0) {
+            this.opcodeValue = readAddress(programCounter)
 
-        val (addressingMode, operation, cycles) = fetchInstruction(opcodeValue)
+            val (addressingMode, operation, cycles) = fetchInstruction(opcodeValue)
 
-        executeOperation(addressingMode, operation)
+            cycleCount += cycles
 
-        operandLowByte = null
-        operandHighByte = null
-        targetAddress = null
-        immediateOperand = null
+            executeOperation(addressingMode, operation)
 
+            operandLowByte = null
+            operandHighByte = null
+            targetAddress = null
+            immediateOperand = null
 
+            //interruptSignalTriage.map { it.invoke() }
+        }
 
-        //interruptSignalTriage.map { it.invoke() }
+        cycleCount--
     }
 
     /**
@@ -276,7 +280,7 @@ class CPU6502(override var bus: Mediator) : Component {
      * 2. fetch operands
      * 3. call the correct instruction.
      */
-    private fun fetchInstruction(opcode: UByte): Triple<AddressingMode, Operation, Int?> {
+    private fun fetchInstruction(opcode: UByte): Triple<AddressingMode, Operation, Int> {
         return this.opcodeTable.getValue(opcode) //?: throw InvalidOpcodeException("Opcode $opcode not found in opcode table.")
     }
 
@@ -976,6 +980,7 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.negativeFlag = result and signBitMask == signBitMask
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
 
+            if (hasOverflowCycle) this@CPU6502.cycleCount++
             this@CPU6502.programCounter++
         }
     }
@@ -1120,6 +1125,7 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
 
+            if (hasOverflowCycle) this@CPU6502.cycleCount++
             this@CPU6502.programCounter++
         }
     }
@@ -1246,6 +1252,7 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
 
+            if (hasOverflowCycle) this@CPU6502.cycleCount++
             this@CPU6502.programCounter++
         }
     }
@@ -1274,6 +1281,7 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
 
+            if (hasOverflowCycle) this@CPU6502.cycleCount++
             this@CPU6502.programCounter++
         }
     }
@@ -1302,6 +1310,7 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
 
+            if (hasOverflowCycle) this@CPU6502.cycleCount++
             this@CPU6502.programCounter++
         }
     }
@@ -1383,6 +1392,7 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
 
+            if (hasOverflowCycle) this@CPU6502.cycleCount++
             this@CPU6502.programCounter++
         }
     }
@@ -1642,6 +1652,8 @@ class CPU6502(override var bus: Mediator) : Component {
             this@CPU6502.carryFlag = result.toByte() >= 0
             this@CPU6502.negativeFlag = result and NEGATIVE_BITMASK == NEGATIVE_BITMASK
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
+
+            if (hasOverflowCycle) this@CPU6502.cycleCount++
 
             if (accumulatorSignedBit == operandSignedBit) {
                 this@CPU6502.overflowFlag = false

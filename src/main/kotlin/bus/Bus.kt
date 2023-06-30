@@ -30,11 +30,14 @@ class Bus(cartridgePath: String, ramSize: Int) : Mediator {
         if (address < 0x4000u) {
             val ppuRegisterAddress = (address.mod(0x0008u) + 0x2000u).toUShort()
             when (ppuRegisterAddress) {
-                (0x2002u).toUShort() -> return ppu.readStatusRegister()
-                (0x2003u).toUShort() -> return 0u
-                (0x2004u).toUShort() -> return ppu.oamDataRegister
-                (0x2005u).toUShort() -> return ppu.scrollRegister
-                (0x2007u).toUShort() -> return ppu.readDataRegister()
+                (0x2000u).toUShort() -> return ppu.readControllerRegister().toUByte()
+                (0x2001u).toUShort() -> return ppu.readMaskRegister().toUByte()
+                (0x2002u).toUShort() -> return ppu.readStatusRegister().toUByte()
+                (0x2003u).toUShort() -> return ppu.readObjectAttributeMemoryAddressRegister().toUByte()
+                (0x2004u).toUShort() -> return ppu.readObjectAttributeMemoryDataRegister().toUByte()
+                (0x2005u).toUShort() -> return ppu.readScrollRegister().toUByte()
+                (0x2006u).toUShort() -> return ppu.readAddressRegister().toUByte()
+                (0x2007u).toUShort() -> return ppu.readDataRegister().toUByte()
             }
         }
 
@@ -70,23 +73,24 @@ class Bus(cartridgePath: String, ramSize: Int) : Mediator {
         if (address < 0x4000u) {
             val ppuRegisterAddress = (address.mod(0x0008u) + 0x2000u).toUShort()
             when (ppuRegisterAddress) {
-                (0x2000u).toUShort() -> ppu.writeToControlRegister(data)
-                (0x2001u).toUShort() -> ppu.writeToMaskRegister(data)
-                (0x2003u).toUShort() -> ppu.oamAddressRegister = data
-                (0x2004u).toUShort() -> ppu.oamDataRegister = data
-                (0x2005u).toUShort() -> ppu.scrollRegister = data
-                (0x2006u).toUShort() -> ppu.writeToAddressRegister(data)
-                (0x2007u).toUShort() -> ppu.writeToDataRegister(data)
+                (0x2000u).toUShort() -> ppu.writeToControllerRegister(data.toUInt())
+                (0x2001u).toUShort() -> ppu.writeToMaskRegister(data.toUInt())
+                (0x2002u).toUShort() -> ppu.writeToStatusRegister(data.toUInt())
+                (0x2003u).toUShort() -> ppu.writeToObjectAttributeMemoryAddressRegister(data.toUInt())
+                (0x2004u).toUShort() -> ppu.writeToObjectAttributeMemoryDataRegister(data.toUInt())
+                (0x2005u).toUShort() -> ppu.writeToScrollRegister(data.toUInt())
+                (0x2006u).toUShort() -> ppu.writeToAddressRegister(data.toUInt())
+                (0x2007u).toUShort() -> ppu.writeToDataRegister(data.toUInt())
             }
             return
         }
 
         if (address < 0x4018u) {
-            TODO("APU and IO memory map not implemented")
+            return
         }
 
         if (address < 0x4020u) {
-            TODO("APU and IO disabled memory map not implemented")
+            return
         }
 
         if (address <= 0xFFFFu) {

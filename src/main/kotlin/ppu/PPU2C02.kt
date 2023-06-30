@@ -285,6 +285,4 @@ class PPU2C02(override var bus: Mediator) : Component {
         )
 
     }
-
-
 }

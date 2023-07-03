@@ -1,11 +1,8 @@
 package ui
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 
@@ -14,37 +11,16 @@ import androidx.compose.ui.window.application
 @Preview
 fun App() {
     MaterialTheme {
-        val nesEmulator = remember { NesEmulator() }
-
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp)
-        ) {
-            ZeroPageDisplay(
-                zeroPage = nesEmulator.zeroPageState,
-                modifier = Modifier
-                    .weight(2f)
-                    .fillMaxSize()
-            )
-
-            CPUDisplay(
-                cpuState = nesEmulator.cpuState,
-                currentInstruction = nesEmulator.currentInstruction,
-                onStart = nesEmulator::start,
-                onStep = nesEmulator::step,
-                onReset = nesEmulator::reset,
-                onStop = nesEmulator::stop,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-            )
-        }
+        val nesEmulatorUiState = remember { NesEmulatorUiState() }
+        NesEmulatorScreen(nesEmulatorUiState)
     }
 }
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication) {
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = "NESquick Emulator",
+    ) {
         App()
     }
 }

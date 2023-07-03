@@ -23,39 +23,48 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
         modifier = Modifier
             .fillMaxSize(),
     ) {
-        GameView(uiState.gameViewUiState)
+        GameView(
+            uiState.gameViewUiState,
+            modifier = Modifier
+                .weight(1f)
+                .background(Color.Black)
+        )
         EmulatorHudView(
             mainCpuViewState = uiState.mainCpuViewState,
             zeroPageViewState = uiState.zeroPageViewState,
             onStart = uiState::start,
             onStep = uiState::step,
             onReset = uiState::reset,
-            onStop = uiState::stop
+            onStop = uiState::stop,
+            modifier = Modifier
+                .background(DarkGreen100)
+                .padding(12.dp)
+                .fillMaxHeight()
         )
     }
 }
 
 @Composable
 fun GameView(
-    gameViewUiState: GameViewUiState
+    gameViewUiState: GameViewUiState,
+    modifier: Modifier
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth(.66f)
-            .fillMaxHeight()
-            .background(Color.Black)
+        modifier = modifier
     ) {
         for (scanline in gameViewUiState.pixelScreen) {
             Row(
                 modifier = Modifier.fillMaxWidth()
+                    .weight(1f)
             ) {
                 for (pixel in scanline) {
-                    Box(
+                    Spacer(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RectangleShape)
-                            .background(pixel)
+                            .aspectRatio(1f)
+                            .weight(1f)
+                            .background(Color.Red)
                             .border(1.dp, Color.Black)
+
                     )
                 }
             }
@@ -70,13 +79,11 @@ fun EmulatorHudView(
     onStart: () -> Unit,
     onStep: () -> Unit,
     onReset: () -> Unit,
-    onStop: () -> Unit
+    onStop: () -> Unit,
+    modifier: Modifier
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkGreen100)
-            .padding(12.dp)
+        modifier = modifier
     ) {
         ButtonsView(
             onStart,
@@ -105,8 +112,6 @@ fun ButtonsView(
     onStop: () -> Unit
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Button(

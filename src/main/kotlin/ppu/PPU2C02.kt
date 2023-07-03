@@ -5,19 +5,19 @@ import mediator.Component
 import mediator.Mediator
 
 @ExperimentalUnsignedTypes
-class PPU2C02(override var bus: Mediator) : Component {
-
-    var ioBusLatch = 0u
+class PPU2C02(
+    override var bus: Mediator
+) : Component {
 
     private val controllerRegister = ControllerRegister()
     private val maskRegister = MaskRegister()
     private val statusRegister = StatusRegister()
     private var objectAttributeMemoryAddressRegister = ObjectAttributeMemoryAddressRegister()
     private var objectAttributeMemoryDataRegister: UInt = 0u
-    private val scrollRegister = ScrollRegister()
-    private val addressRegister = AddressRegister()
     private var dataRegister: UInt = 0u
     private val directMemoryAccessRegister = ObjectAttributeMemoryDirectMemoryAccess()
+
+    private val graphicsRenderer = GraphicsRenderer()
 
     private val nameTableMirroringState = NameTableMirroring.HORIZONTAL
 
@@ -31,6 +31,7 @@ class PPU2C02(override var bus: Mediator) : Component {
 
     fun writeToControllerRegister(data: UInt) {
         controllerRegister.value = data
+        graphicsRenderer.temporaryNameTableSelect = data
     }
 
     fun readMaskRegister(): UInt {
@@ -44,7 +45,8 @@ class PPU2C02(override var bus: Mediator) : Component {
     fun readStatusRegister(): UInt {
         val value = statusRegister.value
         statusRegister.clearBit7()
-        addressRegister.clearAddressLatch()
+        //addressRegister.clearAddressLatch()
+        graphicsRenderer.hasFirstWrite = false
         return value
     }
 
@@ -57,14 +59,21 @@ class PPU2C02(override var bus: Mediator) : Component {
     }
 
     fun writeToAddressRegister(data: UInt) {
-        addressRegister.writeToAddressLatch(data)
+        //addressRegister.writeToAddressLatch(data)
+        if (!graphicsRenderer.hasFirstWrite) {
+            graphicsRenderer.temporaryUpperLatch = data
+            graphicsRenderer.hasFirstWrite = true
+        } else {
+            graphicsRenderer.temporaryLowerLatch = data
+            graphicsRenderer.hasFirstWrite = false
+        }
     }
 
     fun readDataRegister(): UInt {
 
         var data = dataRegister
 
-        when (val address = addressRegister.readAddressFromLatch()) {
+        when (val address = graphicsRenderer.currentVRAMAddress) {
             in PATTERN_TABLE_ADDRESS_RANGE -> {
                 dataRegister = readAddress((address + 0x6000u).toUShort()).toUInt()
             }
@@ -85,14 +94,14 @@ class PPU2C02(override var bus: Mediator) : Component {
             }
         }
 
-        addressRegister.incrementAddressLatch(controllerRegister.vRamAddressIncrement)
+        graphicsRenderer.currentVRAMAddress += controllerRegister.vRamAddressIncrement
         return data
     }
 
     fun writeToDataRegister(data: UInt) {
         dataRegister = data
 
-        when (val address = addressRegister.readAddressFromLatch()) {
+        when (val address = graphicsRenderer.currentVRAMAddress) {
             in PATTERN_TABLE_ADDRESS_RANGE -> {
                 writeToAddress((address + 0x6000u).toUShort(), data.toUByte())
             }
@@ -111,7 +120,7 @@ class PPU2C02(override var bus: Mediator) : Component {
                 paletteTable[paletteAddress] = data.toUByte()
             }
         }
-        addressRegister.incrementAddressLatch(controllerRegister.vRamAddressIncrement)
+        graphicsRenderer.currentVRAMAddress += controllerRegister.vRamAddressIncrement
     }
 
     private fun computeNameTableAddress(unmappedAddress: UInt): UInt {
@@ -175,7 +184,15 @@ class PPU2C02(override var bus: Mediator) : Component {
     }
 
     fun writeToScrollRegister(data: UInt) {
-
+        if (!graphicsRenderer.hasFirstWrite) {
+            graphicsRenderer.temporaryCoarseXScroll = data
+            graphicsRenderer.fineXScroll = data
+            graphicsRenderer.hasFirstWrite = true
+        } else {
+            graphicsRenderer.temporaryCoarseYScroll = data
+            graphicsRenderer.temporaryFineYScroll = data
+            graphicsRenderer.hasFirstWrite = false
+        }
     }
 
     fun readDirectMemoryAccessRegister(): UInt {

@@ -2,8 +2,6 @@ package ui
 
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
-import util.to2DigitHexString
-import util.to4DigitHexString
 
 data class MainCpuViewState(
     val registers: ImmutableList<String> =

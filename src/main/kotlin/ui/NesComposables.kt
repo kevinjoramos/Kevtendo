@@ -34,8 +34,9 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
             gameViewUiState,
             modifier = Modifier
                 .weight(1f)
-                .fillMaxHeight()
                 .background(Color.Black)
+
+            //.fillMaxSize()
         )
         EmulatorHudView(
             mainCpuViewState = mainCpuViewState,
@@ -58,7 +59,8 @@ fun GameView(
     modifier: Modifier
 ) {
     Box(
-        modifier = modifier
+        modifier = modifier,
+        contentAlignment = Alignment.Center
     ) {
         Canvas(
             modifier = Modifier

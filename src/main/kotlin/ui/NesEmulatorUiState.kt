@@ -3,8 +3,12 @@ package ui
 import bus.Bus
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import util.Logger
 import util.to2DigitHexString
 import util.to4DigitHexString
@@ -18,13 +22,16 @@ class NesEmulatorUiState {
     private val pathToGame = "$projectRootPath/src/main/kotlin/games/nestest.nes"
     private var bus = Bus(pathToGame, ramSize)
 
-    var gameViewUiState by mutableStateOf(GameViewUiState())
-    var patternTableState by mutableStateOf("")
-    var mainCpuViewState by mutableStateOf(updateMainCpuViewState())
-    var disassemblerState by mutableStateOf("f")
-    var zeroPageViewState by mutableStateOf(updateZeroPageViewState())
+    private val _gameViewUiState = MutableStateFlow(GameViewUiState())
+    val gameViewUiState = _gameViewUiState.asStateFlow()
 
+    //val patternTableState by mutableStateOf("")
+    private val _mainCpuViewState = MutableStateFlow(MainCpuViewState())
+    val mainCpuViewState = _mainCpuViewState.asStateFlow()
 
+    //val disassemblerState by mutableStateOf("f")
+    private val _zeroPageViewState = MutableStateFlow(ZeroPageViewState())
+    val zeroPageViewState = _zeroPageViewState.asStateFlow()
 
     private var isRunning = false
     var isPaused = false
@@ -36,8 +43,9 @@ class NesEmulatorUiState {
                 isRunning = true
                 while (isRunning) {
                     step()
-                    mainCpuViewState = updateMainCpuViewState()
-                    zeroPageViewState = updateZeroPageViewState()
+                    updateMainCpuViewState()
+                    updateZeroPageViewState()
+                    generateNoise()
                 }
                 
             } catch (e: Exception) {
@@ -53,8 +61,8 @@ class NesEmulatorUiState {
     fun step() {
         val programCounterValue = bus.cpu.programCounter
         bus.cpu.run()
-        mainCpuViewState = updateMainCpuViewState()
-        zeroPageViewState = updateZeroPageViewState()
+        updateMainCpuViewState()
+        updateZeroPageViewState()
         //currentInstruction = bus.cpu.disassembledProgram[programCounterValue] ?: "i dunno"
 
 
@@ -70,15 +78,16 @@ class NesEmulatorUiState {
         Logger.writeLogsToFile()
     }
 
-    private fun updateMainCpuViewState(): MainCpuViewState = MainCpuViewState(
-        listOf(
+    private fun updateMainCpuViewState() {
+        val registers = listOf(
             "PC: ${bus.cpu.programCounter.to4DigitHexString()}",
             "A: ${bus.cpu.accumulator.to2DigitHexString()}",
             "X: ${bus.cpu.xRegister.to2DigitHexString()}",
             "Y: ${bus.cpu.yRegister.to2DigitHexString()}",
             "SP: ${bus.cpu.stackPointer.to4DigitHexString()}"
-        ),
-        listOf(
+        )
+
+        val flags = listOf(
             Pair("N", bus.cpu.negativeFlag),
             Pair("V", bus.cpu.overflowFlag),
             Pair("-", bus.cpu.extraFlag),
@@ -88,15 +97,22 @@ class NesEmulatorUiState {
             Pair("Z", bus.cpu.zeroFlag),
             Pair("C", bus.cpu.carryFlag),
         )
-    )
 
-    private fun updateZeroPageViewState(): ZeroPageViewState =
-        ZeroPageViewState(
-            bus.ram
-                .sliceArray(0..255)
-                .map { it.to2DigitHexString() }
-                .chunked(16)
-        )
+        _mainCpuViewState.update {
+            it.copy(registers = registers.toImmutableList(), flags = flags.toImmutableList())
+        }
+    }
+
+    private fun updateZeroPageViewState() {
+        val zeroPage = bus.ram
+            .slice(0..255)
+            .map { it.to2DigitHexString() }
+            .chunked(16).map { it.toImmutableList() }.toImmutableList()
+
+        _zeroPageViewState.update {
+            it.copy(zeroPage = zeroPage)
+        }
+    }
 
     private fun getCurrentInstructionsSlidingWindowState(): List<String> {
         val instructionList = mutableListOf<String>()
@@ -114,5 +130,17 @@ class NesEmulatorUiState {
         }
 
         return instructionList
+    }
+
+    private fun generateNoise() {
+        val pixelScreen = List(240) {
+            List(256) {
+                if ((0..1).random() == 0) Color.Black else Color.White
+            }.toImmutableList()
+        }.toImmutableList()
+
+        _gameViewUiState.update {
+            it.copy(pixelScreen = pixelScreen)
+        }
     }
 }

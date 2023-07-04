@@ -1,16 +1,19 @@
 package ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -19,19 +22,24 @@ import androidx.compose.ui.unit.sp
 @OptIn(ExperimentalUnsignedTypes::class)
 @Composable
 fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
+    val gameViewUiState = uiState.gameViewUiState.collectAsState()
+    val mainCpuViewState = uiState.mainCpuViewState.collectAsState()
+    val zeroPageViewState = uiState.zeroPageViewState.collectAsState()
+
     Row(
         modifier = Modifier
             .fillMaxSize(),
     ) {
         GameView(
-            uiState.gameViewUiState,
+            gameViewUiState,
             modifier = Modifier
                 .weight(1f)
+                .fillMaxHeight()
                 .background(Color.Black)
         )
         EmulatorHudView(
-            mainCpuViewState = uiState.mainCpuViewState,
-            zeroPageViewState = uiState.zeroPageViewState,
+            mainCpuViewState = mainCpuViewState,
+            zeroPageViewState = zeroPageViewState,
             onStart = uiState::start,
             onStep = uiState::step,
             onReset = uiState::reset,
@@ -46,36 +54,45 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
 
 @Composable
 fun GameView(
-    gameViewUiState: GameViewUiState,
+    gameViewUiState: State<GameViewUiState>,
     modifier: Modifier
 ) {
-    Column(
+    Box(
         modifier = modifier
     ) {
-        for (scanline in gameViewUiState.pixelScreen) {
-            Row(
-                modifier = Modifier.fillMaxWidth()
-                    .weight(1f)
-            ) {
-                for (pixel in scanline) {
-                    Spacer(
-                        modifier = Modifier
-                            .aspectRatio(1f)
-                            .weight(1f)
-                            .background(Color.Red)
-                            .border(1.dp, Color.Black)
+        Canvas(
+            modifier = Modifier
+                .aspectRatio(1.07f)
+                .fillMaxSize(),
+        ) {
+            val pixelWidth = size.width / 256f
+            val pixelHeight = size.height / 240f
 
-                    )
-                }
+            for ((i, scanline) in gameViewUiState.value.pixelScreen.withIndex()) {
+               for ((j, pixel) in scanline.withIndex()) {
+                   drawRect(
+                       topLeft = Offset(x = pixelWidth * j, y= pixelHeight * i),
+                       size = Size(width = pixelWidth, height = pixelHeight),
+                       color = pixel
+                   )
+               }
             }
+
+            /*for ((index, pixel) in gameViewUiState.pixelScreen[0].withIndex()) {
+                drawRect(
+                    topLeft = Offset(x = (pixelWidth * index) - 1, y= 0f ),
+                    size = Size(width = pixelWidth, height = pixelHeight),
+                    color = pixel
+                )
+            }*/
         }
     }
 }
 
 @Composable
 fun EmulatorHudView(
-    mainCpuViewState: MainCpuViewState,
-    zeroPageViewState: ZeroPageViewState,
+    mainCpuViewState: State<MainCpuViewState>,
+    zeroPageViewState: State<ZeroPageViewState>,
     onStart: () -> Unit,
     onStep: () -> Unit,
     onReset: () -> Unit,
@@ -184,9 +201,8 @@ fun ButtonsView(
 
     }
 }
-
 @Composable
-fun MainCpuView(mainCpuViewState: MainCpuViewState) {
+fun MainCpuView(mainCpuViewState: State<MainCpuViewState>) {
     Column {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -200,7 +216,7 @@ fun MainCpuView(mainCpuViewState: MainCpuViewState) {
                 fontFamily = FontFamily.Monospace
             )
 
-            for (flag in mainCpuViewState.flags) {
+            for (flag in mainCpuViewState.value.flags) {
                 Text(
                     text = flag.first,
                     fontWeight = FontWeight.Bold,
@@ -214,7 +230,7 @@ fun MainCpuView(mainCpuViewState: MainCpuViewState) {
             }
         }
 
-        for (register in mainCpuViewState.registers) {
+        for (register in mainCpuViewState.value.registers) {
             Text(
                 text = register,
                 fontWeight = FontWeight.Bold,
@@ -228,14 +244,14 @@ fun MainCpuView(mainCpuViewState: MainCpuViewState) {
 
 @Composable
 fun ZeroPageView(
-    zeroPageViewState: ZeroPageViewState
+    zeroPageViewState: State<ZeroPageViewState>
 ) {
     Column(
         modifier = Modifier
             .border(1.dp, Color.White)
             .padding(5.dp, 0.dp, 0.dp, 0.dp)
     ) {
-        for (array in zeroPageViewState.zeroPage) {
+        for (array in zeroPageViewState.value.zeroPage) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier

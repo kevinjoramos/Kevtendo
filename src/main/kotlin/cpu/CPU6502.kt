@@ -1,8 +1,10 @@
 package cpu
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import mediator.Component
 import mediator.Mediator
-import util.Logger
 
 /**
  * Emulation of the 6502 processor.
@@ -20,45 +22,77 @@ class CPU6502(override var bus: Mediator) : Component {
      * 6502 Architecture components
      */
     var programCounter: UShort = 0xC000u
+    val programCounterState = MutableStateFlow(programCounter)
+    //val programCounterState = _programCounterState.asStateFlow()
+
     var stackPointer: UShort = 0x0000u
         set(value: UShort) { field = (0x0100u).toUShort() or value.toUByte().toUShort() }
+    val _stackPointerState = MutableStateFlow(stackPointer)
+    val stackPointerState = _stackPointerState.asStateFlow()
 
     var accumulator: UByte = 0x00u
+    val _accumulatorState = MutableStateFlow(accumulator)
+    val accumulatorState = _accumulatorState.asStateFlow()
+
     var xRegister: UByte = 0x00u
+    val _xRegisterState = MutableStateFlow(xRegister)
+    val xRegisterState = _xRegisterState.asStateFlow()
+
     var yRegister: UByte = 0x00u
+    val _yRegisterState = MutableStateFlow(yRegister)
+    val yRegisterState = _yRegisterState.asStateFlow()
+
     var statusRegister: UByte = 0x34u
+    val _statusRegisterState = MutableStateFlow(statusRegister)
+    val statusRegisterState = _statusRegisterState.asStateFlow()
 
     var negativeFlag: Boolean
         get() = getFlagValue(NEGATIVE_BITMASK)
         set(value) = setFlagValue(value, NEGATIVE_BITMASK)
+    private val _negativeFlagState = MutableStateFlow(negativeFlag)
+    val negativeFlagState = _negativeFlagState.asStateFlow()
 
     var overflowFlag: Boolean
         get() = getFlagValue(OVERFLOW_BITMASK)
         set(value) = setFlagValue(value, OVERFLOW_BITMASK)
+    private val _overflowFlagState = MutableStateFlow(overflowFlag)
+    val overflowFlagState = _overflowFlagState.asStateFlow()
 
     var extraFlag: Boolean
         get() = getFlagValue(EXTRA_BITMASK)
         set(value) = setFlagValue(value, EXTRA_BITMASK)
+    private val _extraFlagState = MutableStateFlow(extraFlag)
+    val extraFlagState = _extraFlagState.asStateFlow()
 
     var breakFlag: Boolean
         get() = getFlagValue(BREAK_BITMASK)
         set(value) = setFlagValue(value, BREAK_BITMASK)
+    private val _breakFlagState = MutableStateFlow(breakFlag)
+    val breakFlagState = _breakFlagState.asStateFlow()
 
     var decimalFlag: Boolean
         get() = getFlagValue(DECIMAL_BITMASK)
         set(value) = setFlagValue(value, DECIMAL_BITMASK)
+    private val _decimalFlagState = MutableStateFlow(decimalFlag)
+    val decimalFlagState = _decimalFlagState.asStateFlow()
 
     var interruptDisableFlag: Boolean
         get() = getFlagValue(INTERRUPT_DISABLE_BITMASK)
         set(value) = setFlagValue(value, INTERRUPT_DISABLE_BITMASK)
+    private val _interruptDisableFlagState = MutableStateFlow(interruptDisableFlag)
+    val interruptDisableFlagState = _interruptDisableFlagState.asStateFlow()
 
     var zeroFlag: Boolean
         get() = getFlagValue(ZERO_BITMASK)
         set(value) = setFlagValue(value, ZERO_BITMASK)
+    private val _zeroFlagState = MutableStateFlow(zeroFlag)
+    val zeroFlagState = _zeroFlagState.asStateFlow()
 
     var carryFlag: Boolean
         get() = getFlagValue(CARRY_BITMASK)
         set(value) = setFlagValue(value, CARRY_BITMASK)
+    private val _carryFlagState = MutableStateFlow(carryFlag)
+    val carryFlagState = _carryFlagState.asStateFlow()
 
     private fun getFlagValue(bitMask: UByte): Boolean = (statusRegister and bitMask) == bitMask
 
@@ -345,6 +379,7 @@ class CPU6502(override var bus: Mediator) : Component {
                 operation.execute()
         }
 
+        /*
         Logger.addLog(
             currentProgramCounter,
             opcodeValue,
@@ -359,6 +394,8 @@ class CPU6502(override var bus: Mediator) : Component {
             statusRegisterValue,
             stackPointerValue
         )
+         */
+
     }
 
     /**

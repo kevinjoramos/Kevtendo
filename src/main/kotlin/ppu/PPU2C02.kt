@@ -21,8 +21,10 @@ class PPU2C02(
 
     private val nameTableMirroringState = NameTableMirroring.HORIZONTAL
 
+    private val internalFrame: Int = 0
+
     fun run() {
-        TODO("RENDER A PIXEL!!!!")
+
     }
 
     fun readControllerRegister(): UInt {

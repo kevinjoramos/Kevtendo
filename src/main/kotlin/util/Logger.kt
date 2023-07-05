@@ -42,7 +42,7 @@ object Logger {
         //C000  4C F5 C5  JMP $C5F5                       A:00 X:00 Y:00 P:24 SP:FD PPU:  0, 21 CYC:7
         val logState = "$pc  $op $low $high  $opcodeName $address $acc $x $y $p $sp"
 
-        println(logState)
+        //println(logState)
         logs.add(logState)
     }
 

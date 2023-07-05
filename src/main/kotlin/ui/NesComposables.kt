@@ -11,6 +11,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -62,32 +63,28 @@ fun GameView(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-        Canvas(
+        Spacer(
             modifier = Modifier
                 .aspectRatio(1.07f)
-                .fillMaxSize(),
-        ) {
-            val pixelWidth = size.width / 256f
-            val pixelHeight = size.height / 240f
+                .fillMaxSize()
+                .drawWithCache {
+                    val pixelWidth = size.width / 256f
+                    val pixelHeight = size.height / 240f
+                    val pixelSize = Size(width = pixelWidth, height = pixelHeight)
 
-            for ((i, scanline) in gameViewUiState.value.pixelScreen.withIndex()) {
-               for ((j, pixel) in scanline.withIndex()) {
-                   drawRect(
-                       topLeft = Offset(x = pixelWidth * j, y= pixelHeight * i),
-                       size = Size(width = pixelWidth, height = pixelHeight),
-                       color = pixel
-                   )
-               }
-            }
-
-            /*for ((index, pixel) in gameViewUiState.pixelScreen[0].withIndex()) {
-                drawRect(
-                    topLeft = Offset(x = (pixelWidth * index) - 1, y= 0f ),
-                    size = Size(width = pixelWidth, height = pixelHeight),
-                    color = pixel
-                )
-            }*/
-        }
+                    onDrawWithContent {
+                        for ((i, scanline) in gameViewUiState.value.pixelScreen.withIndex()) {
+                            for ((j, pixel) in scanline.withIndex()) {
+                                drawRect(
+                                    topLeft = Offset(x = pixelWidth * j, y= pixelHeight * i),
+                                    size = pixelSize,
+                                    color = pixel
+                                )
+                            }
+                        }
+                    }
+                },
+        )
     }
 }
 

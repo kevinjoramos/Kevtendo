@@ -1,7 +1,5 @@
 package ppu
 
-private const val i = 10
-
 @ExperimentalUnsignedTypes
 class GraphicsRenderer() {
 
@@ -90,9 +88,14 @@ class GraphicsRenderer() {
     private val paletteAttributeShiftRegister1 = ShiftRegister8Bit()
     private val paletteAttributeShiftRegister2 = ShiftRegister8Bit()
 
+    //private val frameBuffer = List<>
+
     fun executeRenderCycle() {
 
     }
+
+
+
 
     companion object {
         private const val FIFTEEN_BITMASK = 0x7FFFu

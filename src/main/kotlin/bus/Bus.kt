@@ -12,8 +12,10 @@ import mediator.Mediator
  * @param ram is an array of memory addresses.
  */
 @ExperimentalUnsignedTypes
-class Bus(cartridgePath: String, ramSize: Int) : Mediator {
-    var ram = UByteArray(ramSize)
+class Bus(
+    cartridgePath: String
+) : Mediator {
+    var ram = Ram()
     var ppu = PPU2C02(this)
     private var mapper = MapperZero(Cartridge(cartridgePath), this)
     val cpu = CPU6502(this)
@@ -25,7 +27,7 @@ class Bus(cartridgePath: String, ramSize: Int) : Mediator {
     override fun readAddress(address: UShort): UByte {
 
 
-        if (address < 0x2000u) return ram[address.toInt()]
+        if (address < 0x2000u) return ram.memory[address.toInt()]
 
         if (address < 0x4000u) {
             val ppuRegisterAddress = (address.mod(0x0008u) + 0x2000u).toUShort()
@@ -63,10 +65,11 @@ class Bus(cartridgePath: String, ramSize: Int) : Mediator {
 
     override fun writeToAddress(address: UShort, data: UByte) {
         if (address < 0x2000u) {
-            ram[address.toInt()] = data
-            ram[(address + 0x0800u).mod(0x2000u).toUShort().toInt()] = data
-            ram[(address + 0x1000u).mod(0x2000u).toUShort().toInt()] = data
-            ram[(address + 0x1800u).mod(0x2000u).toUShort().toInt()] = data
+            ram.writeToMemory(address, data)
+            ram.writeToMemory((address + 0x0800u).mod(0x2000u).toUShort(), data)
+            ram.writeToMemory((address + 0x1000u).mod(0x2000u).toUShort(), data)
+            ram.writeToMemory((address + 0x1800u).mod(0x2000u).toUShort(), data)
+
             return
         }
 
@@ -101,10 +104,5 @@ class Bus(cartridgePath: String, ramSize: Int) : Mediator {
 
     fun reset() {
         cpu.reset()
-    }
-
-    fun clearRam() {
-        val size = this.ram.size
-        this.ram = UByteArray(size)
     }
 }

@@ -1,9 +1,9 @@
 package ui
 
+import androidx.compose.runtime.collectAsState
 import bus.Bus
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
+import bus.Ram
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,15 +12,15 @@ import kotlinx.coroutines.flow.update
 import util.Logger
 import util.to2DigitHexString
 import util.to4DigitHexString
+import kotlin.system.measureTimeMillis
 
 @ExperimentalUnsignedTypes
 class NesEmulatorUiState {
     private val projectRootPath = System.getProperty("user.dir")
-    private val ramSize = 0x2000
 
     //private val pathToGame = "$projectRootPath/src/main/kotlin/games/Donkey Kong.nes"
     private val pathToGame = "$projectRootPath/src/main/kotlin/games/nestest.nes"
-    private var bus = Bus(pathToGame, ramSize)
+    private var bus = Bus(pathToGame)
 
     private val _gameViewUiState = MutableStateFlow(GameViewUiState())
     val gameViewUiState = _gameViewUiState.asStateFlow()
@@ -33,29 +33,32 @@ class NesEmulatorUiState {
     private val _zeroPageViewState = MutableStateFlow(ZeroPageViewState())
     val zeroPageViewState = _zeroPageViewState.asStateFlow()
 
+    val zeroPageRow1ViewState = bus.ram.zeroPageRow1StateFlow
+    val zeroPageRow2ViewState = bus.ram.zeroPageRow2StateFlow
+    val zeroPageRow3ViewState = bus.ram.zeroPageRow3StateFlow
+    val zeroPageRow4ViewState = bus.ram.zeroPageRow4StateFlow
+    val zeroPageRow5ViewState = bus.ram.zeroPageRow5StateFlow
+    val zeroPageRow6ViewState = bus.ram.zeroPageRow6StateFlow
+    val zeroPageRow7ViewState = bus.ram.zeroPageRow7StateFlow
+    val zeroPageRow8ViewState = bus.ram.zeroPageRow8StateFlow
+    val zeroPageRow9ViewState = bus.ram.zeroPageRow9StateFlow
+    val zeroPageRow10ViewState = bus.ram.zeroPageRow10StateFlow
+    val zeroPageRow11ViewState = bus.ram.zeroPageRow11StateFlow
+    val zeroPageRow12ViewState = bus.ram.zeroPageRow12StateFlow
+    val zeroPageRow13ViewState = bus.ram.zeroPageRow13StateFlow
+    val zeroPageRow14ViewState = bus.ram.zeroPageRow14StateFlow
+    val zeroPageRow15ViewState = bus.ram.zeroPageRow15StateFlow
+    val zeroPageRow16ViewState = bus.ram.zeroPageRow16StateFlow
+
     private var isRunning = false
     var isPaused = false
 
+    private var systemClock = 0
+
     @OptIn(DelicateCoroutinesApi::class)
     fun start() {
-        GlobalScope.launch {
-            try {
-                isRunning = true
-                while (isRunning) {
-                    step()
-                    updateMainCpuViewState()
-                    updateZeroPageViewState()
-                    generateNoise()
-                }
-                
-            } catch (e: Exception) {
-                isRunning = false
-                println(e.toString())
-                Logger.writeLogsToFile()
-                println(bus.cpu.readAddress(0x02FFu))
-                println(bus.cpu.readAddress(0x0300u))
-            }
-        }
+        isRunning = true
+        runSystem()
     }
 
     fun step() {
@@ -63,19 +66,68 @@ class NesEmulatorUiState {
         bus.cpu.run()
         updateMainCpuViewState()
         updateZeroPageViewState()
-        //currentInstruction = bus.cpu.disassembledProgram[programCounterValue] ?: "i dunno"
 
 
         //instructionSlidingWindowState = getCurrentInstructionsSlidingWindowState()
     }
 
     fun reset() {
-        this.bus = Bus(pathToGame, ramSize)
+        this.bus = Bus(pathToGame)
     }
 
     fun stop() {
         isRunning = false
         Logger.writeLogsToFile()
+    }
+
+    private fun runSystem() {
+        GlobalScope.launch {
+
+            while (isRunning) {
+
+                val elapsedTime = measureTimeMillis {
+                    executeMainCycle()
+                }
+
+                println(elapsedTime)
+
+                systemClock = 0
+            }
+
+            /*} catch (e: Exception) {
+                isRunning = false
+                println(e.toString())
+                Logger.writeLogsToFile()
+                println(bus.cpu.readAddress(0x02FFu))
+                println(bus.cpu.readAddress(0x0300u))
+            }*/
+        }
+    }
+
+    private fun executeMainCycle() {
+
+        while (systemClock < TOTAL_SYSTEM_CYCLES_PER_FRAME) {
+            // execute one cycle of ppu (outputs one pixel)
+            bus.ppu.run()
+
+            // execute one cycle of cpu (1 cpu cycle for every 3 ppu cycles).
+            if (systemClock % 3 == 0) {
+                bus.cpu.run()
+                updateMainCpuViewState()
+                updateZeroPageViewState()
+            }
+
+            // At this point visible scan lines are complete.
+            if (systemClock == FIRST_CYCLE_AFTER_RENDER) {
+                generateNoise()
+            }
+
+            systemClock++
+        }
+    }
+
+    private fun updateGameViewState() {
+        val pair = Pair(1, 2)
     }
 
     private fun updateMainCpuViewState() {
@@ -104,14 +156,7 @@ class NesEmulatorUiState {
     }
 
     private fun updateZeroPageViewState() {
-        val zeroPage = bus.ram
-            .slice(0..255)
-            .map { it.to2DigitHexString() }
-            .chunked(16).map { it.toImmutableList() }.toImmutableList()
 
-        _zeroPageViewState.update {
-            it.copy(zeroPage = zeroPage)
-        }
     }
 
     private fun getCurrentInstructionsSlidingWindowState(): List<String> {
@@ -132,6 +177,8 @@ class NesEmulatorUiState {
         return instructionList
     }
 
+
+
     private fun generateNoise() {
         val pixelScreen = List(240) {
             List(256) {
@@ -142,5 +189,13 @@ class NesEmulatorUiState {
         _gameViewUiState.update {
             it.copy(pixelScreen = pixelScreen)
         }
+    }
+
+    companion object {
+        const val TOTAL_SYSTEM_CYCLES_PER_FRAME = 89_342
+        const val FIRST_CYCLE_AFTER_RENDER = 81_841
+        //const val FIRST_CYCLE_AFTER_RENDER = 82_080
+
+        const val MILLISECONDS_PER_FRAME = 17
     }
 }

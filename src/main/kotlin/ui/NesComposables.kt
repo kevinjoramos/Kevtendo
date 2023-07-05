@@ -24,7 +24,21 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
     val gameViewUiState = uiState.gameViewUiState.collectAsState()
-    val mainCpuViewState = uiState.mainCpuViewState.collectAsState()
+
+    val programCounterViewState = uiState.programCounterViewState.collectAsState()
+    val accumulatorViewState = uiState.accumulatorViewState.collectAsState()
+    val xRegisterViewState = uiState.xRegisterViewState.collectAsState()
+    val yRegisterViewState = uiState.yRegisterViewState.collectAsState()
+    val stackPointerViewState = uiState.stackPointerViewState.collectAsState()
+    val negativeFlagViewState = uiState.negativeFlagViewState.collectAsState()
+    val overflowFlagViewState = uiState.overflowFlagViewState.collectAsState()
+    val extraFlagViewState = uiState.extraFlagViewState.collectAsState()
+    val breakFlagViewState = uiState.breakFlagViewState.collectAsState()
+    val decimalFlagViewState = uiState.decimalFlagViewState.collectAsState()
+    val interruptDisableViewState = uiState.interruptDisableViewState.collectAsState()
+    val zeroFlagViewState = uiState.zeroFlagViewState.collectAsState()
+    val carryFlagViewState = uiState.carryFlagViewState.collectAsState()
+
     val zeroPageRow1ViewState = uiState.zeroPageRow1ViewState.collectAsState()
     val zeroPageRow2ViewState = uiState.zeroPageRow2ViewState.collectAsState()
     val zeroPageRow3ViewState = uiState.zeroPageRow3ViewState.collectAsState()
@@ -55,7 +69,19 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
             //.fillMaxSize()
         )
         EmulatorHudView(
-            mainCpuViewState = mainCpuViewState,
+            programCounterViewState = programCounterViewState,
+            accumulatorViewState = accumulatorViewState,
+            xRegisterViewState = xRegisterViewState,
+            yRegisterViewState = yRegisterViewState,
+            stackPointerViewState = stackPointerViewState,
+            negativeFlagViewState = negativeFlagViewState,
+            overflowFlagViewState = overflowFlagViewState,
+            extraFlagViewState = extraFlagViewState,
+            breakFlagViewState = breakFlagViewState,
+            decimalFlagViewState = decimalFlagViewState,
+            interruptDisableViewState = interruptDisableViewState,
+            zeroFlagViewState = zeroFlagViewState,
+            carryFlagViewState = carryFlagViewState,
             zeroPageRow1ViewState = zeroPageRow1ViewState,
             zeroPageRow2ViewState = zeroPageRow2ViewState,
             zeroPageRow3ViewState = zeroPageRow3ViewState,
@@ -124,7 +150,19 @@ State<String>
 
 @Composable
 fun EmulatorHudView(
-    mainCpuViewState: State<MainCpuViewState>,
+    programCounterViewState: State<String>,
+    accumulatorViewState: State<String>,
+    xRegisterViewState: State<String>,
+    yRegisterViewState: State<String>,
+    stackPointerViewState: State<String>,
+    negativeFlagViewState: State<Boolean>,
+    overflowFlagViewState: State<Boolean>,
+    extraFlagViewState: State<Boolean>,
+    breakFlagViewState: State<Boolean>,
+    decimalFlagViewState: State<Boolean>,
+    interruptDisableViewState: State<Boolean>,
+    zeroFlagViewState: State<Boolean>,
+    carryFlagViewState: State<Boolean>,
     zeroPageRow1ViewState: State<String>,
     zeroPageRow2ViewState: State<String>,
     zeroPageRow3ViewState: State<String>,
@@ -157,7 +195,21 @@ fun EmulatorHudView(
             onStop
         )
         Spacer(modifier = Modifier.height(12.dp))
-        MainCpuView(mainCpuViewState)
+        MainCpuView(
+            programCounterViewState = programCounterViewState,
+            accumulatorViewState = accumulatorViewState,
+            xRegisterViewState = xRegisterViewState,
+            yRegisterViewState = yRegisterViewState,
+            stackPointerViewState = stackPointerViewState,
+            negativeFlagViewState = negativeFlagViewState,
+            overflowFlagViewState = overflowFlagViewState,
+            extraFlagViewState = extraFlagViewState,
+            breakFlagViewState = breakFlagViewState,
+            decimalFlagViewState = decimalFlagViewState,
+            interruptDisableViewState = interruptDisableViewState,
+            zeroFlagViewState = zeroFlagViewState,
+            carryFlagViewState = carryFlagViewState,
+        )
         Spacer(modifier = Modifier.height(12.dp))
         ZeroPageView(
             zeroPageRow1ViewState = zeroPageRow1ViewState,
@@ -267,44 +319,98 @@ fun ButtonsView(
     }
 }
 @Composable
-fun MainCpuView(mainCpuViewState: State<MainCpuViewState>) {
+fun MainCpuView(
+    programCounterViewState: State<String>,
+    accumulatorViewState: State<String>,
+    xRegisterViewState: State<String>,
+    yRegisterViewState: State<String>,
+    stackPointerViewState: State<String>,
+    negativeFlagViewState: State<Boolean>,
+    overflowFlagViewState: State<Boolean>,
+    extraFlagViewState: State<Boolean>,
+    breakFlagViewState: State<Boolean>,
+    decimalFlagViewState: State<Boolean>,
+    interruptDisableViewState: State<Boolean>,
+    zeroFlagViewState: State<Boolean>,
+    carryFlagViewState: State<Boolean>,
+) {
     Column {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "STATUS: ",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = Color.White,
-                fontFamily = FontFamily.Monospace
-            )
+        StatusFlagsView(
+            negativeFlagViewState = negativeFlagViewState,
+            overflowFlagViewState = overflowFlagViewState,
+            extraFlagViewState = extraFlagViewState,
+            breakFlagViewState = breakFlagViewState,
+            decimalFlagViewState = decimalFlagViewState,
+            interruptDisableViewState = interruptDisableViewState,
+            zeroFlagViewState = zeroFlagViewState,
+            carryFlagViewState = carryFlagViewState,
+        )
 
-            for (flag in mainCpuViewState.value.flags) {
-                Text(
-                    text = flag.first,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = if (flag.second) Color.Gray else Color.White,
-                    fontFamily = FontFamily.Monospace
-                )
-                Spacer(
-                    modifier = Modifier.width(6.dp)
-                )
-            }
-        }
-
-        for (register in mainCpuViewState.value.registers) {
-            Text(
-                text = register,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = Color.White,
-                fontFamily = FontFamily.Monospace
-            )
-        }
+        RegisterView("PC:", programCounterViewState.value)
+        RegisterView("A:", accumulatorViewState.value)
+        RegisterView("X:", xRegisterViewState.value)
+        RegisterView("Y:", yRegisterViewState.value)
+        RegisterView("SP:", stackPointerViewState.value)
     }
+}
+
+@Composable
+fun StatusFlagsView(
+    negativeFlagViewState: State<Boolean>,
+    overflowFlagViewState: State<Boolean>,
+    extraFlagViewState: State<Boolean>,
+    breakFlagViewState: State<Boolean>,
+    decimalFlagViewState: State<Boolean>,
+    interruptDisableViewState: State<Boolean>,
+    zeroFlagViewState: State<Boolean>,
+    carryFlagViewState: State<Boolean>
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "STATUS: ",
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            color = Color.White,
+            fontFamily = FontFamily.Monospace
+        )
+
+       FlagView("N", negativeFlagViewState.value)
+       FlagView("V", overflowFlagViewState.value)
+       FlagView("-", extraFlagViewState.value)
+       FlagView("B", breakFlagViewState.value)
+       FlagView("D", decimalFlagViewState.value)
+       FlagView("I", interruptDisableViewState.value)
+       FlagView("Z", zeroFlagViewState.value)
+       FlagView("C", carryFlagViewState.value)
+    }
+}
+
+@Composable
+fun FlagView(name: String, isActive: Boolean) {
+    Text(
+        text = name,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        color = if (isActive) Color.White else Color.Gray,
+        fontFamily = FontFamily.Monospace
+    )
+    Spacer(
+        modifier = Modifier.width(6.dp)
+    )
+}
+
+@Composable
+fun RegisterView(label: String, value: String) {
+    Text(
+        text = "$label $value",
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        color = Color.White,
+        fontFamily = FontFamily.Monospace
+    )
 }
 
 @Composable

@@ -29,9 +29,19 @@ class NesEmulatorUiState {
     private val _mainCpuViewState = MutableStateFlow(MainCpuViewState())
     val mainCpuViewState = _mainCpuViewState.asStateFlow()
 
-    //val disassemblerState by mutableStateOf("f")
-    //private val _zeroPageViewState = MutableStateFlow(ZeroPageViewState())
-    //val zeroPageViewState = _zeroPageViewState.asStateFlow()
+    val programCounterViewState = bus.cpu.programCounterState
+    val accumulatorViewState = bus.cpu.accumulatorState
+    val xRegisterViewState = bus.cpu.xRegisterState
+    val yRegisterViewState = bus.cpu.yRegisterState
+    val stackPointerViewState = bus.cpu.stackPointerState
+    val negativeFlagViewState = bus.cpu.negativeFlagState
+    val overflowFlagViewState = bus.cpu.overflowFlagState
+    val extraFlagViewState = bus.cpu.extraFlagState
+    val breakFlagViewState = bus.cpu.breakFlagState
+    val decimalFlagViewState = bus.cpu.decimalFlagState
+    val interruptDisableViewState = bus.cpu.interruptDisableFlagState
+    val zeroFlagViewState = bus.cpu.zeroFlagState
+    val carryFlagViewState = bus.cpu.carryFlagState
 
     val zeroPageRow1ViewState = bus.ram.zeroPageRow1StateFlow
     val zeroPageRow2ViewState = bus.ram.zeroPageRow2StateFlow
@@ -113,7 +123,7 @@ class NesEmulatorUiState {
             // execute one cycle of cpu (1 cpu cycle for every 3 ppu cycles).
             if (systemClock % 3 == 0) {
                 bus.cpu.run()
-                updateMainCpuViewState()
+                //updateMainCpuViewState()
                 //updateZeroPageViewState()
             }
 

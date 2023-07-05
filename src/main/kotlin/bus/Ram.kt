@@ -2,7 +2,7 @@ package bus
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import util.to2DigitHexString
 
 class Ram {
     val memory = Array(0x2000) { (0x00u).toUByte() }
@@ -10,72 +10,121 @@ class Ram {
     fun writeToMemory(address: UShort, data: UByte) {
         memory[address.toInt()] = data
         when (address.toUInt()) {
-            in FIRST_SIXTEEN_UBYTES -> { _zeroPageRow1StateFlow.value[(address % 15u).toInt()] = data }
-            in SECOND_SIXTEEN_UBYTES -> { _zeroPageRow2StateFlow.value[(address % 15u).toInt()] = data }
-            in THIRD_SIXTEEN_UBYTES -> { _zeroPageRow3StateFlow.value[(address % 15u).toInt()] = data }
-            in FOURTH_SIXTEEN_UBYTES -> { _zeroPageRow4StateFlow.value[(address % 15u).toInt()] = data }
-            in FIFTH_SIXTEEN_UBYTES -> { _zeroPageRow5StateFlow.value[(address % 15u).toInt()] = data }
-            in SIXTH_SIXTEEN_UBYTES -> { _zeroPageRow6StateFlow.value[(address % 15u).toInt()] = data }
-            in SEVENTH_SIXTEEN_UBYTES -> { _zeroPageRow7StateFlow.value[(address % 15u).toInt()] = data }
-            in EIGHTH_SIXTEEN_UBYTES -> { _zeroPageRow8StateFlow.value[(address % 15u).toInt()] = data }
-            in NINTH_SIXTEEN_UBYTES -> { _zeroPageRow9StateFlow.value[(address % 15u).toInt()] = data }
-            in TENTH_SIXTEEN_UBYTES -> { _zeroPageRow10StateFlow.value[(address % 15u).toInt()] = data }
-            in ELEVENTH_SIXTEEN_UBYTES -> { _zeroPageRow11StateFlow.value[(address % 15u).toInt()] = data }
-            in TWELFTH_SIXTEEN_UBYTES -> { _zeroPageRow12StateFlow.value[(address % 15u).toInt()] = data }
-            in THIRTEENTH_SIXTEEN_UBYTES -> { _zeroPageRow13StateFlow.value[(address % 15u).toInt()] = data }
-            in FOURTEENTH_SIXTEEN_UBYTES -> { _zeroPageRow14StateFlow.value[(address % 15u).toInt()] = data }
-            in FIFTEENTH_SIXTEEN_UBYTES -> { _zeroPageRow15StateFlow.value[(address % 15u).toInt()] = data }
-            in SIXTEENTH_SIXTEEN_UBYTES -> { _zeroPageRow16StateFlow.value[(address % 15u).toInt()] = data }
+            in FIRST_SIXTEEN_UBYTES -> {
+                val row = memory.slice(FIRST_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in SECOND_SIXTEEN_UBYTES -> {
+                val row = memory.slice(SECOND_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in THIRD_SIXTEEN_UBYTES -> {
+                val row = memory.slice(THIRD_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+
+            }
+            in FOURTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(FOURTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in FIFTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(FIFTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in SIXTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(SIXTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in SEVENTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(SEVENTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in EIGHTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(EIGHTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in NINTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(NINTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in TENTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(TENTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in ELEVENTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(ELEVENTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in TWELFTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(TWELFTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in THIRTEENTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(THIRTEENTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in FOURTEENTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(FOURTEENTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in FIFTEENTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(FIFTEENTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
+            in SIXTEENTH_SIXTEEN_UBYTES -> {
+                val row = memory.slice(SIXTEENTH_SIXTEEN_BYTES)
+                _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
+            }
         }
     }
 
-    private val _zeroPageRow1StateFlow = MutableStateFlow(memory.slice(FIRST_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow1StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow1StateFlow = _zeroPageRow1StateFlow.asStateFlow()
 
 
-    private val _zeroPageRow2StateFlow = MutableStateFlow(memory.slice(SECOND_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow2StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow2StateFlow = _zeroPageRow2StateFlow.asStateFlow()
 
-    private val _zeroPageRow3StateFlow = MutableStateFlow(memory.slice(THIRD_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow3StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow3StateFlow = _zeroPageRow3StateFlow.asStateFlow()
 
-    private val _zeroPageRow4StateFlow = MutableStateFlow(memory.slice(FOURTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow4StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow4StateFlow = _zeroPageRow4StateFlow.asStateFlow()
 
-    private val _zeroPageRow5StateFlow = MutableStateFlow(memory.slice(FIFTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow5StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow5StateFlow = _zeroPageRow5StateFlow.asStateFlow()
 
-    private val _zeroPageRow6StateFlow = MutableStateFlow(memory.slice(SIXTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow6StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow6StateFlow = _zeroPageRow6StateFlow.asStateFlow()
 
-    private val _zeroPageRow7StateFlow = MutableStateFlow(memory.slice(SEVENTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow7StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow7StateFlow = _zeroPageRow7StateFlow.asStateFlow()
 
-    private val _zeroPageRow8StateFlow = MutableStateFlow(memory.slice(EIGHTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow8StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow8StateFlow = _zeroPageRow8StateFlow.asStateFlow()
 
-    private val _zeroPageRow9StateFlow = MutableStateFlow(memory.slice(NINTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow9StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow9StateFlow = _zeroPageRow9StateFlow.asStateFlow()
 
-    private val _zeroPageRow10StateFlow = MutableStateFlow(memory.slice(TENTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow10StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow10StateFlow = _zeroPageRow10StateFlow.asStateFlow()
 
-    private val _zeroPageRow11StateFlow = MutableStateFlow(memory.slice(ELEVENTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow11StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow11StateFlow = _zeroPageRow11StateFlow.asStateFlow()
 
-    private val _zeroPageRow12StateFlow = MutableStateFlow(memory.slice(TWELFTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow12StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow12StateFlow = _zeroPageRow12StateFlow.asStateFlow()
 
-    private val _zeroPageRow13StateFlow = MutableStateFlow(memory.slice(THIRTEENTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow13StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow13StateFlow = _zeroPageRow13StateFlow.asStateFlow()
 
-    private val _zeroPageRow14StateFlow = MutableStateFlow(memory.slice(FOURTEENTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow14StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow14StateFlow = _zeroPageRow14StateFlow.asStateFlow()
 
-    private val _zeroPageRow15StateFlow = MutableStateFlow(memory.slice(FIFTEENTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow15StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow15StateFlow = _zeroPageRow15StateFlow.asStateFlow()
 
-    private val _zeroPageRow16StateFlow = MutableStateFlow(memory.slice(SIXTEENTH_SIXTEEN_BYTES).toMutableList())
+    private val _zeroPageRow16StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")
     val zeroPageRow16StateFlow = _zeroPageRow16StateFlow.asStateFlow()
 
     companion object {

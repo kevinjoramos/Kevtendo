@@ -25,7 +25,22 @@ import androidx.compose.ui.unit.sp
 fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
     val gameViewUiState = uiState.gameViewUiState.collectAsState()
     val mainCpuViewState = uiState.mainCpuViewState.collectAsState()
-    val zeroPageViewState = uiState.zeroPageViewState.collectAsState()
+    val zeroPageRow1ViewState = uiState.zeroPageRow1ViewState.collectAsState()
+    val zeroPageRow2ViewState = uiState.zeroPageRow2ViewState.collectAsState()
+    val zeroPageRow3ViewState = uiState.zeroPageRow3ViewState.collectAsState()
+    val zeroPageRow4ViewState = uiState.zeroPageRow4ViewState.collectAsState()
+    val zeroPageRow5ViewState = uiState.zeroPageRow5ViewState.collectAsState()
+    val zeroPageRow6ViewState = uiState.zeroPageRow6ViewState.collectAsState()
+    val zeroPageRow7ViewState = uiState.zeroPageRow7ViewState.collectAsState()
+    val zeroPageRow8ViewState = uiState.zeroPageRow8ViewState.collectAsState()
+    val zeroPageRow9ViewState = uiState.zeroPageRow9ViewState.collectAsState()
+    val zeroPageRow10ViewState = uiState.zeroPageRow10ViewState.collectAsState()
+    val zeroPageRow11ViewState = uiState.zeroPageRow11ViewState.collectAsState()
+    val zeroPageRow12ViewState = uiState.zeroPageRow12ViewState.collectAsState()
+    val zeroPageRow13ViewState = uiState.zeroPageRow13ViewState.collectAsState()
+    val zeroPageRow14ViewState = uiState.zeroPageRow14ViewState.collectAsState()
+    val zeroPageRow15ViewState = uiState.zeroPageRow15ViewState.collectAsState()
+    val zeroPageRow16ViewState = uiState.zeroPageRow16ViewState.collectAsState()
 
     Row(
         modifier = Modifier
@@ -41,7 +56,22 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
         )
         EmulatorHudView(
             mainCpuViewState = mainCpuViewState,
-            zeroPageViewState = zeroPageViewState,
+            zeroPageRow1ViewState = zeroPageRow1ViewState,
+            zeroPageRow2ViewState = zeroPageRow2ViewState,
+            zeroPageRow3ViewState = zeroPageRow3ViewState,
+            zeroPageRow4ViewState = zeroPageRow4ViewState,
+            zeroPageRow5ViewState = zeroPageRow5ViewState,
+            zeroPageRow6ViewState = zeroPageRow6ViewState,
+            zeroPageRow7ViewState = zeroPageRow7ViewState,
+            zeroPageRow8ViewState = zeroPageRow8ViewState,
+            zeroPageRow9ViewState = zeroPageRow9ViewState,
+            zeroPageRow10ViewState = zeroPageRow10ViewState,
+            zeroPageRow11ViewState = zeroPageRow11ViewState,
+            zeroPageRow12ViewState = zeroPageRow12ViewState,
+            zeroPageRow13ViewState = zeroPageRow13ViewState,
+            zeroPageRow14ViewState = zeroPageRow14ViewState,
+            zeroPageRow15ViewState = zeroPageRow15ViewState,
+            zeroPageRow16ViewState = zeroPageRow16ViewState,
             onStart = uiState::start,
             onStep = uiState::step,
             onReset = uiState::reset,
@@ -88,10 +118,29 @@ fun GameView(
     }
 }
 
+/*
+State<String>
+ */
+
 @Composable
 fun EmulatorHudView(
     mainCpuViewState: State<MainCpuViewState>,
-    zeroPageViewState: State<ZeroPageViewState>,
+    zeroPageRow1ViewState: State<String>,
+    zeroPageRow2ViewState: State<String>,
+    zeroPageRow3ViewState: State<String>,
+    zeroPageRow4ViewState: State<String>,
+    zeroPageRow5ViewState: State<String>,
+    zeroPageRow6ViewState: State<String>,
+    zeroPageRow7ViewState: State<String>,
+    zeroPageRow8ViewState: State<String>,
+    zeroPageRow9ViewState: State<String>,
+    zeroPageRow10ViewState: State<String>,
+    zeroPageRow11ViewState: State<String>,
+    zeroPageRow12ViewState: State<String>,
+    zeroPageRow13ViewState: State<String>,
+    zeroPageRow14ViewState: State<String>,
+    zeroPageRow15ViewState: State<String>,
+    zeroPageRow16ViewState: State<String>,
     onStart: () -> Unit,
     onStep: () -> Unit,
     onReset: () -> Unit,
@@ -110,7 +159,24 @@ fun EmulatorHudView(
         Spacer(modifier = Modifier.height(12.dp))
         MainCpuView(mainCpuViewState)
         Spacer(modifier = Modifier.height(12.dp))
-        ZeroPageView(zeroPageViewState)
+        ZeroPageView(
+            zeroPageRow1ViewState = zeroPageRow1ViewState,
+            zeroPageRow2ViewState = zeroPageRow2ViewState,
+            zeroPageRow3ViewState = zeroPageRow3ViewState,
+            zeroPageRow4ViewState = zeroPageRow4ViewState,
+            zeroPageRow5ViewState = zeroPageRow5ViewState,
+            zeroPageRow6ViewState = zeroPageRow6ViewState,
+            zeroPageRow7ViewState = zeroPageRow7ViewState,
+            zeroPageRow8ViewState = zeroPageRow8ViewState,
+            zeroPageRow9ViewState = zeroPageRow9ViewState,
+            zeroPageRow10ViewState = zeroPageRow10ViewState,
+            zeroPageRow11ViewState = zeroPageRow11ViewState,
+            zeroPageRow12ViewState = zeroPageRow12ViewState,
+            zeroPageRow13ViewState = zeroPageRow13ViewState,
+            zeroPageRow14ViewState = zeroPageRow14ViewState,
+            zeroPageRow15ViewState = zeroPageRow15ViewState,
+            zeroPageRow16ViewState = zeroPageRow16ViewState
+        )
     }
         /*
         Spacer(modifier.height(10.dp))
@@ -243,32 +309,58 @@ fun MainCpuView(mainCpuViewState: State<MainCpuViewState>) {
 
 @Composable
 fun ZeroPageView(
-    zeroPageViewState: State<ZeroPageViewState>
+    zeroPageRow1ViewState: State<String>,
+    zeroPageRow2ViewState: State<String>,
+    zeroPageRow3ViewState: State<String>,
+    zeroPageRow4ViewState: State<String>,
+    zeroPageRow5ViewState: State<String>,
+    zeroPageRow6ViewState: State<String>,
+    zeroPageRow7ViewState: State<String>,
+    zeroPageRow8ViewState: State<String>,
+    zeroPageRow9ViewState: State<String>,
+    zeroPageRow10ViewState: State<String>,
+    zeroPageRow11ViewState: State<String>,
+    zeroPageRow12ViewState: State<String>,
+    zeroPageRow13ViewState: State<String>,
+    zeroPageRow14ViewState: State<String>,
+    zeroPageRow15ViewState: State<String>,
+    zeroPageRow16ViewState: State<String>,
 ) {
     Column(
         modifier = Modifier
             .border(1.dp, Color.White)
-            .padding(5.dp, 0.dp, 0.dp, 0.dp)
+            .padding(5.dp, 5.dp, 5.dp, 0.dp)
     ) {
-        for (array in zeroPageViewState.value.zeroPage) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-            ) {
-                for (value in array) {
-                    Text(
-                        text = value,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = Color.White,
-                        fontFamily = FontFamily.Monospace
-                    )
-                    Spacer(
-                        modifier = Modifier
-                            .width(5.dp)
-                    )
-                }
-            }
-        }
+        ZeroPageRowView(zeroPageRow1ViewState.value)
+        ZeroPageRowView(zeroPageRow2ViewState.value)
+        ZeroPageRowView(zeroPageRow3ViewState.value)
+        ZeroPageRowView(zeroPageRow4ViewState.value)
+        ZeroPageRowView(zeroPageRow5ViewState.value)
+        ZeroPageRowView(zeroPageRow6ViewState.value)
+        ZeroPageRowView(zeroPageRow7ViewState.value)
+        ZeroPageRowView(zeroPageRow8ViewState.value)
+        ZeroPageRowView(zeroPageRow9ViewState.value)
+        ZeroPageRowView(zeroPageRow10ViewState.value)
+        ZeroPageRowView(zeroPageRow11ViewState.value)
+        ZeroPageRowView(zeroPageRow12ViewState.value)
+        ZeroPageRowView(zeroPageRow13ViewState.value)
+        ZeroPageRowView(zeroPageRow14ViewState.value)
+        ZeroPageRowView(zeroPageRow15ViewState.value)
+        ZeroPageRowView(zeroPageRow16ViewState.value)
     }
+}
+
+@Composable
+fun ZeroPageRowView(row: String) {
+    Text(
+        text = row,
+        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp,
+        color = Color.White,
+        fontFamily = FontFamily.Monospace
+    )
+    Spacer(
+        modifier = Modifier
+            .width(5.dp)
+    )
 }

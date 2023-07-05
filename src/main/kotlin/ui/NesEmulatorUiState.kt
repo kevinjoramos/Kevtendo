@@ -30,8 +30,8 @@ class NesEmulatorUiState {
     val mainCpuViewState = _mainCpuViewState.asStateFlow()
 
     //val disassemblerState by mutableStateOf("f")
-    private val _zeroPageViewState = MutableStateFlow(ZeroPageViewState())
-    val zeroPageViewState = _zeroPageViewState.asStateFlow()
+    //private val _zeroPageViewState = MutableStateFlow(ZeroPageViewState())
+    //val zeroPageViewState = _zeroPageViewState.asStateFlow()
 
     val zeroPageRow1ViewState = bus.ram.zeroPageRow1StateFlow
     val zeroPageRow2ViewState = bus.ram.zeroPageRow2StateFlow
@@ -114,7 +114,7 @@ class NesEmulatorUiState {
             if (systemClock % 3 == 0) {
                 bus.cpu.run()
                 updateMainCpuViewState()
-                updateZeroPageViewState()
+                //updateZeroPageViewState()
             }
 
             // At this point visible scan lines are complete.

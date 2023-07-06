@@ -58,8 +58,15 @@ class StatusRegister {
         get() = (value and SPRITE_HIT_BITMASK) != 0u
 
 
-    val isInVBlank
+    var isInVBlank
         get() = (value and VERTICAL_BLANK_BITMASK) != 0u
+        set(value) {
+            if (value) {
+                this.value = this.value or 0x8u
+            } else {
+                this.value = this.value and 0x7u
+            }
+        }
 
     /**
      * Clear Status Register

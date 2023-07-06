@@ -3,7 +3,6 @@ package ppu
 import androidx.compose.ui.graphics.Color
 import mediator.Component
 import mediator.Mediator
-import java.sql.Array
 
 @ExperimentalUnsignedTypes
 class PPU2C02(
@@ -24,53 +23,61 @@ class PPU2C02(
 
     val frameBuffer = Array(262) { Array(341) { 0x01u } }
     var scanline = 0
-    var pixel = 0
-    var tileId = 0x0000u
-    var attributeId = 0x0000u
+    var cycles = 0
+    var patternTileId = 0x0000u
+    var attributeTileId = 0x0000u
     var tileLowerBitPlane = 0x00u
     var tileHigherBitPlane = 0x00u
 
 
     fun run() {
-        when (scanline) {
-            in -1..239 -> {
-                when (pixel) {
-                    in 1..256 -> {
-                        when (pixel % 8) {
-                            0 -> {
-                                tileId = graphicsRenderer.tileAddress
-                            }
-                            2 -> {
-                                attributeId = graphicsRenderer.attributeAddress
-                            }
-                            4 -> {
 
-                            }
-                            6 -> {
+        if (scanline in 0..239 || scanline == 261) {
 
-                            }
-                            7 -> {
-
-                            }
-                        }
-
-                        pixel++
+            if (cycles in 1..256) {
+                when (cycles % 8) {
+                    0 -> {
+                        // Nametable Byte
+                    }
+                    2 -> {
+                        // Attribute Byte
+                    }
+                    4 -> {
+                        // Pattern Tile Low
+                    }
+                    6 -> {
+                        // Pattern Tile High
+                    }
+                    7 -> {
+                        // Load shift registers.
                     }
                 }
             }
 
-            240 -> {
 
+
+        }
+
+        if (scanline == 240) {
+            // idle scanline.
+        }
+
+        if (scanline in 241..260) {
+            if (scanline == 241 && cycles == 1) {
+                statusRegister.isInVBlank = true
             }
+        }
 
-            241 -> {
+        if (scanline == 261) {
+            statusRegister.isInVBlank = false
+        }
 
-            }
-
-            in 242..260 -> {
-
-            }
-
+        // Multidimensional array index wrapping.
+        if (cycles < 340) {
+            cycles++
+        } else {
+            if (scanline < 261) scanline++ else scanline = 0
+            cycles = 0
         }
 
     }

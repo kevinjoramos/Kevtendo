@@ -3,6 +3,7 @@ package ppu
 import androidx.compose.ui.graphics.Color
 import mediator.Component
 import mediator.Mediator
+import java.sql.Array
 
 @ExperimentalUnsignedTypes
 class PPU2C02(
@@ -21,9 +22,56 @@ class PPU2C02(
 
     private val nameTableMirroringState = NameTableMirroring.HORIZONTAL
 
-    private val internalFrame: Int = 0
+    val frameBuffer = Array(262) { Array(341) { 0x01u } }
+    var scanline = 0
+    var pixel = 0
+    var tileId = 0x0000u
+    var attributeId = 0x0000u
+    var tileLowerBitPlane = 0x00u
+    var tileHigherBitPlane = 0x00u
+
 
     fun run() {
+        when (scanline) {
+            in -1..239 -> {
+                when (pixel) {
+                    in 1..256 -> {
+                        when (pixel % 8) {
+                            0 -> {
+                                tileId = graphicsRenderer.tileAddress
+                            }
+                            2 -> {
+                                attributeId = graphicsRenderer.attributeAddress
+                            }
+                            4 -> {
+
+                            }
+                            6 -> {
+
+                            }
+                            7 -> {
+
+                            }
+                        }
+
+                        pixel++
+                    }
+                }
+            }
+
+            240 -> {
+
+            }
+
+            241 -> {
+
+            }
+
+            in 242..260 -> {
+
+            }
+
+        }
 
     }
 

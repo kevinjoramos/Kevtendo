@@ -23,6 +23,20 @@ class GraphicsRenderer() {
 
 
     /**
+     * The tile address is the value represented by excluding fine y.
+     */
+    val tileAddress: UInt
+        get() = 0x2000u or (currentVRAMAddress and 0x0FFFu)
+
+    /**
+     * The attribute address is hard to explain, but it comes from dividing the name table into 8 by 8 sections.
+     * The free bits become the attribute offset. Attribute tiles start at 23C0
+     */
+    val attributeAddress: UInt
+        get() = 0x23C0u or (currentVRAMAddress and 0x0C00u) or ((currentVRAMAddress shr 4) and 0x38u) or ((currentVRAMAddress shr 2) and 0x07u)
+
+
+    /**
      * Temporary VRAM Address
      */
     var temporaryVRAMAddress: UInt = 0u

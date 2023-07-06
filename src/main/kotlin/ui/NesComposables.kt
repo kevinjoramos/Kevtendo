@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -134,7 +135,7 @@ fun GameView(
                                 drawRect(
                                     topLeft = Offset(x = pixelWidth * j, y= pixelHeight * i),
                                     size = pixelSize,
-                                    color = pixel
+                                    color = pixel,
                                 )
                             }
                         }

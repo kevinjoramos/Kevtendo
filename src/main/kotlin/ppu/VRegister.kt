@@ -44,6 +44,28 @@ class VRegister {
         }
     }
 
+    fun incrementY() {
+        if (fineY < 7u) {
+            value += 0x1000u
+        } else {
+            value = value and (0x7000u).inv()
+            var y = coarseY
+            when (y) {
+                29u -> {
+                    y = 0u
+                    value = value xor 0x0800u
+                }
+                31u -> {
+                    y = 0u
+                }
+                else -> {
+                    y += 1u
+                }
+            }
+            value = (value and COARSE_Y_BITMASK.inv()) or (y shl COARSE_Y_SHIFT)
+        }
+    }
+
 
     companion object {
         private const val FIFTEEN_BITMASK = 0x7FFFu

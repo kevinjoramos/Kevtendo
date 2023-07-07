@@ -123,13 +123,12 @@ class NesEmulatorUiState {
             // execute one cycle of cpu (1 cpu cycle for every 3 ppu cycles).
             if (systemClock % 3 == 0) {
                 bus.cpu.run()
-                //updateMainCpuViewState()
-                //updateZeroPageViewState()
             }
 
             // At this point visible scan lines are complete.
             if (systemClock == FIRST_CYCLE_AFTER_RENDER) {
-                generateNoise()
+                //generateNoise()
+                updateGameViewState()
             }
 
             systemClock++
@@ -137,7 +136,87 @@ class NesEmulatorUiState {
     }
 
     private fun updateGameViewState() {
-        val pair = Pair(1, 2)
+        val pixelScreen = bus.ppu.frameBuffer.map { row ->
+            row.map { pixel ->
+                getColorFromValue(pixel.toUInt() )
+            }.toImmutableList()
+        }.toImmutableList()
+
+        _gameViewUiState.update {
+            it.copy(pixelScreen = pixelScreen)
+        }
+    }
+
+    private fun getColorFromValue(colorValue: UInt): Color {
+        return when (colorValue) {
+            0x00u -> COLOR_00
+            0x01u -> COLOR_01
+            0x02u -> COLOR_02
+            0x03u -> COLOR_03
+            0x04u -> COLOR_04
+            0x05u -> COLOR_05
+            0x06u -> COLOR_06
+            0x07u -> COLOR_07
+            0x08u -> COLOR_08
+            0x09u -> COLOR_09
+            0x0Au -> COLOR_0A
+            0x0Bu -> COLOR_0B
+            0x0Cu -> COLOR_0C
+            0x0Du -> COLOR_0D
+            0x0Eu -> COLOR_0E
+            0x0Fu -> COLOR_0F
+
+            0x10u -> COLOR_10
+            0x11u -> COLOR_11
+            0x12u -> COLOR_12
+            0x13u -> COLOR_13
+            0x14u -> COLOR_14
+            0x15u -> COLOR_15
+            0x16u -> COLOR_16
+            0x17u -> COLOR_17
+            0x18u -> COLOR_18
+            0x19u -> COLOR_19
+            0x1Au -> COLOR_1A
+            0x1Bu -> COLOR_1B
+            0x1Cu -> COLOR_1C
+            0x1Du -> COLOR_1D
+            0x1Eu -> COLOR_1E
+            0x1Fu -> COLOR_1F
+
+            0x20u -> COLOR_20
+            0x21u -> COLOR_21
+            0x22u -> COLOR_22
+            0x23u -> COLOR_23
+            0x24u -> COLOR_24
+            0x25u -> COLOR_25
+            0x26u -> COLOR_26
+            0x27u -> COLOR_27
+            0x28u -> COLOR_28
+            0x29u -> COLOR_29
+            0x2Au -> COLOR_2A
+            0x2Bu -> COLOR_2B
+            0x2Cu -> COLOR_2C
+            0x2Du -> COLOR_2D
+            0x2Eu -> COLOR_2E
+            0x2Fu-> COLOR_1F
+
+            0x30u -> COLOR_30
+            0x31u -> COLOR_31
+            0x32u -> COLOR_32
+            0x33u -> COLOR_33
+            0x34u -> COLOR_34
+            0x35u -> COLOR_35
+            0x36u -> COLOR_36
+            0x37u -> COLOR_37
+            0x38u -> COLOR_38
+            0x39u -> COLOR_39
+            0x3Au -> COLOR_3A
+            0x3Bu -> COLOR_3B
+            0x3Cu -> COLOR_3C
+            0x3Du -> COLOR_3D
+            0x3Eu -> COLOR_3E
+            else -> COLOR_3F
+        }
     }
 
     private fun updateMainCpuViewState() {
@@ -186,8 +265,6 @@ class NesEmulatorUiState {
 
         return instructionList
     }
-
-
 
     private fun generateNoise() {
         val pixelScreen = List(240) {

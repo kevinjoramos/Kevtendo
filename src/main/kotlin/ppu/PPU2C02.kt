@@ -70,6 +70,20 @@ class PPU2C02(
 
         if (scanline in 0..239 || scanline == 261) {
 
+            if (scanline in 0..239 && cycles in 0..256) {
+                drawPixel(
+                    scanline,
+                    cycles,
+                    (lowerBackgroundShiftRegister and 0x1u) or ((upperBackGroundShiftRegister and 0x1u) shl 1),
+                    (lowerPaletteShiftRegister and 0x1u) or ((upperPaletteShiftRegister and 0x1u) shl 1),
+                )
+
+                lowerBackgroundShiftRegister = lowerPaletteShiftRegister shr 1
+                upperBackGroundShiftRegister = upperBackGroundShiftRegister shr 1
+                lowerPaletteShiftRegister = lowerPaletteShiftRegister shr 1
+                upperPaletteShiftRegister = upperPaletteShiftRegister shr 1
+            }
+
             if (cycles in 1..336) {
                 when (cycles % 8) {
                     0 -> {
@@ -122,14 +136,19 @@ class PPU2C02(
 
                         upperPaletteShiftRegister = if (highBit == 1u) 0xFFu else 0u
                         lowerPaletteShiftRegister = if (lowBit == 1u) 0xFFu else 0u
+
+                        // Increment Coarse X.
+                        if (cycles <= 256 || cycles >= 328) {
+                            vRegister.incrementCoarseX()
+                        }
                     }
+                }
+                if (cycles == 256) {
+                    vRegister.incrementY()
                 }
             }
 
-            if (cycles <= 256 || cycles >= 328) {
-                // Increment Coarse X.
-                vRegister.incrementCoarseX()
-            }
+
 
             if (cycles == 257) {
                 vRegister.value = vRegister.value and (0x41Fu).inv()
@@ -147,10 +166,6 @@ class PPU2C02(
             }
         }
 
-        if (scanline == 240) {
-            // idle scanline.
-        }
-
         if (scanline in 241..260) {
             if (scanline == 241 && cycles == 1) {
                 statusRegister.isInVBlank = true
@@ -165,6 +180,12 @@ class PPU2C02(
             cycles = 0
         }
 
+    }
+
+    private fun drawPixel(scanline: Int, cycle: Int, colorSelect: UInt, paletteSelect: UInt) {
+        frameBuffer[scanline][cycle] = readPaletteTableAddress(
+            (1u + (4u * paletteSelect) + colorSelect)
+        ).toUByte()
     }
 
     /**

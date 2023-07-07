@@ -16,11 +16,11 @@ class MapperZero(private val cartridge: Cartridge, bus: Mediator) : Mapper(cartr
     }
 
    fun writeToCartridgeAddress(address: UShort, data: UByte) {
-        if (address < 0x8000u) {
+        /*if (address < 0x8000u) {
             cartridge.characterRom[(address - 0x6000u).toInt()] = data
         }
 
-        cartridge.programRom[(address - 0x8000u).toInt()] = data
+        cartridge.programRom[(address - 0x8000u).toInt()] = data*/
     }
 
 

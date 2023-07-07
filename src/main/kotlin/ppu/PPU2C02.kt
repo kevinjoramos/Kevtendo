@@ -170,11 +170,13 @@ class PPU2C02(
 
         if (scanline in 241..260) {
             if (scanline == 241 && cycles == 1) {
+
                 statusRegister.isInVBlank = true
+
                 if (controllerRegister.generateNMIAtStartVBlank) {
+                    println("CONTROL REG SET NMI TRUE")
                     emitNMISignal()
                 }
-                //controllerRegister.generateNMIAtStartVBlank =
             }
         }
 
@@ -196,6 +198,7 @@ class PPU2C02(
 
     private fun emitNMISignal() {
         notify(Sender.PPU, Event.NMI)
+        println("NMI SIGNAL SENT")
     }
 
     /**

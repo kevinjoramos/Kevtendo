@@ -61,10 +61,9 @@ class StatusRegister {
     var isInVBlank
         get() = (value and VERTICAL_BLANK_BITMASK) != 0u
         set(value) {
-            if (value) {
-                this.value = this.value or 0x8u
-            } else {
-                this.value = this.value and 0x7u
+            when (value) {
+                true -> this.value = this.value or 0x8u
+                false -> this.value = this.value and 0x7u
             }
         }
 

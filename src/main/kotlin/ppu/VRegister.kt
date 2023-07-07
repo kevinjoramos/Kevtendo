@@ -8,16 +8,16 @@ class VRegister {
     var value: UInt = 0u
         set(value) { field = value and FIFTEEN_BITMASK }
 
-    val currentCoarseXScroll: UInt
+    val coarseX: UInt
         get() = value and COARSE_X_BITMASK
 
-    val currentCoarseYScroll: UInt
+    val coarseY: UInt
         get() = (value and COARSE_Y_BITMASK) shr COARSE_Y_SHIFT
 
-    val currentNameTableSelect: UInt
+    val nameTableSelect: UInt
         get() = (value and NAMETABLE_SELECT_BITMASK) shr NAMETABLE_SELECT_SHIFT
 
-    val currentFineYScroll: UInt
+    val fineY: UInt
         get() = (value and FINE_Y_BITMASK) shr FINE_Y_SHIFT
 
 
@@ -33,6 +33,16 @@ class VRegister {
      */
     val attributeDataAddress: UInt
         get() = 0x23C0u or (value and 0x0C00u) or ((value shr 4) and 0x38u) or ((value shr 2) and 0x07u)
+
+
+    fun incrementCoarseX() {
+        if (coarseX == 31u) {
+            this.value = this.value and COARSE_X_BITMASK.inv()
+            this.value = this.value xor 0x400u
+        } else {
+            this.value++
+        }
+    }
 
 
     companion object {

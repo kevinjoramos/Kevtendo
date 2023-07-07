@@ -50,13 +50,13 @@ class PPU2C02(
     private val yPosition get() = nameTableAddress and 0x40u shr 6
     private var patternTileAddress = 0x0000u
     private var attributeData = 0x0000u
-    val topLeft get() = attributeData and 0x3u
-    val topRight get() = (attributeData shr 2) and 0x3u
-    val bottomLeft get() = (attributeData shr 4) and 0x3u
-    val bottomRight get() = (attributeData shr 6) and 0x3u
+    private val topLeft get() = attributeData and 0x3u
+    private val topRight get() = (attributeData shr 2) and 0x3u
+    private val bottomLeft get() = (attributeData shr 4) and 0x3u
+    private val bottomRight get() = (attributeData shr 6) and 0x3u
 
-    var tileLowerBitPlane = 0x00u
-    var tileHigherBitPlane = 0x00u
+    private var tileLowerBitPlane = 0x00u
+    private var tileHigherBitPlane = 0x00u
 
     /**
      * Shift Registers
@@ -70,7 +70,7 @@ class PPU2C02(
 
         if (scanline in 0..239 || scanline == 261) {
 
-            if (cycles in 1..256) {
+            if (cycles in 1..336) {
                 when (cycles % 8) {
                     0 -> {
                         nameTableAddress = vRegister.tileAddress
@@ -83,13 +83,13 @@ class PPU2C02(
                     4 -> {
                         // Pattern Tile Low
                         tileLowerBitPlane = readPatternTableMemoryAddress(
-                            patternTileAddress + vRegister.currentFineYScroll
+                            patternTileAddress + vRegister.fineY
                         )
                     }
                     6 -> {
                         // Pattern Tile High
                         tileHigherBitPlane = readPatternTableMemoryAddress(
-                            patternTileAddress + vRegister.currentFineYScroll + 8u
+                            patternTileAddress + vRegister.fineY + 8u
                         )
                     }
                     7 -> {
@@ -126,8 +126,25 @@ class PPU2C02(
                 }
             }
 
+            if (cycles <= 256 || cycles >= 328) {
+                // Increment Coarse X.
+                vRegister.incrementCoarseX()
+            }
 
+            if (cycles == 257) {
+                vRegister.value = vRegister.value and (0x41Fu).inv()
+                vRegister.value = vRegister.value or (tRegister.value and 0x41Fu)
+            }
 
+            if (scanline == 261) {
+
+                if (cycles == 1) statusRegister.isInVBlank = false
+
+                if (cycles in 280..304) {
+                    vRegister.value = vRegister.value and (0x7BE0u).inv()
+                    vRegister.value = vRegister.value or (tRegister.value and (0x7BE0u))
+                }
+            }
         }
 
         if (scanline == 240) {
@@ -138,10 +155,6 @@ class PPU2C02(
             if (scanline == 241 && cycles == 1) {
                 statusRegister.isInVBlank = true
             }
-        }
-
-        if (scanline == 261) {
-            statusRegister.isInVBlank = false
         }
 
         // Multidimensional array index wrapping.

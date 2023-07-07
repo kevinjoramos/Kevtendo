@@ -6,6 +6,7 @@ import cartridge.MapperZero
 import ppu.PPU2C02
 import mediator.Event
 import mediator.Mediator
+import mediator.Sender
 
 /**
  * The connection to all other pieces of the system.
@@ -20,8 +21,21 @@ class Bus(
     private var mapper = MapperZero(Cartridge(cartridgePath), this)
     val cpu = CPU6502(this)
 
-    override fun notify(event: Event) {
-        TODO("Not yet implemented")
+    override fun notify(sender: Sender, event: Event) {
+        when (sender) {
+
+            Sender.PPU -> {
+
+                when (event) {
+                    Event.NMI -> {
+                        cpu.isPendingNMI = true
+                    }
+                }
+
+            }
+
+            else -> {}
+        }
     }
 
     override fun readAddress(address: UShort): UByte {

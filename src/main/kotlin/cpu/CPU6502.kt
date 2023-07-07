@@ -156,7 +156,9 @@ class CPU6502(override var bus: Mediator) : Component {
     private var cycleCount: Int = 0
     private var hasOverflowCycle = false
 
-    val interruptSignalTriage: List<() -> Unit> = mutableListOf()
+    var isPendingNMI = false
+    var isPendingIRQ = false
+    var isPendingReset = false
 
     private val opcodeTable: Map<UByte, Triple<AddressingMode, Operation, Int>> = mapOf(
         (0x00u).toUByte() to Triple(AddressingMode.IMP, BRK(), 7),
@@ -331,22 +333,25 @@ class CPU6502(override var bus: Mediator) : Component {
     }
 
     fun run() {
-
         if (cycleCount == 0) {
-            this.opcodeValue = readAddress(programCounter)
 
-            val (addressingMode, operation, cycles) = fetchInstruction(opcodeValue)
+            if (isPendingNMI) {
+                isPendingIRQ = false
+                nmi()
+            } else {
+                this.opcodeValue = readAddress(programCounter)
 
-            cycleCount += cycles
+                val (addressingMode, operation, cycles) = fetchInstruction(opcodeValue)
 
-            executeOperation(addressingMode, operation)
+                cycleCount += cycles
 
-            operandLowByte = null
-            operandHighByte = null
-            targetAddress = null
-            immediateOperand = null
+                executeOperation(addressingMode, operation)
 
-            //interruptSignalTriage.map { it.invoke() }
+                operandLowByte = null
+                operandHighByte = null
+                targetAddress = null
+                immediateOperand = null
+            }
         }
 
         cycleCount--
@@ -1981,6 +1986,8 @@ class CPU6502(override var bus: Mediator) : Component {
         this@CPU6502.interruptDisableFlag = true
 
         programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
+
+        cycleCount += 7
     }
 
     /**

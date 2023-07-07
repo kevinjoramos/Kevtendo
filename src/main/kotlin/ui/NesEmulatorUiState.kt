@@ -268,7 +268,7 @@ class NesEmulatorUiState {
 
     private fun generateNoise() {
         val pixelScreen = List(240) {
-            List(256) {
+            List(257) {
                 if ((0..1).random() == 0) Color.Black else Color.White
             }.toImmutableList()
         }.toImmutableList()

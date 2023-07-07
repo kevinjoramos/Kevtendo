@@ -2,7 +2,9 @@ package ppu
 
 import androidx.compose.ui.graphics.Color
 import mediator.Component
+import mediator.Event
 import mediator.Mediator
+import mediator.Sender
 
 @ExperimentalUnsignedTypes
 class PPU2C02(
@@ -42,7 +44,7 @@ class PPU2C02(
     /**
      * Scanline Rendering
      */
-    val frameBuffer = Array(262) { Array(341) { (0x01u).toUByte() } }
+    val frameBuffer = Array(240) { Array(257) { (0x01u).toUByte() } }
     private var scanline = 0
     private var cycles = 0
     private var nameTableAddress = 0x0000u
@@ -169,6 +171,10 @@ class PPU2C02(
         if (scanline in 241..260) {
             if (scanline == 241 && cycles == 1) {
                 statusRegister.isInVBlank = true
+                if (controllerRegister.generateNMIAtStartVBlank) {
+                    emitNMISignal()
+                }
+                //controllerRegister.generateNMIAtStartVBlank =
             }
         }
 
@@ -186,6 +192,10 @@ class PPU2C02(
         frameBuffer[scanline][cycle] = readPaletteTableAddress(
             (1u + (4u * paletteSelect) + colorSelect)
         ).toUByte()
+    }
+
+    private fun emitNMISignal() {
+        notify(Sender.PPU, Event.NMI)
     }
 
     /**

@@ -7,8 +7,8 @@ interface Component {
         bus = mediator
     }
 
-    fun notify(event: Event) {
-        bus.notify(event)
+    fun notify(sender: Sender, event: Event) {
+        bus.notify(sender, event)
     }
 
     fun readAddress(address: UShort): UByte {

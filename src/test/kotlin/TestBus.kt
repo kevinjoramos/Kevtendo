@@ -3,6 +3,7 @@ package bus
 import cpu.CPU6502
 import mediator.Event
 import mediator.Mediator
+import mediator.Sender
 
 /**
  * The connection to all other pieces of the system.
@@ -13,7 +14,7 @@ class TestBus(ramSize: Int) : Mediator {
     val cpu = CPU6502(this)
     var ram = UByteArray(ramSize)
 
-    override fun notify(event: Event) {
+    override fun notify(sender: Sender, event: Event) {
         TODO("Not yet implemented")
     }
 

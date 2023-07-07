@@ -9,26 +9,62 @@ class PPU2C02(
     override var bus: Mediator
 ) : Component {
 
+    /**
+     * Basic Registers
+     */
     private val controllerRegister = ControllerRegister()
     private val maskRegister = MaskRegister()
     private val statusRegister = StatusRegister()
-    private var objectAttributeMemoryAddressRegister = ObjectAttributeMemoryAddressRegister()
-    private var objectAttributeMemoryDataRegister: UInt = 0u
+    private var oamAddressRegister = OamAddressRegister()
+    private var oamDataRegister: UInt = 0u
     private var dataRegister: UInt = 0u
-    private val directMemoryAccessRegister = ObjectAttributeMemoryDirectMemoryAccess()
+    private val dmaRegister = OamDma()
+    private var staleBus: UInt = 0u
 
-    private val graphicsRenderer = GraphicsRenderer()
+    /**
+     * VRam Registers
+     */
+    private val vRegister = VRegister()
+    private val tRegister = TRegister()
+    private var vRamHasFirstWrite = false
+    private var fineX: UInt = 0u
+        set(value) { field = value and THREE_BITMASK }
 
     private val nameTableMirroringState = NameTableMirroring.HORIZONTAL
 
-    val frameBuffer = Array(262) { Array(341) { 0x01u } }
-    var scanline = 0
-    var cycles = 0
-    var patternTileId = 0x0000u
-    var attributeTileId = 0x0000u
+    /**
+     * Memories
+     */
+    private val nameTable: UByteArray = UByteArray(NAMETABLE_MEMORY_SIZE)
+    private val objectAttributeMemory: UByteArray = UByteArray(OAM_MEMORY_SIZE)
+    private val paletteTable = UByteArray(PALETTE_TABLE_MEMORY_SIZE)
+
+    /**
+     * Scanline Rendering
+     */
+    val frameBuffer = Array(262) { Array(341) { (0x01u).toUByte() } }
+    private var scanline = 0
+    private var cycles = 0
+    private var nameTableAddress = 0x0000u
+    private val xPosition get() = (nameTableAddress and 0x02u) shr 1
+    private val yPosition get() = nameTableAddress and 0x40u shr 6
+    private var patternTileAddress = 0x0000u
+    private var attributeData = 0x0000u
+    val topLeft get() = attributeData and 0x3u
+    val topRight get() = (attributeData shr 2) and 0x3u
+    val bottomLeft get() = (attributeData shr 4) and 0x3u
+    val bottomRight get() = (attributeData shr 6) and 0x3u
+
     var tileLowerBitPlane = 0x00u
     var tileHigherBitPlane = 0x00u
 
+    /**
+     * Shift Registers
+     */
+    private var upperBackGroundShiftRegister: UInt = 0u
+    private var lowerBackgroundShiftRegister: UInt = 0u
+    private var upperPaletteShiftRegister: UInt = 0u
+    private var lowerPaletteShiftRegister: UInt = 0u
 
     fun run() {
 
@@ -37,19 +73,55 @@ class PPU2C02(
             if (cycles in 1..256) {
                 when (cycles % 8) {
                     0 -> {
-                        // Nametable Byte
+                        nameTableAddress = vRegister.tileAddress
+                        patternTileAddress = nameTable[computeNameTableAddress(nameTableAddress).toInt()].toUInt()
                     }
                     2 -> {
                         // Attribute Byte
+                        var attributeData = nameTable[computeNameTableAddress(vRegister.attributeDataAddress).toInt()].toUInt()
                     }
                     4 -> {
                         // Pattern Tile Low
+                        tileLowerBitPlane = readPatternTableMemoryAddress(
+                            patternTileAddress + vRegister.currentFineYScroll
+                        )
                     }
                     6 -> {
                         // Pattern Tile High
+                        tileHigherBitPlane = readPatternTableMemoryAddress(
+                            patternTileAddress + vRegister.currentFineYScroll + 8u
+                        )
                     }
                     7 -> {
                         // Load shift registers.
+                        upperBackGroundShiftRegister = upperBackGroundShiftRegister or (tileHigherBitPlane shl 8)
+                        lowerBackgroundShiftRegister = lowerBackgroundShiftRegister or (tileLowerBitPlane shl 8)
+
+                        var highBit = 0u
+                        var lowBit = 0u
+
+                        if (xPosition == 0u && yPosition == 0u) {
+                            highBit = topLeft and 0x2u
+                            lowBit = topLeft and 0x1u
+                        }
+
+                        if (xPosition == 1u && yPosition == 0u) {
+                            highBit = topRight and 0x2u
+                            lowBit = topRight and 0x1u
+                        }
+
+                        if (xPosition == 0u && yPosition == 1u) {
+                            highBit = bottomLeft and 0x2u
+                            lowBit = bottomLeft and 0x1u
+                        }
+
+                        if (xPosition == 1u && yPosition == 1u) {
+                            highBit = bottomRight and 0x2u
+                            lowBit = bottomRight and 0x1u
+                        }
+
+                        upperPaletteShiftRegister = if (highBit == 1u) 0xFFu else 0u
+                        lowerPaletteShiftRegister = if (lowBit == 1u) 0xFFu else 0u
                     }
                 }
             }
@@ -82,85 +154,183 @@ class PPU2C02(
 
     }
 
+    /**
+     * Read And Writes To Controller Register $2000
+     */
     fun readControllerRegister(): UInt {
-        return 0u
+        return staleBus
     }
 
     fun writeToControllerRegister(data: UInt) {
+        staleBus = data
         controllerRegister.value = data
-        graphicsRenderer.temporaryNameTableSelect = data
+        tRegister.nameTableSelect = data
     }
 
+    /**
+    * Read And Writes To Mask Register $2001
+    */
     fun readMaskRegister(): UInt {
-        return 0u
+        return staleBus
     }
 
     fun writeToMaskRegister(data: UInt) {
+        staleBus = data
         maskRegister.value = data
     }
 
+    /**
+     * Read And Writes To Status Register $2002
+     */
     fun readStatusRegister(): UInt {
         val value = statusRegister.value
         statusRegister.clearBit7()
-        //addressRegister.clearAddressLatch()
-        graphicsRenderer.hasFirstWrite = false
+        vRamHasFirstWrite = false
         return value
     }
 
-    fun writeToStatusRegister(data: UInt){
-
+    fun writeToStatusRegister(data: UInt) {
+        staleBus = data
     }
 
+    /**
+     * Read And Writes To Address Register $2006
+     */
     fun readAddressRegister(): UInt {
-        return 0u
+        return staleBus
     }
 
     fun writeToAddressRegister(data: UInt) {
-        //addressRegister.writeToAddressLatch(data)
-        if (!graphicsRenderer.hasFirstWrite) {
-            graphicsRenderer.temporaryUpperLatch = data
-            graphicsRenderer.hasFirstWrite = true
+        staleBus = data
+
+        if (!vRamHasFirstWrite) {
+            tRegister.upperLatch = data
+            vRamHasFirstWrite = true
         } else {
-            graphicsRenderer.temporaryLowerLatch = data
-            graphicsRenderer.hasFirstWrite = false
+            tRegister.lowerLatch = data
+            vRegister.value = tRegister.value
+            vRamHasFirstWrite = false
         }
     }
 
+    /**
+     * Read And Writes To Data Register
+     */
     fun readDataRegister(): UInt {
-
         var data = dataRegister
 
-        when (val address = graphicsRenderer.currentVRAMAddress) {
-            in PATTERN_TABLE_ADDRESS_RANGE -> {
-                dataRegister = readAddress((address + 0x6000u).toUShort()).toUInt()
-            }
-            in NAME_TABLE_ADDRESS_RANGE -> {
-                val nameTableAddress = computeNameTableAddress(address)
-                dataRegister = nameTable[nameTableAddress.toInt()].toUInt()
-            }
-            in NAME_TABLE_MIRROR_ADDRESS_RANGE -> {
-                val nameTableAddress = computeNameTableAddress(address - MIRROR_OFFSET_FROM_NAMETABLE)
-                dataRegister = nameTable[nameTableAddress.toInt()].toUInt()
-            }
-            in PALETTE_TABLE_ADDRESS_RANGE -> {
-                val paletteAddress = (address - PALETTE_TABLE_ADDRESS_OFFSET)
-                    .mod(PALETTE_TABLE_MEMORY_SIZE.toUInt()).toInt()
-
-                dataRegister = paletteTable[paletteAddress].toUInt()
-                data = dataRegister
-            }
+        if (vRegister.value in PALETTE_TABLE_ADDRESS_RANGE) {
+            dataRegister = readPaletteTableAddress(vRegister.value)
+            data = dataRegister
+        } else {
+            dataRegister = readPPUMemory(vRegister.value)
         }
 
-        graphicsRenderer.currentVRAMAddress += controllerRegister.vRamAddressIncrement
+        vRegister.value += controllerRegister.vRamAddressIncrement
+
         return data
     }
 
     fun writeToDataRegister(data: UInt) {
+        staleBus = data
+
         dataRegister = data
 
-        when (val address = graphicsRenderer.currentVRAMAddress) {
+        writeToPPUMemory(vRegister.value, data)
+
+        vRegister.value += controllerRegister.vRamAddressIncrement
+    }
+
+    /**
+     * Read And Writes To OAM Address Register
+     */
+    fun readOamAddressRegister(): UInt {
+        return staleBus
+    }
+
+    fun writeToOamAddressRegister(data: UInt) {
+        staleBus = data
+        oamAddressRegister.value = data
+    }
+
+    /**
+     * Read And Writes To OAM Data Register
+     */
+    fun readOamDataRegister(): UInt {
+        return objectAttributeMemory[oamAddressRegister.value.toInt()].toUInt()
+    }
+
+    fun writeToOamDataRegister(data: UInt) {
+        staleBus = data
+
+        oamDataRegister = data
+        objectAttributeMemory[oamAddressRegister.value.toInt()] = data.toUByte()
+        oamAddressRegister.increment()
+    }
+
+    /**
+     * Read And Writes To Scroll Register $2005
+     */
+    fun readScrollRegister(): UInt {
+        return staleBus
+    }
+
+    fun writeToScrollRegister(data: UInt) {
+        if (!vRamHasFirstWrite) {
+            tRegister.coarseX = data
+            fineX = data
+            vRamHasFirstWrite = true
+        } else {
+            tRegister.coarseY = data
+            tRegister.fineY = data
+            vRamHasFirstWrite = false
+        }
+    }
+
+    /**
+     * Read And Writes To OAM DMA Register
+     */
+    fun readDMARegister(): UInt {
+        return staleBus
+    }
+
+    fun writeToDMARegister(data: UInt) {
+        staleBus = data
+
+        dmaRegister.value = data
+        //TODO copy over page from cpu memory into oam.
+    }
+
+    /**
+     * PPU Memory Access
+     */
+    private fun readPPUMemory(address: UInt): UInt {
+        var data = 0u
+        when (address) {
             in PATTERN_TABLE_ADDRESS_RANGE -> {
-                writeToAddress((address + 0x6000u).toUShort(), data.toUByte())
+                data = readPatternTableMemoryAddress(address)
+            }
+            in NAME_TABLE_ADDRESS_RANGE -> {
+                val nameTableAddress = computeNameTableAddress(address)
+                data = nameTable[nameTableAddress.toInt()].toUInt()
+            }
+            in NAME_TABLE_MIRROR_ADDRESS_RANGE -> {
+                val nameTableAddress = computeNameTableAddress(address - MIRROR_OFFSET_FROM_NAMETABLE)
+                data = nameTable[nameTableAddress.toInt()].toUInt()
+            }
+            in PALETTE_TABLE_ADDRESS_RANGE -> {
+               data = readPaletteTableAddress(address)
+            }
+        }
+
+        return data
+    }
+
+    private fun writeToPPUMemory(address: UInt, data: UInt) {
+
+        when (address) {
+            in PATTERN_TABLE_ADDRESS_RANGE -> {
+                writeToPatternTableMemoryAddress(address, data)
             }
             in NAME_TABLE_ADDRESS_RANGE -> {
                 val nameTableAddress = computeNameTableAddress(address)
@@ -171,13 +341,17 @@ class PPU2C02(
                 nameTable[nameTableAddress.toInt()] = data.toUByte()
             }
             in PALETTE_TABLE_ADDRESS_RANGE -> {
-                val paletteAddress = (address - PALETTE_TABLE_ADDRESS_OFFSET)
-                    .mod(PALETTE_TABLE_MEMORY_SIZE.toUInt()).toInt()
-
-                paletteTable[paletteAddress] = data.toUByte()
+               writeToPaletteTableAddress(address, data)
             }
         }
-        graphicsRenderer.currentVRAMAddress += controllerRegister.vRamAddressIncrement
+    }
+
+    private fun readPatternTableMemoryAddress(address: UInt): UInt {
+        return readAddress((address + 0x6000u).toUShort()).toUInt()
+    }
+
+    private fun writeToPatternTableMemoryAddress(address: UInt, data: UInt) {
+        writeToAddress((address + 0x6000u).toUShort(), data.toUByte())
     }
 
     private fun computeNameTableAddress(unmappedAddress: UInt): UInt {
@@ -218,52 +392,20 @@ class PPU2C02(
         }
     }
 
-    fun readObjectAttributeMemoryAddressRegister(): UInt {
-        return 0u
+    private fun readPaletteTableAddress(address: UInt): UInt {
+        val paletteAddress = (address - PALETTE_TABLE_ADDRESS_OFFSET)
+            .mod(PALETTE_TABLE_MEMORY_SIZE.toUInt()).toInt()
+
+        return paletteTable[paletteAddress].toUInt()
     }
 
-    fun writeToObjectAttributeMemoryAddressRegister(data: UInt) {
-        objectAttributeMemoryAddressRegister.value = data
+    private fun writeToPaletteTableAddress(address: UInt, data: UInt) {
+        val paletteAddress = (address - PALETTE_TABLE_ADDRESS_OFFSET)
+            .mod(PALETTE_TABLE_MEMORY_SIZE.toUInt()).toInt()
+
+        paletteTable[paletteAddress] = data.toUByte()
     }
 
-    fun readObjectAttributeMemoryDataRegister(): UInt {
-        return objectAttributeMemory[objectAttributeMemoryAddressRegister.value.toInt()].toUInt()
-    }
-
-    fun writeToObjectAttributeMemoryDataRegister(data: UInt) {
-        objectAttributeMemoryDataRegister = data
-        objectAttributeMemory[objectAttributeMemoryAddressRegister.value.toInt()] = data.toUByte()
-        objectAttributeMemoryAddressRegister.increment()
-    }
-
-    fun readScrollRegister(): UInt {
-        return 0u
-    }
-
-    fun writeToScrollRegister(data: UInt) {
-        if (!graphicsRenderer.hasFirstWrite) {
-            graphicsRenderer.temporaryCoarseXScroll = data
-            graphicsRenderer.fineXScroll = data
-            graphicsRenderer.hasFirstWrite = true
-        } else {
-            graphicsRenderer.temporaryCoarseYScroll = data
-            graphicsRenderer.temporaryFineYScroll = data
-            graphicsRenderer.hasFirstWrite = false
-        }
-    }
-
-    fun readDirectMemoryAccessRegister(): UInt {
-        return 0u
-    }
-
-    fun writeToDirectMemoryAccessRegister(data: UInt) {
-        directMemoryAccessRegister.value = data
-        //TODO copy over page from cpu memory into oam.
-    }
-
-    private val nameTable: UByteArray = UByteArray(NAMETABLE_MEMORY_SIZE)
-    private val objectAttributeMemory: UByteArray = UByteArray(OAM_MEMORY_SIZE)
-    private val paletteTable = UByteArray(PALETTE_TABLE_MEMORY_SIZE)
 
     companion object {
         const val NAMETABLE_MEMORY_SIZE = 0x800
@@ -283,6 +425,7 @@ class PPU2C02(
         private val MIRROR_OFFSET_FROM_NAMETABLE = 0x1000u
         private val EXTRA_NAME_TABLE_1_ADDRESS_OFFSET = 0x3000
         private val PALETTE_TABLE_ADDRESS_OFFSET = 0x3F00u
+        private const val THREE_BITMASK = 0x7u
 
         enum class NameTableMirroring {
             HORIZONTAL,

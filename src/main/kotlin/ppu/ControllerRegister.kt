@@ -16,11 +16,11 @@ class ControllerRegister {
      */
     val baseNameTableAddress: UInt
         get() {
-            return when (value and BASE_NAMETABLE_BITMASK) {
-                0u -> BASE_NAMETABLE_ADDRESS_2000
-                1u -> BASE_NAMETABLE_ADDRESS_2400
-                2u -> BASE_NAMETABLE_ADDRESS_2800
-                else -> BASE_NAMETABLE_ADDRESS_2C00
+            return when (value and 0x3u) {
+                0u -> 0x2000u
+                1u -> 0x2400u
+                2u -> 0x2800u
+                else -> 0x2C00u
             }
         }
 
@@ -29,7 +29,7 @@ class ControllerRegister {
      * (0: add 1, going across; 1: add 32, going down)
      */
     val vRamAddressIncrement: UInt
-        get() = when (value and VRAM_ADDRESS_INCREMENT_BITMASK) {
+        get() = when (value and 0x04u) {
             0u -> 1u
             else -> 32u
         }
@@ -93,11 +93,6 @@ class ControllerRegister {
         const val BASE_NAMETABLE_ADDRESS_2400 = 0x2400u
         const val BASE_NAMETABLE_ADDRESS_2800 = 0x2800u
         const val BASE_NAMETABLE_ADDRESS_2C00 = 0x2C00u
-
-        // VRAM INCREMENT
-        const val VRAM_ADDRESS_INCREMENT_BITMASK = 0x04u
-        const val INCREMENT_GOING_ACROSS = 1u
-        const val INCREMENT_GOING_DOWN = 32u
 
         // SPRITE PATTERN TABLE ADDRESS
         const val SPRITE_PATTERN_TABLE_ADDRESS_BITMASK = 0x08u

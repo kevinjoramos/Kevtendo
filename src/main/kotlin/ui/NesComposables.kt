@@ -119,7 +119,7 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
             onReset = uiState::reset,
             onStop = uiState::stop,
             modifier = Modifier
-                .background(DarkGreen100)
+                .background(ProjectColors.DarkGreen100)
                 .padding(12.dp)
                 .fillMaxHeight()
         )
@@ -150,7 +150,72 @@ fun GameView(
                                 drawRect(
                                     topLeft = Offset(x = pixelWidth * j, y= pixelHeight * i),
                                     size = pixelSize,
-                                    color = pixel,
+                                    color = when (pixel.toUInt()) {
+                                        0x00u -> ProjectColors.COLOR_00
+                                        0x01u -> ProjectColors.COLOR_01
+                                        0x02u -> ProjectColors.COLOR_02
+                                        0x03u -> ProjectColors.COLOR_03
+                                        0x04u -> ProjectColors.COLOR_04
+                                        0x05u -> ProjectColors.COLOR_05
+                                        0x06u -> ProjectColors.COLOR_06
+                                        0x07u -> ProjectColors.COLOR_07
+                                        0x08u -> ProjectColors.COLOR_08
+                                        0x09u -> ProjectColors.COLOR_09
+                                        0x0Au -> ProjectColors.COLOR_0A
+                                        0x0Bu -> ProjectColors.COLOR_0B
+                                        0x0Cu -> ProjectColors.COLOR_0C
+                                        0x0Du -> ProjectColors.COLOR_0D
+                                        0x0Eu -> ProjectColors.COLOR_0E
+                                        0x0Fu -> ProjectColors.COLOR_0F
+                                        0x10u -> ProjectColors.COLOR_10
+                                        0x11u -> ProjectColors.COLOR_11
+                                        0x12u -> ProjectColors.COLOR_12
+                                        0x13u -> ProjectColors.COLOR_13
+                                        0x14u -> ProjectColors.COLOR_14
+                                        0x15u -> ProjectColors.COLOR_15
+                                        0x16u -> ProjectColors.COLOR_16
+                                        0x17u -> ProjectColors.COLOR_17
+                                        0x18u -> ProjectColors.COLOR_18
+                                        0x19u -> ProjectColors.COLOR_19
+                                        0x1Au -> ProjectColors.COLOR_1A
+                                        0x1Bu -> ProjectColors.COLOR_1B
+                                        0x1Cu -> ProjectColors.COLOR_1C
+                                        0x1Du -> ProjectColors.COLOR_1D
+                                        0x1Eu -> ProjectColors.COLOR_1E
+                                        0x1Fu -> ProjectColors.COLOR_1F
+                                        0x20u -> ProjectColors.COLOR_20
+                                        0x21u -> ProjectColors.COLOR_21
+                                        0x22u -> ProjectColors.COLOR_22
+                                        0x23u -> ProjectColors.COLOR_23
+                                        0x24u -> ProjectColors.COLOR_24
+                                        0x25u -> ProjectColors.COLOR_25
+                                        0x26u -> ProjectColors.COLOR_26
+                                        0x27u -> ProjectColors.COLOR_27
+                                        0x28u -> ProjectColors.COLOR_28
+                                        0x29u -> ProjectColors.COLOR_29
+                                        0x2Au -> ProjectColors.COLOR_2A
+                                        0x2Bu -> ProjectColors.COLOR_2B
+                                        0x2Cu -> ProjectColors.COLOR_2C
+                                        0x2Du -> ProjectColors.COLOR_2D
+                                        0x2Eu -> ProjectColors.COLOR_2E
+                                        0x2Fu -> ProjectColors.COLOR_1F
+                                        0x30u -> ProjectColors.COLOR_30
+                                        0x31u -> ProjectColors.COLOR_31
+                                        0x32u -> ProjectColors.COLOR_32
+                                        0x33u -> ProjectColors.COLOR_33
+                                        0x34u -> ProjectColors.COLOR_34
+                                        0x35u -> ProjectColors.COLOR_35
+                                        0x36u -> ProjectColors.COLOR_36
+                                        0x37u -> ProjectColors.COLOR_37
+                                        0x38u -> ProjectColors.COLOR_38
+                                        0x39u -> ProjectColors.COLOR_39
+                                        0x3Au -> ProjectColors.COLOR_3A
+                                        0x3Bu -> ProjectColors.COLOR_3B
+                                        0x3Cu -> ProjectColors.COLOR_3C
+                                        0x3Du -> ProjectColors.COLOR_3D
+                                        0x3Eu -> ProjectColors.COLOR_3E
+                                        else -> ProjectColors.COLOR_3F
+                                    }
                                 )
                             }
                         }
@@ -283,7 +348,7 @@ fun ButtonsView(
             onClick = onStart,
             shape = RoundedCornerShape(50f),
             colors = ButtonDefaults.buttonColors(
-                backgroundColor = LightGreen100
+                backgroundColor = ProjectColors.LightGreen100
             )
         ) {
             Text(
@@ -300,7 +365,7 @@ fun ButtonsView(
             onClick = onReset,
             shape = RoundedCornerShape(50f),
             colors = ButtonDefaults.buttonColors(
-                backgroundColor = LightGreen100
+                backgroundColor = ProjectColors.LightGreen100
             )
         ) {
             Text(
@@ -317,7 +382,7 @@ fun ButtonsView(
             onClick = onStop,
             shape = RoundedCornerShape(50f),
             colors = ButtonDefaults.buttonColors(
-                backgroundColor = LightGreen100
+                backgroundColor = ProjectColors.LightGreen100
             )
         ) {
             Text(
@@ -334,7 +399,7 @@ fun ButtonsView(
             onClick = onStep,
             shape = RoundedCornerShape(50f),
             colors = ButtonDefaults.buttonColors(
-                backgroundColor = LightGreen100
+                backgroundColor = ProjectColors.LightGreen100
             )
         ) {
             Text(

@@ -38,7 +38,7 @@ class TRegister {
         set(value) {
             val incomingUpperLatch = (value and 0x3Fu) shl 8
             this.value = (value and 0x3Fu.inv()) or incomingUpperLatch
-            this.value = value and 0x7FFFu
+            this.value = value and 0x3FFFu
         }
 
     var lowerLatch: UInt

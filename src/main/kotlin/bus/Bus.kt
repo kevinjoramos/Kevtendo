@@ -40,10 +40,13 @@ class Bus(
 
     override fun readAddress(address: UShort): UByte {
 
+        // 2KB internal Ram and Mirrors
+        if (address in 0x0000u..0x1FFFu) {
+            return ram.memory[address.toInt()]
+        }
 
-        if (address < 0x2000u) return ram.memory[address.toInt()]
-
-        if (address < 0x4000u) {
+        // PPU registers and mirrors.
+        if (address in 0x2000u..0x3FFFu) {
             val ppuRegisterAddress = (address.mod(0x0008u) + 0x2000u).toUShort()
             when (ppuRegisterAddress) {
                 (0x2000u).toUShort() -> return ppu.readControllerRegister().toUByte()
@@ -57,28 +60,28 @@ class Bus(
             }
         }
 
-        if (address < 0x4018u) {
-            return 0x00u // TODO("APU and IO memory map not implemented")
+        // APU and I/O
+        if (address in 0x4000u..0x4017u) {
+            return 0u
         }
 
-        if (address < 0x4020u) {
-            return 0x00u //TODO("APU and IO disabled memory map not implemented")
+        // 	APU and I/O functionality that is normally disabled
+        if (address in 0x4018u..0x401Fu) {
+            return 0u
         }
 
-        if (address < 0x6000u) {
-            return 0x00u
-        }
-
-        if (address <= 0xFFFFu) {
+        // Cartridge Space
+        if (address in 0x4020u..0xFFFFu) {
             return mapper.readCartridgeAddress(address)
         }
-
 
         return 0x00u
     }
 
     override fun writeToAddress(address: UShort, data: UByte) {
-        if (address < 0x2000u) {
+
+        // 2KB internal Ram and Mirrors
+        if (address in 0x0000u..0x1FFFu) {
             ram.writeToMemory(address, data)
             ram.writeToMemory((address + 0x0800u).mod(0x2000u).toUShort(), data)
             ram.writeToMemory((address + 0x1000u).mod(0x2000u).toUShort(), data)
@@ -87,7 +90,8 @@ class Bus(
             return
         }
 
-        if (address < 0x4000u) {
+        // PPU registers and mirrors.
+        if (address in 0x2000u..0x3FFFu) {
             val ppuRegisterAddress = (address.mod(0x0008u) + 0x2000u).toUShort()
             when (ppuRegisterAddress) {
                 (0x2000u).toUShort() -> ppu.writeToControllerRegister(data.toUInt())
@@ -102,16 +106,21 @@ class Bus(
             return
         }
 
-        if (address < 0x4018u) {
+
+        // APU and I/O
+        if (address in 0x4000u..0x4017u) {
             return
         }
 
-        if (address < 0x4020u) {
+        // 	APU and I/O functionality that is normally disabled
+        if (address in 0x4018u..0x401Fu) {
             return
         }
 
-        if (address <= 0xFFFFu) {
+        // Cartridge Space
+        if (address in 0x4020u..0xFFFFu) {
             mapper.writeToCartridgeAddress(address, data)
+            return
         }
 
     }

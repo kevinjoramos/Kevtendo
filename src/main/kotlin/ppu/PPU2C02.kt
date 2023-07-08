@@ -90,15 +90,28 @@ class PPU2C02(
         }
     }
 
-    fun run() {
+    fun testPrintPaletteTable() {
+        println("")
+        println(paletteTable[0].toUInt().to2DigitHexString())
+        for (color in paletteTable.slice(1..3)) {
+            print("${ color.toUInt().to2DigitHexString() } ")
+        }
+        println("")
+        for (color in paletteTable.slice(5..7)) {
+            print("${color.toUInt().to2DigitHexString()} ")
+        }
+        println("")
+        for (color in paletteTable.slice(9..11)) {
+            print("${color.toUInt().to2DigitHexString()} ")
+        }
+        println("")
+        for (color in paletteTable.slice(13..15)) {
+            print("${color.toUInt().to2DigitHexString()} ")
+        }
+        println("")
+    }
 
-        if (testCounter == 0) {
-            //testPrintNameTable()
-            //testPrintFrameBuffer()
-            //println("")
-            //println("")
-            testCounter = 50
-        } else testCounter--
+    fun run() {
 
         // Visible Scanlines + Pre-render
         if (scanline in 0..239 || scanline == 261) {
@@ -125,37 +138,37 @@ class PPU2C02(
             if (cycles in 1..336) {
                 when (cycles % 8) {
                     0 -> {
-                        println("")
-                        println("")
+                        //println("")
+                        //println("")
                         nameTableAddress = vRegister.tileAddress
                         patternTileAddress = nameTable[computeNameTableAddress(nameTableAddress).toInt()].toUInt()
-                        println("NameTableAddress: ${nameTableAddress.to4DigitHexString()}")
-                        println("TileAddress: ${patternTileAddress.to4DigitHexString()}")
+                        //println("NameTableAddress: ${nameTableAddress.to4DigitHexString()}")
+                        //println("TileAddress: ${patternTileAddress.to4DigitHexString()}")
                     }
                     2 -> {
                         // Attribute Byte
                         var attributeData = nameTable[computeNameTableAddress(vRegister.attributeDataAddress).toInt()].toUInt()
-                        println("Attribute Address ${vRegister.attributeDataAddress.to4DigitHexString()}")
-                        println("Attribute Data ${attributeData.to4DigitHexString()}")
+                        /*println("Attribute Address ${vRegister.attributeDataAddress.to4DigitHexString()}")
+                        println("Attribute Data ${attributeData.to4DigitHexString()}")*/
                     }
                     4 -> {
                         // Pattern Tile Low
                         tileLowerBitPlane = readPatternTableMemoryAddress(patternTileAddress + vRegister.fineY)
-                        println("Lower Pattern Plane ${tileLowerBitPlane.to2DigitHexString()}")
+                        //println("Lower Pattern Plane ${tileLowerBitPlane.to2DigitHexString()}")
 
                     }
                     6 -> {
                         // Pattern Tile High
                         tileHigherBitPlane = readPatternTableMemoryAddress(patternTileAddress + vRegister.fineY + 8u)
-                        println("Higher Pattern Plane ${tileHigherBitPlane.to2DigitHexString()}")
+                        //println("Higher Pattern Plane ${tileHigherBitPlane.to2DigitHexString()}")
 
                     }
                     7 -> {
                         // Load shift registers.
                         upperBackGroundShiftRegister = (upperBackGroundShiftRegister and 0xFF00u.inv()) or (tileHigherBitPlane shl 8)
                         lowerBackgroundShiftRegister = (lowerBackgroundShiftRegister and 0xFF00u.inv()) or (tileLowerBitPlane shl 8)
-                        println("Upper BG SHIFT ${upperBackGroundShiftRegister.to4DigitHexString()}")
-                        println("Lower BG SHIFT ${lowerBackgroundShiftRegister.to4DigitHexString()}")
+                        /*println("Upper BG SHIFT ${upperBackGroundShiftRegister.to4DigitHexString()}")
+                        println("Lower BG SHIFT ${lowerBackgroundShiftRegister.to4DigitHexString()}")*/
 
                         var highBit = 0u
                         var lowBit = 0u
@@ -183,8 +196,8 @@ class PPU2C02(
                         upperPaletteShiftRegister = if (highBit == 1u) 0xFFu else 0u
                         lowerPaletteShiftRegister = if (lowBit == 1u) 0xFFu else 0u
 
-                        println("Upper BG SHIFT ${upperPaletteShiftRegister.to4DigitHexString()}")
-                        println("Lower BG SHIFT ${lowerPaletteShiftRegister.to4DigitHexString()}")
+                        /*println("Upper BG SHIFT ${upperPaletteShiftRegister.to4DigitHexString()}")
+                        println("Lower BG SHIFT ${lowerPaletteShiftRegister.to4DigitHexString()}")*/
 
                         // Increment X every 8 cycles when between 328 and 256 of next scanline.
                         if (328 >= cycles && cycles <= 256) {
@@ -209,6 +222,12 @@ class PPU2C02(
         // Post Render Scanline
         if (scanline == 240) {
             // DOES NOTHING
+
+            // TESTING
+            //testPrintNameTable()
+            //testPrintPaletteTable()
+            println("")
+            println("")
         }
 
         // Vertical Blanking Lines
@@ -233,145 +252,21 @@ class PPU2C02(
             // Repeatedly copy vertical bits v = vertical bits t.
             if (cycles in 280..304) {
                 vRegister.value = vRegister.value and (0x7BE0u).inv()
-                vRegister.value = vRegister.value or (tRegister.value and (0x7BE0u))
+                vRegister.value = (vRegister.value) or (tRegister.value and (0x7BE0u))
             }
         }
 
         // Increment X And Y Over Entire Area.
-        if (cycles < 341) {
+        if (cycles < 340) {
             cycles++
         } else {
-            if (scanline < 262) {
+            if (scanline < 261) {
                 scanline++
             } else {
                 scanline = 0
             }
             cycles  = 0
         }
-
-
-        /*
-        if (scanline in 0..239 || scanline == 261) {
-
-            if (scanline in 0..239 && cycles in 0..256) {
-                drawPixel(
-                    scanline,
-                    cycles,
-                    (lowerBackgroundShiftRegister and 0x1u) or ((upperBackGroundShiftRegister and 0x1u) shl 1),
-                    (lowerPaletteShiftRegister and 0x1u) or ((upperPaletteShiftRegister and 0x1u) shl 1),
-                )
-
-                lowerBackgroundShiftRegister = lowerPaletteShiftRegister shr 1
-                upperBackGroundShiftRegister = upperBackGroundShiftRegister shr 1
-                lowerPaletteShiftRegister = lowerPaletteShiftRegister shr 1
-                upperPaletteShiftRegister = upperPaletteShiftRegister shr 1
-            }
-
-            if (cycles in 1..336) {
-                when (cycles % 8) {
-                    0 -> {
-                        println(vRegister.tileAddress.to2DigitHexString())
-                        nameTableAddress = vRegister.tileAddress
-                        patternTileAddress = nameTable[computeNameTableAddress(nameTableAddress).toInt()].toUInt()
-                    }
-                    2 -> {
-                        // Attribute Byte
-                        var attributeData = nameTable[computeNameTableAddress(vRegister.attributeDataAddress).toInt()].toUInt()
-                    }
-                    4 -> {
-                        // Pattern Tile Low
-                        tileLowerBitPlane = readPatternTableMemoryAddress(
-                            patternTileAddress + vRegister.fineY
-                        )
-                    }
-                    6 -> {
-                        // Pattern Tile High
-                        tileHigherBitPlane = readPatternTableMemoryAddress(
-                            patternTileAddress + vRegister.fineY + 8u
-                        )
-                    }
-                    7 -> {
-                        // Load shift registers.
-                        upperBackGroundShiftRegister = upperBackGroundShiftRegister or (tileHigherBitPlane shl 8)
-                        lowerBackgroundShiftRegister = lowerBackgroundShiftRegister or (tileLowerBitPlane shl 8)
-
-                        var highBit = 0u
-                        var lowBit = 0u
-
-                        if (xPosition == 0u && yPosition == 0u) {
-                            highBit = topLeft and 0x2u
-                            lowBit = topLeft and 0x1u
-                        }
-
-                        if (xPosition == 1u && yPosition == 0u) {
-                            highBit = topRight and 0x2u
-                            lowBit = topRight and 0x1u
-                        }
-
-                        if (xPosition == 0u && yPosition == 1u) {
-                            highBit = bottomLeft and 0x2u
-                            lowBit = bottomLeft and 0x1u
-                        }
-
-                        if (xPosition == 1u && yPosition == 1u) {
-                            highBit = bottomRight and 0x2u
-                            lowBit = bottomRight and 0x1u
-                        }
-
-                        upperPaletteShiftRegister = if (highBit == 1u) 0xFFu else 0u
-                        lowerPaletteShiftRegister = if (lowBit == 1u) 0xFFu else 0u
-
-                        // Increment Coarse X.
-                        if (cycles <= 256 || cycles >= 328) {
-                            vRegister.incrementCoarseX()
-                        }
-                    }
-                }
-                if (cycles == 256) {
-                    vRegister.incrementY()
-                }
-            }
-
-            if (cycles == 257) {
-                vRegister.value = vRegister.value and (0x41Fu).inv()
-                vRegister.value = vRegister.value or (tRegister.value and 0x41Fu)
-            }
-
-            if (scanline == 261) {
-
-                if (cycles == 1) statusRegister.isInVBlank = false
-
-                if (cycles in 280..304) {
-                    vRegister.value = vRegister.value and (0x7BE0u).inv()
-                    vRegister.value = vRegister.value or (tRegister.value and (0x7BE0u))
-                }
-            }
-        }
-
-        if (scanline in 241..260) {
-            if (scanline == 241 && cycles == 1) {
-                //testPrintFrameBuffer()
-                    //println("")
-                    //println("")
-
-                statusRegister.isInVBlank = true
-
-                if (controllerRegister.generateNMIAtStartVBlank) {
-                    emitNMISignal()
-                }
-            }
-        }
-
-        // Multidimensional array index wrapping.
-        if (cycles < 340) {
-            cycles++
-        } else {
-            if (scanline < 261) scanline++ else scanline = 0
-            cycles = 0
-        }
-
-
-         */
     }
 
     private fun drawPixel(scanline: Int, cycle: Int, colorSelect: UInt, paletteSelect: UInt) {
@@ -454,8 +349,8 @@ class PPU2C02(
     fun readDataRegister(): UInt {
         var data = dataRegister
 
-        if (vRegister.value in PALETTE_TABLE_ADDRESS_RANGE) {
-            dataRegister = readPaletteTableAddress(vRegister.value)
+        if (vRegister.addressRegister in PALETTE_TABLE_ADDRESS_RANGE) {
+            dataRegister = readPaletteTableAddress(vRegister.addressRegister)
             data = dataRegister
         } else {
             dataRegister = readPPUMemory(vRegister.value)
@@ -471,7 +366,7 @@ class PPU2C02(
 
         dataRegister = data
 
-        writeToPPUMemory(vRegister.value, data)
+        writeToPPUMemory(vRegister.addressRegister, data)
 
         vRegister.value += controllerRegister.vRamAddressIncrement
     }
@@ -563,7 +458,7 @@ class PPU2C02(
         return data
     }
 
-    private fun writeToPPUMemory(address: UInt, data: UInt) {
+    private fun  writeToPPUMemory(address: UInt, data: UInt) {
 
         when (address) {
             in PATTERN_TABLE_ADDRESS_RANGE -> {
@@ -571,7 +466,6 @@ class PPU2C02(
             }
             in NAME_TABLE_ADDRESS_RANGE -> {
                 val nameTableAddress = computeNameTableAddress(address)
-                println("NAMETABLE ADDESS = ${nameTableAddress.to4DigitHexString()}")
                 nameTable[nameTableAddress.toInt()] = data.toUByte()
             }
             in NAME_TABLE_MIRROR_ADDRESS_RANGE -> {
@@ -631,17 +525,19 @@ class PPU2C02(
     }
 
     private fun readPaletteTableAddress(address: UInt): UInt {
-        val paletteAddress = (address - PALETTE_TABLE_ADDRESS_OFFSET)
+        val paletteAddress = (address - 0x3F00u)
             .mod(PALETTE_TABLE_MEMORY_SIZE.toUInt()).toInt()
 
         return paletteTable[paletteAddress].toUInt()
     }
 
     private fun writeToPaletteTableAddress(address: UInt, data: UInt) {
-        val paletteAddress = (address - PALETTE_TABLE_ADDRESS_OFFSET)
+        val paletteAddress = (address - 0x3F00u)
             .mod(PALETTE_TABLE_MEMORY_SIZE.toUInt()).toInt()
 
         paletteTable[paletteAddress] = data.toUByte()
+
+        println("Write To Palette Address: ${address.to4DigitHexString()} -> ${paletteAddress.toUInt().to4DigitHexString()} With DATA: ${data.to2DigitHexString()}")
     }
 
 
@@ -669,75 +565,5 @@ class PPU2C02(
             HORIZONTAL,
             VERTICAL
         }
-
-
-        val colorLookUpTable = listOf(
-            Color(0x626262),
-            Color(0x0D226B),
-            Color(0x241476),
-            Color(0x3B0A6B),
-            Color(0x4C074D),
-            Color(0x520C24),
-            Color(0x4C1700),
-            Color(0x3B2600),
-            Color(0x243400),
-            Color(0x0D3D00),
-            Color(0x004000),
-            Color(0x003B24),
-            Color(0x00304D),
-            Color(0x000000),
-            Color(0x000000),
-            Color(0x000000),
-            Color(0xABABAB),
-            Color(0x3156B1),
-            Color(0x5043C5),
-            Color(0x7034BB),
-            Color(0x892F95),
-            Color(0x94345F),
-            Color(0x8E4226),
-            Color(0x795500),
-            Color(0x5B6800),
-            Color(0x3B7700),
-            Color(0x227C15),
-            Color(0x17774C),
-            Color(0x1D6985),
-            Color(0x000000),
-            Color(0x000000),
-            Color(0x000000),
-            Color(0xFFFFFF),
-            Color(0x7CAAFF),
-            Color(0x9B96FF),
-            Color(0xBD86FF),
-            Color(0xD87EF1),
-            Color(0xE682BA),
-            Color(0xE38F7F),
-            Color(0xD0A24E),
-            Color(0xB2B734),
-            Color(0x90C739),
-            Color(0x74CE5C),
-            Color(0x66CB92),
-            Color(0x69BECE),
-            Color(0x4E4E4E),
-            Color(0x000000),
-            Color(0x000000),
-            Color(0x000000),
-            Color(0xFFFFFF),
-            Color(0xC9DEFC),
-            Color(0xD5D6FF),
-            Color(0xE2CFFF),
-            Color(0xEECCFC),
-            Color(0xF5CCE7),
-            Color(0xF5D1CF),
-            Color(0xEED8BB),
-            Color(0xE2E1AE),
-            Color(0xD5E8AE),
-            Color(0xC9EBBB),
-            Color(0xC2EBCF),
-            Color(0xC2E6E7),
-            Color(0xB8B8B8),
-            Color(0x000000),
-            Color(0x000000)
-        )
-
     }
 }

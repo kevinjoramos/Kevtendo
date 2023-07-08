@@ -20,6 +20,9 @@ class VRegister {
     val fineY: UInt
         get() = (value and 0x7000u) shr 12
 
+    val addressRegister: UInt
+        get() = (value and 0x3FFFu)
+
 
     /**
      * The tile address is the value represented by excluding fine y.
@@ -38,7 +41,7 @@ class VRegister {
     fun incrementCoarseX() {
         if (coarseX == 31u) {
             this.value = this.value and 0x1Fu.inv()
-            this.value = this.value xor 0x400u
+            this.value = this.value xor 0x0400u
         } else {
             this.value++
         }
@@ -62,7 +65,7 @@ class VRegister {
                     y += 1u
                 }
             }
-            value = (value and 0x3Eu.inv()) or (y shl 5)
+            value = (value and 0x03E0u.inv()) or (y shl 5)
         }
     }
 }

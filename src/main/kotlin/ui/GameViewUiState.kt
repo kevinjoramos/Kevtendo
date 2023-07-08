@@ -5,6 +5,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 data class GameViewUiState(
-    val pixelScreen: ImmutableList<ImmutableList<Color>> =
-        List(240) { List(256) { Color.Transparent }.toImmutableList() }.toImmutableList()
+    val pixelScreen: ImmutableList<ImmutableList<UByte>> =
+        List(240) { List(256) { (0x0Fu).toUByte() }.toImmutableList() }.toImmutableList()
 )

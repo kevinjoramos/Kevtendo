@@ -28,8 +28,8 @@ class CPU6502(override var bus: Mediator) : Component {
         set(value) {
             field = value
             _programCounterState.value = programCounter.to4DigitHexString()
-            _instructionState3.value = disassembler.allInstructions[(programCounter - 2u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
-            _instructionState3.value = disassembler.allInstructions[(programCounter - 1u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
+            _instructionState1.value = disassembler.allInstructions[(programCounter - 2u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
+            _instructionState2.value = disassembler.allInstructions[(programCounter - 1u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
             _instructionState3.value = disassembler.allInstructions[programCounter] ?: "${programCounter.to4DigitHexString()}:"
             _instructionState4.value = disassembler.allInstructions[(programCounter + 1u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
             _instructionState5.value = disassembler.allInstructions[(programCounter + 2u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
@@ -455,7 +455,7 @@ class CPU6502(override var bus: Mediator) : Component {
             else -> {}
         }
 
-        Logger.addLog(
+        /*Logger.addLog(
             currentProgramCounter,
             opcodeValue,
             operandLowByte,
@@ -468,7 +468,7 @@ class CPU6502(override var bus: Mediator) : Component {
             yRegisterValue,
             statusRegisterValue,
             stackPointerValue
-        )
+        )*/
     }
 
     /**

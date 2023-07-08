@@ -181,7 +181,7 @@ class CPU6502(override var bus: Mediator) : Component {
     var isPendingIRQ = false
     var isPendingReset = false
 
-    var disassembler: Disassembler = Disassembler()
+    private var disassembler: Disassembler = Disassembler()
 
     private val opcodeTable: Map<UByte, Triple<AddressingMode, Operation, Int>> = mapOf(
         (0x00u).toUByte() to Triple(AddressingMode.IMP, BRK(), 7),
@@ -360,6 +360,7 @@ class CPU6502(override var bus: Mediator) : Component {
         if (cycleCount == 0) {
 
             if (isPendingNMI) {
+                isPendingNMI = false
                 isPendingIRQ = false
                 nmi()
             } else {

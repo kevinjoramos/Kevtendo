@@ -3,59 +3,47 @@ package ppu
 class TRegister {
 
     var value: UInt = 0u
-        set(value) { field = value and FIFTEEN_BITMASK }
+        set(value) { field = value and 0x7FFFu}
 
     var coarseX: UInt
-        get() = value and COARSE_X_BITMASK
+        get() = value and 0x1Fu
         set(value) {
-            val coarseX = ((value shr 3) and COARSE_X_BITMASK)
-            this.value = value or coarseX
+            val incomingCoarseX = ((value shr 3) and 0x1Fu)
+            this.value = (this.value and 0x1Fu.inv()) or incomingCoarseX
         }
 
     var coarseY: UInt
-        get() = (value and COARSE_Y_BITMASK) shr COARSE_Y_SHIFT
+        get() = (value and 0x3E0u) shr 5
         set(value) {
-            val coarseY = (value and 0xF8u) shl 2
-            this.value = value or coarseY
+            val incomingCoarseY = (value and 0xF8u) shl 2
+            this.value = (this.value and 0x3E0u.inv()) or incomingCoarseY
         }
 
     var nameTableSelect: UInt
-        get() = (value and NAMETABLE_SELECT_BITMASK) shr NAMETABLE_SELECT_SHIFT
+        get() = (value and 0xC00u) shr 10
         set(value) {
-            val nameTableSelect = value and NAMETABLE_SELECT_BITMASK
-            this.value = value or nameTableSelect
+            val nameTableSelectValue = (value and 0x03u) shl 10
+            this.value = (this.value and 0xC00u.inv()) or nameTableSelectValue
         }
 
     var fineY: UInt
-        get() = (value and FINE_Y_BITMASK) shr FINE_Y_SHIFT
+        get() = (value and 0x7000u) shr 12
         set(value) {
-            val fineY = (value and 0x7u) shl 12
-            this.value = value or fineY
+            val incomingFineY = (value and 0x7u) shl 12
+            this.value = (this.value and 0x7000u.inv()) or incomingFineY
         }
 
     var upperLatch: UInt
-        get() = value and UPPER_LATCH_BITMASK
+        get() = value and 0x3F00u
         set(value) {
-            val upperLatch = (value and 0x3Fu) shl 8
-            this.value = value or upperLatch
+            val incomingUpperLatch = (value and 0x3Fu) shl 8
+            this.value = (value and 0x3Fu.inv()) or incomingUpperLatch
             this.value = value and 0x7FFFu
         }
 
     var lowerLatch: UInt
-        get() = value and UPPER_LATCH_BITMASK
+        get() = value and 0xFFu
         set(value) {
-            this.value = value or value
+            this.value = (this.value or 0xFFu.inv()) or value
         }
-
-    companion object {
-        private const val FIFTEEN_BITMASK = 0x7FFFu
-        private const val COARSE_X_BITMASK = 0x1Fu
-        private const val COARSE_Y_BITMASK = 0x3Eu
-        private const val COARSE_Y_SHIFT = 5
-        private const val NAMETABLE_SELECT_BITMASK = 0xC00u
-        private const val NAMETABLE_SELECT_SHIFT = 10
-        private const val FINE_Y_BITMASK = 0x7000u
-        private const val FINE_Y_SHIFT = 12
-        private const val UPPER_LATCH_BITMASK = 0xFF00u
-    }
 }

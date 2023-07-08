@@ -23,52 +23,48 @@ class NesEmulatorUiState {
     private val _gameViewUiState = MutableStateFlow(GameViewUiState())
     val gameViewUiState = _gameViewUiState.asStateFlow()
 
-    //val patternTableState by mutableStateOf("")
-    private val _mainCpuViewState = MutableStateFlow(MainCpuViewState())
-    val mainCpuViewState = _mainCpuViewState.asStateFlow()
-
-    val programCounterViewState = bus.cpu.programCounterState
-    val accumulatorViewState = bus.cpu.accumulatorState
-    val xRegisterViewState = bus.cpu.xRegisterState
-    val yRegisterViewState = bus.cpu.yRegisterState
-    val stackPointerViewState = bus.cpu.stackPointerState
-    val negativeFlagViewState = bus.cpu.negativeFlagState
-    val overflowFlagViewState = bus.cpu.overflowFlagState
-    val extraFlagViewState = bus.cpu.extraFlagState
-    val breakFlagViewState = bus.cpu.breakFlagState
-    val decimalFlagViewState = bus.cpu.decimalFlagState
-    val interruptDisableViewState = bus.cpu.interruptDisableFlagState
-    val zeroFlagViewState = bus.cpu.zeroFlagState
-    val carryFlagViewState = bus.cpu.carryFlagState
-
-    val instructionViewState1 = bus.cpu.instructionState1
-    val instructionViewState2 = bus.cpu.instructionState2
-    val instructionViewState3 = bus.cpu.instructionState3
-    val instructionViewState4 = bus.cpu.instructionState4
-    val instructionViewState5 = bus.cpu.instructionState5
-    val instructionViewState6 = bus.cpu.instructionState6
-
-    val zeroPageRow1ViewState = bus.ram.zeroPageRow1StateFlow
-    val zeroPageRow2ViewState = bus.ram.zeroPageRow2StateFlow
-    val zeroPageRow3ViewState = bus.ram.zeroPageRow3StateFlow
-    val zeroPageRow4ViewState = bus.ram.zeroPageRow4StateFlow
-    val zeroPageRow5ViewState = bus.ram.zeroPageRow5StateFlow
-    val zeroPageRow6ViewState = bus.ram.zeroPageRow6StateFlow
-    val zeroPageRow7ViewState = bus.ram.zeroPageRow7StateFlow
-    val zeroPageRow8ViewState = bus.ram.zeroPageRow8StateFlow
-    val zeroPageRow9ViewState = bus.ram.zeroPageRow9StateFlow
-    val zeroPageRow10ViewState = bus.ram.zeroPageRow10StateFlow
-    val zeroPageRow11ViewState = bus.ram.zeroPageRow11StateFlow
-    val zeroPageRow12ViewState = bus.ram.zeroPageRow12StateFlow
-    val zeroPageRow13ViewState = bus.ram.zeroPageRow13StateFlow
-    val zeroPageRow14ViewState = bus.ram.zeroPageRow14StateFlow
-    val zeroPageRow15ViewState = bus.ram.zeroPageRow15StateFlow
-    val zeroPageRow16ViewState = bus.ram.zeroPageRow16StateFlow
+    var programCounterViewState = bus.cpu.programCounterState
+    var accumulatorViewState = bus.cpu.accumulatorState
+    var xRegisterViewState = bus.cpu.xRegisterState
+    var yRegisterViewState = bus.cpu.yRegisterState
+    var stackPointerViewState = bus.cpu.stackPointerState
+    var negativeFlagViewState = bus.cpu.negativeFlagState
+    var overflowFlagViewState = bus.cpu.overflowFlagState
+    var extraFlagViewState = bus.cpu.extraFlagState
+    var breakFlagViewState = bus.cpu.breakFlagState
+    var decimalFlagViewState = bus.cpu.decimalFlagState
+    var interruptDisableViewState = bus.cpu.interruptDisableFlagState
+    var zeroFlagViewState = bus.cpu.zeroFlagState
+    var carryFlagViewState = bus.cpu.carryFlagState
+    var instructionViewState1 = bus.cpu.instructionState1
+    var instructionViewState2 = bus.cpu.instructionState2
+    var instructionViewState3 = bus.cpu.instructionState3
+    var instructionViewState4 = bus.cpu.instructionState4
+    var instructionViewState5 = bus.cpu.instructionState5
+    var instructionViewState6 = bus.cpu.instructionState6
+    var zeroPageRow1ViewState = bus.ram.zeroPageRow1StateFlow
+    var zeroPageRow2ViewState = bus.ram.zeroPageRow2StateFlow
+    var zeroPageRow3ViewState = bus.ram.zeroPageRow3StateFlow
+    var zeroPageRow4ViewState = bus.ram.zeroPageRow4StateFlow
+    var zeroPageRow5ViewState = bus.ram.zeroPageRow5StateFlow
+    var zeroPageRow6ViewState = bus.ram.zeroPageRow6StateFlow
+    var zeroPageRow7ViewState = bus.ram.zeroPageRow7StateFlow
+    var zeroPageRow8ViewState = bus.ram.zeroPageRow8StateFlow
+    var zeroPageRow9ViewState = bus.ram.zeroPageRow9StateFlow
+    var zeroPageRow10ViewState = bus.ram.zeroPageRow10StateFlow
+    var zeroPageRow11ViewState = bus.ram.zeroPageRow11StateFlow
+    var zeroPageRow12ViewState = bus.ram.zeroPageRow12StateFlow
+    var zeroPageRow13ViewState = bus.ram.zeroPageRow13StateFlow
+    var zeroPageRow14ViewState = bus.ram.zeroPageRow14StateFlow
+    var zeroPageRow15ViewState = bus.ram.zeroPageRow15StateFlow
+    var zeroPageRow16ViewState = bus.ram.zeroPageRow16StateFlow
 
     private var isRunning = false
     var isPaused = false
 
     private var systemClock = 0
+
+    private var emulatorProcess: Job? = null
 
     @OptIn(DelicateCoroutinesApi::class)
     fun start() {
@@ -77,17 +73,55 @@ class NesEmulatorUiState {
     }
 
     fun step() {
-        val programCounterValue = bus.cpu.programCounter
         bus.cpu.run()
-        updateMainCpuViewState()
-        updateZeroPageViewState()
 
 
         //instructionSlidingWindowState = getCurrentInstructionsSlidingWindowState()
     }
 
     fun reset() {
+        isRunning = false
+        emulatorProcess?.cancel()
         this.bus = Bus(pathToGame)
+        programCounterViewState = bus.cpu.programCounterState
+        accumulatorViewState = bus.cpu.accumulatorState
+        xRegisterViewState = bus.cpu.xRegisterState
+        yRegisterViewState = bus.cpu.yRegisterState
+        stackPointerViewState = bus.cpu.stackPointerState
+        negativeFlagViewState = bus.cpu.negativeFlagState
+        overflowFlagViewState = bus.cpu.overflowFlagState
+        extraFlagViewState = bus.cpu.extraFlagState
+        breakFlagViewState = bus.cpu.breakFlagState
+        decimalFlagViewState = bus.cpu.decimalFlagState
+        interruptDisableViewState = bus.cpu.interruptDisableFlagState
+        zeroFlagViewState = bus.cpu.zeroFlagState
+        carryFlagViewState = bus.cpu.carryFlagState
+
+        instructionViewState1 = bus.cpu.instructionState1
+        instructionViewState2 = bus.cpu.instructionState2
+        instructionViewState3 = bus.cpu.instructionState3
+        instructionViewState4 = bus.cpu.instructionState4
+        instructionViewState5 = bus.cpu.instructionState5
+        instructionViewState6 = bus.cpu.instructionState6
+
+        zeroPageRow1ViewState = bus.ram.zeroPageRow1StateFlow
+        zeroPageRow2ViewState = bus.ram.zeroPageRow2StateFlow
+        zeroPageRow3ViewState = bus.ram.zeroPageRow3StateFlow
+        zeroPageRow4ViewState = bus.ram.zeroPageRow4StateFlow
+        zeroPageRow5ViewState = bus.ram.zeroPageRow5StateFlow
+        zeroPageRow6ViewState = bus.ram.zeroPageRow6StateFlow
+        zeroPageRow7ViewState = bus.ram.zeroPageRow7StateFlow
+        zeroPageRow8ViewState = bus.ram.zeroPageRow8StateFlow
+        zeroPageRow9ViewState = bus.ram.zeroPageRow9StateFlow
+        zeroPageRow10ViewState = bus.ram.zeroPageRow10StateFlow
+        zeroPageRow11ViewState = bus.ram.zeroPageRow11StateFlow
+        zeroPageRow12ViewState = bus.ram.zeroPageRow12StateFlow
+        zeroPageRow13ViewState = bus.ram.zeroPageRow13StateFlow
+        zeroPageRow14ViewState = bus.ram.zeroPageRow14StateFlow
+        zeroPageRow15ViewState = bus.ram.zeroPageRow15StateFlow
+        zeroPageRow16ViewState = bus.ram.zeroPageRow16StateFlow
+
+        start()
     }
 
     fun stop() {
@@ -95,7 +129,7 @@ class NesEmulatorUiState {
     }
 
     private fun runSystem() {
-        val emulatorJob = GlobalScope.launch {
+        emulatorProcess = GlobalScope.launch {
 
             while (isRunning) {
 
@@ -110,9 +144,6 @@ class NesEmulatorUiState {
 
             Logger.writeLogsToFile()
         }
-
-
-
     }
 
     private fun executeMainCycle() {
@@ -218,53 +249,6 @@ class NesEmulatorUiState {
             0x3Eu -> COLOR_3E
             else -> COLOR_3F
         }
-    }
-
-    private fun updateMainCpuViewState() {
-        val registers = listOf(
-            "PC: ${bus.cpu.programCounter.to4DigitHexString()}",
-            "A: ${bus.cpu.accumulator.to2DigitHexString()}",
-            "X: ${bus.cpu.xRegister.to2DigitHexString()}",
-            "Y: ${bus.cpu.yRegister.to2DigitHexString()}",
-            "SP: ${bus.cpu.stackPointer.to4DigitHexString()}"
-        )
-
-        val flags = listOf(
-            Pair("N", bus.cpu.negativeFlag),
-            Pair("V", bus.cpu.overflowFlag),
-            Pair("-", bus.cpu.extraFlag),
-            Pair("B", bus.cpu.breakFlag),
-            Pair("D", bus.cpu.decimalFlag),
-            Pair("I", bus.cpu.interruptDisableFlag),
-            Pair("Z", bus.cpu.zeroFlag),
-            Pair("C", bus.cpu.carryFlag),
-        )
-
-        _mainCpuViewState.update {
-            it.copy(registers = registers.toImmutableList(), flags = flags.toImmutableList())
-        }
-    }
-
-    private fun updateZeroPageViewState() {
-
-    }
-
-    private fun getCurrentInstructionsSlidingWindowState(): List<String> {
-        val instructionList = mutableListOf<String>()
-
-        if (bus.cpu.programCounter < 15u) {
-           for (index in 0..16) {
-               instructionList.add( "${(index).toString(16)}: ")
-           }
-
-           return instructionList
-        }
-
-        for (index in (bus.cpu.programCounter - 8u)..(bus.cpu.programCounter + 7u)) {
-            instructionList.add( "${(index).toString(16)}: ")
-        }
-
-        return instructionList
     }
 
     private fun generateNoise() {

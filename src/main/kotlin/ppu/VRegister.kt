@@ -6,19 +6,19 @@ class VRegister {
      * Current VRAM Address
      */
     var value: UInt = 0u
-        set(value) { field = value and FIFTEEN_BITMASK }
+        set(value) { field = value and 0x7FFFu}
 
     val coarseX: UInt
-        get() = value and COARSE_X_BITMASK
+        get() = value and 0x1Fu
 
     val coarseY: UInt
-        get() = (value and COARSE_Y_BITMASK) shr COARSE_Y_SHIFT
+        get() = (value and 0x3E0u) shr 5
 
     val nameTableSelect: UInt
-        get() = (value and NAMETABLE_SELECT_BITMASK) shr NAMETABLE_SELECT_SHIFT
+        get() = (value and 0xC00u) shr 10
 
     val fineY: UInt
-        get() = (value and FINE_Y_BITMASK) shr FINE_Y_SHIFT
+        get() = (value and 0x7000u) shr 12
 
 
     /**
@@ -37,7 +37,7 @@ class VRegister {
 
     fun incrementCoarseX() {
         if (coarseX == 31u) {
-            this.value = this.value and COARSE_X_BITMASK.inv()
+            this.value = this.value and 0x1Fu.inv()
             this.value = this.value xor 0x400u
         } else {
             this.value++
@@ -62,19 +62,7 @@ class VRegister {
                     y += 1u
                 }
             }
-            value = (value and COARSE_Y_BITMASK.inv()) or (y shl COARSE_Y_SHIFT)
+            value = (value and 0x3Eu.inv()) or (y shl 5)
         }
-    }
-
-
-    companion object {
-        private const val FIFTEEN_BITMASK = 0x7FFFu
-        private const val COARSE_X_BITMASK = 0x1Fu
-        private const val COARSE_Y_BITMASK = 0x3Eu
-        private const val COARSE_Y_SHIFT = 5
-        private const val NAMETABLE_SELECT_BITMASK = 0xC00u
-        private const val NAMETABLE_SELECT_SHIFT = 10
-        private const val FINE_Y_BITMASK = 0x7000u
-        private const val FINE_Y_SHIFT = 12
     }
 }

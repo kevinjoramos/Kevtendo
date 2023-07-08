@@ -5,6 +5,8 @@ import mediator.Component
 import mediator.Event
 import mediator.Mediator
 import mediator.Sender
+import util.to2DigitHexString
+import util.to4DigitHexString
 
 @ExperimentalUnsignedTypes
 class PPU2C02(
@@ -68,8 +70,187 @@ class PPU2C02(
     private var upperPaletteShiftRegister: UInt = 0u
     private var lowerPaletteShiftRegister: UInt = 0u
 
+    private var testCounter = 5
+    fun testPrintNameTable() {
+        val nameTableState = nameTable.slice(0..(0x400u - 1u).toInt()).chunked(32)
+        for (row in nameTableState) {
+            println("")
+            for (tile in row) {
+                print("${tile.toUInt().to2DigitHexString()} ")
+            }
+        }
+    }
+
+    fun testPrintFrameBuffer() {
+        for (row in frameBuffer) {
+            println("")
+            for (color in row) {
+                print("${color.toUInt().to2DigitHexString()} ")
+            }
+        }
+    }
+
     fun run() {
 
+        if (testCounter == 0) {
+            //testPrintNameTable()
+            //testPrintFrameBuffer()
+            //println("")
+            //println("")
+            testCounter = 50
+        } else testCounter--
+
+        // Visible Scanlines + Pre-render
+        if (scanline in 0..239 || scanline == 261) {
+
+            // Output Pixels
+            if (scanline != 261 && cycles in 1..256 ) {
+                drawPixel(
+                    scanline,
+                    cycles,
+                    (lowerBackgroundShiftRegister and 0x1u) or ((upperBackGroundShiftRegister and 0x1u) shl 1),
+                    (lowerPaletteShiftRegister and 0x1u) or ((upperPaletteShiftRegister and 0x1u) shl 1),
+                )
+
+                lowerBackgroundShiftRegister = lowerPaletteShiftRegister shr 1
+                upperBackGroundShiftRegister = upperBackGroundShiftRegister shr 1
+                lowerPaletteShiftRegister = lowerPaletteShiftRegister shr 1
+                upperPaletteShiftRegister = upperPaletteShiftRegister shr 1
+            }
+
+
+            // 1 - 256 -> Visible Pixels.
+            // 257 - 320 Garbage Tiles
+            // 321 - 336 Next 2 Tiles
+            if (cycles in 1..336) {
+                when (cycles % 8) {
+                    0 -> {
+                        println("")
+                        println("")
+                        nameTableAddress = vRegister.tileAddress
+                        patternTileAddress = nameTable[computeNameTableAddress(nameTableAddress).toInt()].toUInt()
+                        println("NameTableAddress: ${nameTableAddress.to4DigitHexString()}")
+                        println("TileAddress: ${patternTileAddress.to4DigitHexString()}")
+                    }
+                    2 -> {
+                        // Attribute Byte
+                        var attributeData = nameTable[computeNameTableAddress(vRegister.attributeDataAddress).toInt()].toUInt()
+                        println("Attribute Address ${vRegister.attributeDataAddress.to4DigitHexString()}")
+                        println("Attribute Data ${attributeData.to4DigitHexString()}")
+                    }
+                    4 -> {
+                        // Pattern Tile Low
+                        tileLowerBitPlane = readPatternTableMemoryAddress(patternTileAddress + vRegister.fineY)
+                        println("Lower Pattern Plane ${tileLowerBitPlane.to2DigitHexString()}")
+
+                    }
+                    6 -> {
+                        // Pattern Tile High
+                        tileHigherBitPlane = readPatternTableMemoryAddress(patternTileAddress + vRegister.fineY + 8u)
+                        println("Higher Pattern Plane ${tileHigherBitPlane.to2DigitHexString()}")
+
+                    }
+                    7 -> {
+                        // Load shift registers.
+                        upperBackGroundShiftRegister = (upperBackGroundShiftRegister and 0xFF00u.inv()) or (tileHigherBitPlane shl 8)
+                        lowerBackgroundShiftRegister = (lowerBackgroundShiftRegister and 0xFF00u.inv()) or (tileLowerBitPlane shl 8)
+                        println("Upper BG SHIFT ${upperBackGroundShiftRegister.to4DigitHexString()}")
+                        println("Lower BG SHIFT ${lowerBackgroundShiftRegister.to4DigitHexString()}")
+
+                        var highBit = 0u
+                        var lowBit = 0u
+
+                        if (xPosition == 0u && yPosition == 0u) {
+                            highBit = topLeft and 0x2u
+                            lowBit = topLeft and 0x1u
+                        }
+
+                        if (xPosition == 1u && yPosition == 0u) {
+                            highBit = topRight and 0x2u
+                            lowBit = topRight and 0x1u
+                        }
+
+                        if (xPosition == 0u && yPosition == 1u) {
+                            highBit = bottomLeft and 0x2u
+                            lowBit = bottomLeft and 0x1u
+                        }
+
+                        if (xPosition == 1u && yPosition == 1u) {
+                            highBit = bottomRight and 0x2u
+                            lowBit = bottomRight and 0x1u
+                        }
+
+                        upperPaletteShiftRegister = if (highBit == 1u) 0xFFu else 0u
+                        lowerPaletteShiftRegister = if (lowBit == 1u) 0xFFu else 0u
+
+                        println("Upper BG SHIFT ${upperPaletteShiftRegister.to4DigitHexString()}")
+                        println("Lower BG SHIFT ${lowerPaletteShiftRegister.to4DigitHexString()}")
+
+                        // Increment X every 8 cycles when between 328 and 256 of next scanline.
+                        if (328 >= cycles && cycles <= 256) {
+                            vRegister.incrementCoarseX()
+                        }
+                    }
+                }
+            }
+
+            // Increment Y values in vRegister. Skips attribute tables.
+            if (cycles == 256) {
+                vRegister.incrementY()
+            }
+
+            // Horizontal bits in V = Horizontal bits in T
+            if (cycles == 257) {
+                vRegister.value = vRegister.value and (0x41Fu).inv()
+                vRegister.value = vRegister.value or (tRegister.value and 0x41Fu)
+            }
+        }
+
+        // Post Render Scanline
+        if (scanline == 240) {
+            // DOES NOTHING
+        }
+
+        // Vertical Blanking Lines
+        if (scanline in 241..260) {
+
+            // Emit NMI on 2nd tick of scanline 241
+            if (scanline == 241 && cycles == 1) {
+                statusRegister.isInVBlank = true
+                if (controllerRegister.generateNMIAtStartVBlank) {
+                    emitNMISignal()
+                }
+            }
+
+        }
+
+        // Pre-Render Scanline
+        if (scanline == 261) {
+            if (cycles == 1) {
+                statusRegister.isInVBlank = false
+            }
+
+            // Repeatedly copy vertical bits v = vertical bits t.
+            if (cycles in 280..304) {
+                vRegister.value = vRegister.value and (0x7BE0u).inv()
+                vRegister.value = vRegister.value or (tRegister.value and (0x7BE0u))
+            }
+        }
+
+        // Increment X And Y Over Entire Area.
+        if (cycles < 341) {
+            cycles++
+        } else {
+            if (scanline < 262) {
+                scanline++
+            } else {
+                scanline = 0
+            }
+            cycles  = 0
+        }
+
+
+        /*
         if (scanline in 0..239 || scanline == 261) {
 
             if (scanline in 0..239 && cycles in 0..256) {
@@ -89,6 +270,7 @@ class PPU2C02(
             if (cycles in 1..336) {
                 when (cycles % 8) {
                     0 -> {
+                        println(vRegister.tileAddress.to2DigitHexString())
                         nameTableAddress = vRegister.tileAddress
                         patternTileAddress = nameTable[computeNameTableAddress(nameTableAddress).toInt()].toUInt()
                     }
@@ -150,8 +332,6 @@ class PPU2C02(
                 }
             }
 
-
-
             if (cycles == 257) {
                 vRegister.value = vRegister.value and (0x41Fu).inv()
                 vRegister.value = vRegister.value or (tRegister.value and 0x41Fu)
@@ -170,6 +350,9 @@ class PPU2C02(
 
         if (scanline in 241..260) {
             if (scanline == 241 && cycles == 1) {
+                //testPrintFrameBuffer()
+                    //println("")
+                    //println("")
 
                 statusRegister.isInVBlank = true
 
@@ -187,9 +370,16 @@ class PPU2C02(
             cycles = 0
         }
 
+
+         */
     }
 
     private fun drawPixel(scanline: Int, cycle: Int, colorSelect: UInt, paletteSelect: UInt) {
+
+        /*println(readPaletteTableAddress(
+            (1u + (4u * paletteSelect) + colorSelect)
+        ).toUByte())*/
+
         frameBuffer[scanline][cycle] = readPaletteTableAddress(
             (1u + (4u * paletteSelect) + colorSelect)
         ).toUByte()
@@ -321,6 +511,8 @@ class PPU2C02(
     }
 
     fun writeToScrollRegister(data: UInt) {
+        staleBus = data
+
         if (!vRamHasFirstWrite) {
             tRegister.coarseX = data
             fineX = data
@@ -379,6 +571,7 @@ class PPU2C02(
             }
             in NAME_TABLE_ADDRESS_RANGE -> {
                 val nameTableAddress = computeNameTableAddress(address)
+                println("NAMETABLE ADDESS = ${nameTableAddress.to4DigitHexString()}")
                 nameTable[nameTableAddress.toInt()] = data.toUByte()
             }
             in NAME_TABLE_MIRROR_ADDRESS_RANGE -> {

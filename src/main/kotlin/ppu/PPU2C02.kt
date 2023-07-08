@@ -173,6 +173,8 @@ class PPU2C02(
 
                 statusRegister.isInVBlank = true
 
+                println("STATUS REGISTER SET: ${statusRegister.isInVBlank}")
+
                 if (controllerRegister.generateNMIAtStartVBlank) {
                     println("CONTROL REG SET NMI TRUE")
                     emitNMISignal()

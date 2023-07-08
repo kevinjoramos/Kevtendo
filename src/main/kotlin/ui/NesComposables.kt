@@ -40,6 +40,13 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
     val zeroFlagViewState = uiState.zeroFlagViewState.collectAsState()
     val carryFlagViewState = uiState.carryFlagViewState.collectAsState()
 
+    val instructionViewState1 = uiState.instructionViewState1.collectAsState()
+    val instructionViewState2 = uiState.instructionViewState2.collectAsState()
+    val instructionViewState3 = uiState.instructionViewState3.collectAsState()
+    val instructionViewState4 = uiState.instructionViewState4.collectAsState()
+    val instructionViewState5 = uiState.instructionViewState5.collectAsState()
+    val instructionViewState6 = uiState.instructionViewState6.collectAsState()
+
     val zeroPageRow1ViewState = uiState.zeroPageRow1ViewState.collectAsState()
     val zeroPageRow2ViewState = uiState.zeroPageRow2ViewState.collectAsState()
     val zeroPageRow3ViewState = uiState.zeroPageRow3ViewState.collectAsState()
@@ -83,6 +90,14 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
             interruptDisableViewState = interruptDisableViewState,
             zeroFlagViewState = zeroFlagViewState,
             carryFlagViewState = carryFlagViewState,
+
+            instructionViewState1 = instructionViewState1,
+            instructionViewState2 = instructionViewState2,
+            instructionViewState3 = instructionViewState3,
+            instructionViewState4 = instructionViewState4,
+            instructionViewState5 = instructionViewState5,
+            instructionViewState6 = instructionViewState6,
+
             zeroPageRow1ViewState = zeroPageRow1ViewState,
             zeroPageRow2ViewState = zeroPageRow2ViewState,
             zeroPageRow3ViewState = zeroPageRow3ViewState,
@@ -164,6 +179,12 @@ fun EmulatorHudView(
     interruptDisableViewState: State<Boolean>,
     zeroFlagViewState: State<Boolean>,
     carryFlagViewState: State<Boolean>,
+    instructionViewState1: State<String>,
+    instructionViewState2: State<String>,
+    instructionViewState3: State<String>,
+    instructionViewState4: State<String>,
+    instructionViewState5: State<String>,
+    instructionViewState6: State<String>,
     zeroPageRow1ViewState: State<String>,
     zeroPageRow2ViewState: State<String>,
     zeroPageRow3ViewState: State<String>,
@@ -210,6 +231,15 @@ fun EmulatorHudView(
             interruptDisableViewState = interruptDisableViewState,
             zeroFlagViewState = zeroFlagViewState,
             carryFlagViewState = carryFlagViewState,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        CurrentInstructionView(
+            instructionViewState1 = instructionViewState1,
+            instructionViewState2 = instructionViewState2,
+            instructionViewState3 = instructionViewState3,
+            instructionViewState4 = instructionViewState4,
+            instructionViewState5 = instructionViewState5,
+            instructionViewState6 = instructionViewState6,
         )
         Spacer(modifier = Modifier.height(12.dp))
         ZeroPageView(
@@ -471,3 +501,57 @@ fun ZeroPageRowView(row: String) {
             .width(5.dp)
     )
 }
+
+@Composable
+fun CurrentInstructionView(
+    instructionViewState1: State<String>,
+    instructionViewState2: State<String>,
+    instructionViewState3: State<String>,
+    instructionViewState4: State<String>,
+    instructionViewState5: State<String>,
+    instructionViewState6: State<String>,
+) {
+    Text(
+        text = instructionViewState1.value,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        color = Color.White,
+        fontFamily = FontFamily.Monospace
+    )
+    Text(
+        text = instructionViewState2.value,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        color = Color.White,
+        fontFamily = FontFamily.Monospace
+    )
+    Text(
+        text = instructionViewState3.value,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        color = Color.White,
+        fontFamily = FontFamily.Monospace
+    )
+    Text(
+        text =instructionViewState4.value,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        color = Color.White,
+        fontFamily = FontFamily.Monospace
+    )
+    Text(
+        text = instructionViewState5.value,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        color = Color.White,
+        fontFamily = FontFamily.Monospace
+    )
+    Text(
+        text = instructionViewState6.value,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        color = Color.White,
+        fontFamily = FontFamily.Monospace
+    )
+}
+

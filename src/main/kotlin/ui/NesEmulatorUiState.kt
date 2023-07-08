@@ -1,9 +1,7 @@
 package ui
 
-import androidx.compose.runtime.collectAsState
 import bus.Bus
 import androidx.compose.ui.graphics.Color
-import bus.Ram
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +40,13 @@ class NesEmulatorUiState {
     val interruptDisableViewState = bus.cpu.interruptDisableFlagState
     val zeroFlagViewState = bus.cpu.zeroFlagState
     val carryFlagViewState = bus.cpu.carryFlagState
+
+    val instructionViewState1 = bus.cpu.instructionState1
+    val instructionViewState2 = bus.cpu.instructionState2
+    val instructionViewState3 = bus.cpu.instructionState3
+    val instructionViewState4 = bus.cpu.instructionState4
+    val instructionViewState5 = bus.cpu.instructionState5
+    val instructionViewState6 = bus.cpu.instructionState6
 
     val zeroPageRow1ViewState = bus.ram.zeroPageRow1StateFlow
     val zeroPageRow2ViewState = bus.ram.zeroPageRow2StateFlow
@@ -87,11 +92,10 @@ class NesEmulatorUiState {
 
     fun stop() {
         isRunning = false
-        Logger.writeLogsToFile()
     }
 
     private fun runSystem() {
-        GlobalScope.launch {
+        val emulatorJob = GlobalScope.launch {
 
             while (isRunning) {
 
@@ -104,14 +108,11 @@ class NesEmulatorUiState {
                 systemClock = 0
             }
 
-            /*} catch (e: Exception) {
-                isRunning = false
-                println(e.toString())
-                Logger.writeLogsToFile()
-                println(bus.cpu.readAddress(0x02FFu))
-                println(bus.cpu.readAddress(0x0300u))
-            }*/
+            Logger.writeLogsToFile()
         }
+
+
+
     }
 
     private fun executeMainCycle() {

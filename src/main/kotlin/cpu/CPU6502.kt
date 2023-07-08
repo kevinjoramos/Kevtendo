@@ -1,12 +1,13 @@
 package cpu
 
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import mediator.Component
 import mediator.Mediator
+import util.Logger
 import util.to2DigitHexString
 import util.to4DigitHexString
+import java.util.SortedMap
 
 /**
  * Emulation of the 6502 processor.
@@ -27,6 +28,12 @@ class CPU6502(override var bus: Mediator) : Component {
         set(value) {
             field = value
             _programCounterState.value = programCounter.to4DigitHexString()
+            _instructionState3.value = disassembler.allInstructions[(programCounter - 2u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
+            _instructionState3.value = disassembler.allInstructions[(programCounter - 1u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
+            _instructionState3.value = disassembler.allInstructions[programCounter] ?: "${programCounter.to4DigitHexString()}:"
+            _instructionState4.value = disassembler.allInstructions[(programCounter + 1u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
+            _instructionState5.value = disassembler.allInstructions[(programCounter + 2u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
+            _instructionState6.value = disassembler.allInstructions[(programCounter + 3u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
         }
     private val _programCounterState = MutableStateFlow("0000")
     val programCounterState = _programCounterState.asStateFlow()
@@ -144,6 +151,20 @@ class CPU6502(override var bus: Mediator) : Component {
         statusRegister = if (value) statusRegister or bitMask else statusRegister and bitMask.inv()
     }
 
+    private val _instructionState1 = MutableStateFlow("$0000:")
+    private val _instructionState2 = MutableStateFlow("$0000:")
+    private val _instructionState3 = MutableStateFlow("$0000:")
+    private val _instructionState4 = MutableStateFlow("$0000:")
+    private val _instructionState5 = MutableStateFlow("$0000:")
+    private val _instructionState6 = MutableStateFlow("$0000:")
+
+    val instructionState1 = _instructionState1.asStateFlow()
+    val instructionState2 = _instructionState2.asStateFlow()
+    val instructionState3 = _instructionState3.asStateFlow()
+    val instructionState4 = _instructionState4.asStateFlow()
+    val instructionState5 = _instructionState5.asStateFlow()
+    val instructionState6 = _instructionState6.asStateFlow()
+
     /**
      * Other member variables for developer convenience
      */
@@ -159,6 +180,8 @@ class CPU6502(override var bus: Mediator) : Component {
     var isPendingNMI = false
     var isPendingIRQ = false
     var isPendingReset = false
+
+    var disassembler: Disassembler = Disassembler()
 
     private val opcodeTable: Map<UByte, Triple<AddressingMode, Operation, Int>> = mapOf(
         (0x00u).toUByte() to Triple(AddressingMode.IMP, BRK(), 7),
@@ -326,9 +349,10 @@ class CPU6502(override var bus: Mediator) : Component {
         (0xF9u).toUByte() to Triple(AddressingMode.ABS_Y, SBC(), 4),
         (0xFDu).toUByte() to Triple(AddressingMode.ABS_X, SBC(), 4),
         (0xFEu).toUByte() to Triple(AddressingMode.ABS_X, INC(), 7),
-    )
+    ).withDefault { Triple(AddressingMode.ILL, NOP(), 0) }
 
     init {
+        disassembler.disassembleAssemblyCode(0x8000u, 0xFFFFu)
         reset()
     }
 
@@ -426,9 +450,10 @@ class CPU6502(override var bus: Mediator) : Component {
             }
             AddressingMode.IMP->
                 operation.execute()
+
+            else -> {}
         }
 
-        /*
         Logger.addLog(
             currentProgramCounter,
             opcodeValue,
@@ -443,8 +468,6 @@ class CPU6502(override var bus: Mediator) : Component {
             statusRegisterValue,
             stackPointerValue
         )
-         */
-
     }
 
     /**
@@ -2032,6 +2055,100 @@ class CPU6502(override var bus: Mediator) : Component {
         interruptDisableFlag = true
 
         programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
+    }
+
+    inner class Disassembler() {
+       var allInstructions: MutableMap<UShort, String> = mutableMapOf()
+
+        fun disassembleAssemblyCode(startAddress: UInt, endAddress: UInt) {
+            var currentAddress = startAddress
+            while (currentAddress <= endAddress) {
+
+                val instruction = fetchInstruction(readAddress(currentAddress.toUShort()))
+
+                val instructionName = instruction.second.opcodeName
+
+                this@CPU6502.programCounter = currentAddress.toUShort()
+                this@CPU6502.xRegister = 0u
+                this@CPU6502.yRegister = 0u
+
+                val mnemonic = when (instruction.first) {
+                    AddressingMode.IMP -> instructionName
+                    AddressingMode.A -> "$instructionName A"
+                    AddressingMode.IMM -> {
+                        immediateAddressing()
+                        "$instructionName #$${this@CPU6502.immediateOperand?.to2DigitHexString()}"
+                    }
+                    AddressingMode.ABS -> {
+                        absoluteAddressing()
+                        "$instructionName $${this@CPU6502.targetAddress?.to4DigitHexString()}"
+                    }
+                    AddressingMode.ZPG -> {
+                        zeroPageAddressing()
+                        "$instructionName $${this@CPU6502.targetAddress?.to2DigitHexString()}"
+                    }
+                    AddressingMode.ABS_X -> {
+                        absoluteXIndexedAddressing()
+                        "$instructionName $${targetAddress?.to4DigitHexString()}, X"
+                    }
+                    AddressingMode.ABS_Y -> {
+                        absoluteYIndexedAddressing()
+                        "$instructionName $${targetAddress?.to4DigitHexString()}, Y"
+                    }
+                    AddressingMode.ZPG_X -> {
+                        zeroPageXIndexedAddressing()
+                        "$instructionName $${targetAddress?.to2DigitHexString()}, X"
+                    }
+                    AddressingMode.ZPG_Y -> {
+                        zeroPageYIndexedAddressing()
+                        "$instructionName $${targetAddress?.to2DigitHexString()}, Y"
+                    }
+                    AddressingMode.IND -> {
+                        indirectAddressing()
+                        "$instructionName (${((operandHighByte!!.toUInt() shl 8) or operandLowByte!!.toUInt()).to4DigitHexString()})"
+                    }
+                    AddressingMode.X_IND -> {
+                        xIndexedIndirectAddressing()
+                        "$instructionName ($${operandLowByte?.to2DigitHexString()}, X)"
+                    }
+                    AddressingMode.IND_Y -> {
+                        indirectYIndexedAddressing()
+                        "$instructionName ($${operandLowByte?.to2DigitHexString()}), Y"
+                    }
+                    AddressingMode.REL -> {
+                        relativeAddressing()
+                        "$instructionName $${targetAddress?.to4DigitHexString()}"
+                    }
+                    AddressingMode.ILL -> {
+                        "??? Illegal Opcode"
+                    }
+                }
+
+                allInstructions[currentAddress.toUShort()] = "$${currentAddress.to4DigitHexString()}: $mnemonic {${instruction.first}}"
+
+                currentAddress += when (instruction.first) {
+                    AddressingMode.IMP -> if (instruction.second.opcodeName == "BRK") 2u else 1u
+                    AddressingMode.A -> 1u
+                    AddressingMode.IMM -> 2u
+                    AddressingMode.ABS -> 3u
+                    AddressingMode.ZPG -> 2u
+                    AddressingMode.ABS_X -> 3u
+                    AddressingMode.ABS_Y -> 3u
+                    AddressingMode.ZPG_X -> 2u
+                    AddressingMode.ZPG_Y -> 2u
+                    AddressingMode.IND -> 3u
+                    AddressingMode.X_IND -> 2u
+                    AddressingMode.IND_Y -> 2u
+                    AddressingMode.REL -> 2u
+                    else -> 1u
+                }
+
+                operandLowByte = null
+                operandHighByte = null
+                targetAddress = null
+                immediateOperand = null
+            }
+        }
     }
 
     companion object {

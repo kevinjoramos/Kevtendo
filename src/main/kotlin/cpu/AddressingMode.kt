@@ -13,5 +13,6 @@ enum class AddressingMode {
     IND,
     X_IND,
     IND_Y,
-    REL
+    REL,
+    ILL
 }

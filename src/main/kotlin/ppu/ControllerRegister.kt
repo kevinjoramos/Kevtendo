@@ -30,8 +30,8 @@ class ControllerRegister {
      */
     val vRamAddressIncrement: UInt
         get() = when (value and VRAM_ADDRESS_INCREMENT_BITMASK) {
-            0u -> INCREMENT_GOING_ACROSS
-            else -> INCREMENT_GOING_DOWN
+            0u -> 1u
+            else -> 32u
         }
 
     /**
@@ -81,7 +81,10 @@ class ControllerRegister {
      * (0: off; 1: on)
      */
     val generateNMIAtStartVBlank: Boolean
-        get() = (value and GENERATE_NMI_AT_START_VBLANK) == 1u
+        get() = when (value and GENERATE_NMI_AT_START_VBLANK) {
+            0u -> false
+            else -> true
+        }
 
     companion object {
         // BASE NAME TABLE

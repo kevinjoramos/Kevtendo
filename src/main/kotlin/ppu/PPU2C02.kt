@@ -173,10 +173,7 @@ class PPU2C02(
 
                 statusRegister.isInVBlank = true
 
-                println("STATUS REGISTER SET: ${statusRegister.isInVBlank}")
-
                 if (controllerRegister.generateNMIAtStartVBlank) {
-                    println("CONTROL REG SET NMI TRUE")
                     emitNMISignal()
                 }
             }
@@ -200,7 +197,6 @@ class PPU2C02(
 
     private fun emitNMISignal() {
         notify(Sender.PPU, Event.NMI)
-        println("NMI SIGNAL SENT")
     }
 
     /**

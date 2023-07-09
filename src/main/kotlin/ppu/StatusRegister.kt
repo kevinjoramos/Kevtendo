@@ -30,12 +30,7 @@ package ppu
 class StatusRegister {
 
     var value: UInt = 0x00u
-
-    /**
-     * Returns stale PPU bus contents.
-     */
-    val openBusContents
-        get() = value and OPEN_BUS_BITMASK
+        set(value) { field = value and 0xFFu }
 
     /**
      * Sprite overflow. The intent was for this flag to be set
@@ -47,7 +42,10 @@ class StatusRegister {
      * pre-render line.
      */
     val hasSpriteOverflow
-        get() = (value and SPRITE_OVERFLOW_BITMASK) != 0u
+        get() = when (value and 0x20u) {
+            0u -> false
+            else -> true
+        }
 
     /**
      * Sprite 0 Hit.  Set when a nonzero pixel of sprite 0 overlaps
@@ -55,11 +53,17 @@ class StatusRegister {
      * line.  Used for raster timing.
      */
     val hasSpriteHit
-        get() = (value and SPRITE_HIT_BITMASK) != 0u
+        get() = when (value and 0x40u) {
+            0u -> false
+            else -> true
+        }
 
 
     var isInVBlank
-        get() = (value and VERTICAL_BLANK_BITMASK) != 0u
+        get() = when (value and 0x80u) {
+            0u -> false
+            else -> true
+        }
         set(value) {
             when (value) {
                 true -> this.value = this.value or 0x80u
@@ -73,18 +77,7 @@ class StatusRegister {
      * It does not clear the sprite 0 hit or overflow bit.
      */
     fun clearBit7() {
-        value = (value and VERTICAL_BLANK_BITMASK.inv())
+        value = (value and 0x80u.inv())
     }
-
-    companion object {
-        const val OPEN_BUS_BITMASK = 0x1Fu
-
-        const val SPRITE_OVERFLOW_BITMASK = 0x20u
-
-        const val SPRITE_HIT_BITMASK = 0x40u
-
-        const val VERTICAL_BLANK_BITMASK = 0x80u
-    }
-
 
 }

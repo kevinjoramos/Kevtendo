@@ -26,10 +26,12 @@ package ppu
  *                  Set at dot 1 of line 241 (the line *after* the post-render
  *                  line); cleared after reading $2002 and at dot 1 of the
  *                  pre-render line.
+ *
+ *
  */
 class StatusRegister {
 
-    var value: UInt = 0x00u
+    var value: UInt = 0xA0u
         set(value) { field = value and 0xE0u }
 
     /**

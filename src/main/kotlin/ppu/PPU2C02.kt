@@ -24,6 +24,9 @@ class PPU2C02(
     private val dmaRegister = OamDma()
     private var staleBus: UInt = 0u
 
+    private var addressRegister: UInt = 0u
+        set(value) { field = value and 0x3FFFu }
+
     /**
      * VRam Registers
      */
@@ -50,7 +53,7 @@ class PPU2C02(
     private var cycles = 0
     private var nameTableAddress = 0x0000u
     private val xPosition get() = (nameTableAddress and 0x02u) shr 1
-    private val yPosition get() = nameTableAddress and 0x40u shr 6
+    private val yPosition get() = (nameTableAddress and 0x40u) shr 6
     private var patternTileAddress = 0x0000u
     private var attributeData = 0x0000u
     private val topLeft get() = attributeData and 0x3u
@@ -71,8 +74,8 @@ class PPU2C02(
 
     private var testCounter = 5
     fun testPrintNameTable() {
-        val nameTableState = nameTable.slice(0..(0x400u - 1u).toInt()).chunked(32)
-        for (row in nameTableState) {
+        val nameTables = nameTable.chunked(0x400)
+        for (row in nameTables[0].chunked(32)) {
             println("")
             for (tile in row) {
                 print("${tile.toUInt().to2DigitHexString()} ")
@@ -139,8 +142,6 @@ class PPU2C02(
             if (cycles in 1..336) {
                 when (cycles % 8) {
                     0 -> {
-                        //println("")
-                        //println("")
                         nameTableAddress = vRegister.tileAddress
                         patternTileAddress = readNameTableMemory(nameTableAddress)
                         //println("NameTableAddress: ${nameTableAddress.to4DigitHexString()}")
@@ -153,6 +154,7 @@ class PPU2C02(
                         println("Attribute Data ${attributeData.to4DigitHexString()}")*/
                     }
                     4 -> {
+                        //println("Fetching Low Pattern. ${(patternTileAddress + vRegister.fineY).to4DigitHexString()}")
                         // Pattern Tile Low
                         tileLowerBitPlane = readPatternTableMemory(patternTileAddress + vRegister.fineY)
                         //println("Lower Pattern Plane ${tileLowerBitPlane.to2DigitHexString()}")
@@ -203,6 +205,7 @@ class PPU2C02(
                         // Increment X every 8 cycles when between 328 and 256 of next scanline.
                         if (328 >= cycles && cycles <= 256) {
                             if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
+                                println("Increment X called!")
                                 vRegister.incrementCoarseX()
                             }
                         }
@@ -231,10 +234,12 @@ class PPU2C02(
             // DOES NOTHING
 
             // TESTING
-            //testPrintNameTable()
-            //testPrintPaletteTable()
-            //println("")
-            //println("")
+            testPrintNameTable()
+            println("")
+            println("")
+            testPrintPaletteTable()
+            println("")
+            println("")
         }
 
         // Vertical Blanking Lines
@@ -303,7 +308,7 @@ class PPU2C02(
     fun writeToControllerRegister(data: UInt) {
         staleBus = data
         controllerRegister.value = data
-        tRegister.nameTableSelect = data
+        tRegister.parseNameTableSelect(data)
     }
 
     /**
@@ -324,8 +329,10 @@ class PPU2C02(
     fun readStatusRegister(): UInt {
         val value = statusRegister.value
         statusRegister.isInVBlank = false
+
         vRamHasFirstWrite = false
-        vRegister.value = 0u
+        tRegister.value = 0u
+
         return value
     }
 
@@ -344,11 +351,13 @@ class PPU2C02(
         staleBus = data
 
         if (!vRamHasFirstWrite) {
-            tRegister.upperLatch = data
+            tRegister.parseUpperLatch(data)
+            //addressRegister = (data shl 8)
             vRamHasFirstWrite = true
         } else {
-            tRegister.lowerLatch = data
-            vRegister.addressRegister = tRegister.value
+            tRegister.parseLowerLatch(data)
+            vRegister.value = tRegister.value
+            //addressRegister = (addressRegister and 0xFF00u) or data
             vRamHasFirstWrite = false
         }
     }
@@ -359,14 +368,27 @@ class PPU2C02(
     fun readDataRegister(): UInt {
         var data = dataRegister
 
-        if (vRegister.addressRegister in PALETTE_TABLE_ADDRESS_RANGE) {
+        // Palette read is not buffered.
+        if (vRegister.value in 0x3F00u..0x3FFFu) {
+            dataRegister = readPaletteTableMemory(vRegister.value)
+            data = dataRegister
+        } else {
+            dataRegister = readPPUMemory(vRegister.value)
+        }
+
+        vRegister.value += controllerRegister.vRamAddressIncrement
+
+        /*// Palette read is not buffered.
+        if (vRegister.addressRegister in 0x3F00u..0x3FFFu) {
             dataRegister = readPaletteTableMemory(vRegister.addressRegister)
             data = dataRegister
         } else {
             dataRegister = readPPUMemory(vRegister.addressRegister)
         }
 
-        vRegister.addressRegister += controllerRegister.vRamAddressIncrement
+        vRegister.value += controllerRegister.vRamAddressIncrement*/
+
+
 
         return data
     }
@@ -376,9 +398,13 @@ class PPU2C02(
 
         dataRegister = data
 
-        writeToPPUMemory(vRegister.addressRegister, data)
+        println("WRITE TO DATA REGISTER: ${vRegister.value.to4DigitHexString()} : ${data.to2DigitHexString()}")
 
-        vRegister.addressRegister += controllerRegister.vRamAddressIncrement
+        //writeToPPUMemory(vRegister.addressRegister, data)
+        writeToPPUMemory(vRegister.value, data)
+
+        //vRegister.value += controllerRegister.vRamAddressIncrement
+        vRegister.value += controllerRegister.vRamAddressIncrement
     }
 
     /**
@@ -419,12 +445,12 @@ class PPU2C02(
         staleBus = data
 
         if (!vRamHasFirstWrite) {
-            tRegister.coarseX = data
+            tRegister.parseCoarseX(data)
             fineX = data
             vRamHasFirstWrite = true
         } else {
-            tRegister.coarseY = data
-            tRegister.fineY = data
+            tRegister.parseCoarseY(data)
+            tRegister.parseFineY(data)
             vRamHasFirstWrite = false
         }
     }
@@ -466,7 +492,7 @@ class PPU2C02(
         }
     }
 
-    private fun  writeToPPUMemory(address: UInt, data: UInt) {
+    private fun writeToPPUMemory(address: UInt, data: UInt) {
         when (address) {
 
             // Pattern Table 0
@@ -488,14 +514,14 @@ class PPU2C02(
     }
 
     private fun writeToPatternTableMemory(address: UInt, data: UInt) {
-        println("SOMEBODY TOUCH'A MY SPAGHET! = $${address.to4DigitHexString()} : ${data.to2DigitHexString()}")
+        //println("SOMEBODY TOUCH'A MY SPAGHET! = $${address.to4DigitHexString()} : ${data.to2DigitHexString()}")
+        val number = 21
     }
 
     private fun readNameTableMemory(address: UInt): UInt {
 
         if (address in 0x3000u..0x3EFFu) {
             println("This range is not expected to be used.")
-            return 0u
         }
 
         if (nameTableMirroring == NameTableMirroring.VERTICAL) {
@@ -540,6 +566,8 @@ class PPU2C02(
     }
 
     private fun writeToNameTableMemory(address: UInt, data: UInt) {
+
+        println("Writing to name table memory. ${address.to4DigitHexString()} : ${data.to2DigitHexString()}")
 
         if (address in 0x3000u..0x3EFFu) {
             println("This range is not expected to be used.")
@@ -592,7 +620,7 @@ class PPU2C02(
     private fun writeToPaletteTableMemory(address: UInt, data: UInt) {
         val paletteAddress = (address - 0x3F00u).mod(0x20u)
         paletteTable[paletteAddress.toInt()] = data.toUByte()
-        println("Write To Palette Address: ${address.to4DigitHexString()} -> ${paletteAddress.toUInt().to4DigitHexString()} With DATA: ${data.to2DigitHexString()}")
+        //println("Writing to name table memory. ${address.to4DigitHexString()} : ${data.to2DigitHexString()}")
     }
 
 

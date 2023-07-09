@@ -30,7 +30,7 @@ package ppu
 class StatusRegister {
 
     var value: UInt = 0x00u
-        set(value) { field = value and 0xFFu }
+        set(value) { field = value and 0xE0u }
 
     /**
      * Sprite overflow. The intent was for this flag to be set

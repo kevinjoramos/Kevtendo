@@ -31,7 +31,6 @@ class MapperZero(private val cartridge: Cartridge, bus: Mediator) : Mapper(cartr
         cartridge.programRom[(address - 0x8000u).toInt()] = data
 
         */
-       println("SOMEBODY TOUCH'A MY SPAGHET! = $${address.toUInt().to4DigitHexString()} : ${data.toUInt().to2DigitHexString()}")
     }
 
 

@@ -20,8 +20,11 @@ class VRegister {
     val fineY: UInt
         get() = (value and 0x7000u) shr 12
 
-    val addressRegister: UInt
+    var addressRegister: UInt
         get() = (value and 0x3FFFu)
+        set(value) {
+            this.value = value and 0x3FFFu
+        }
 
 
     /**

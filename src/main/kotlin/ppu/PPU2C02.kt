@@ -51,9 +51,9 @@ class PPU2C02(
     val frameBuffer = Array(240) { Array(257) { (0x01u).toUByte() } }
     private var scanline = 0
     private var cycles = 0
-    private var nameTableAddress = 0x0000u
-    private val xPosition get() = (nameTableAddress and 0x02u) shr 1
-    private val yPosition get() = (nameTableAddress and 0x40u) shr 6
+    private var currentNameTableAddress = 0x0000u
+    private val xPosition get() = (currentNameTableAddress and 0x02u) shr 1
+    private val yPosition get() = (currentNameTableAddress and 0x40u) shr 6
     private var patternTileAddress = 0x0000u
     private var attributeData = 0x0000u
     private val topLeft get() = attributeData and 0x3u
@@ -61,16 +61,18 @@ class PPU2C02(
     private val bottomLeft get() = (attributeData shr 4) and 0x3u
     private val bottomRight get() = (attributeData shr 6) and 0x3u
 
-    private var tileLowerBitPlane = 0x00u
-    private var tileHigherBitPlane = 0x00u
+    private var attributeBits = 0u
+
+    private var tileLowBitPlane = 0x00u
+    private var tileHighBitPlane = 0x00u
 
     /**
      * Shift Registers
      */
-    private var upperBackGroundShiftRegister: UInt = 0u
-    private var lowerBackgroundShiftRegister: UInt = 0u
-    private var upperPaletteShiftRegister: UInt = 0u
-    private var lowerPaletteShiftRegister: UInt = 0u
+    private var highBackGroundShiftRegister: UInt = 0u
+    private var lowBackgroundShiftRegister: UInt = 0u
+    private var highPaletteShiftRegister: UInt = 0u
+    private var lowPaletteShiftRegister: UInt = 0u
 
     private var testCounter = 5
     fun testPrintNameTable() {
@@ -121,18 +123,39 @@ class PPU2C02(
             // Output Pixels
             if (scanline != 261 && cycles in 1..256 ) {
                 if (maskRegister.isShowingBackground) {
+
+                    val lowBackgroundBit = when (lowBackgroundShiftRegister and 0x80u) {
+                        0u -> 0u
+                        else -> 1u
+                    }
+
+                    val highBackgroundBit = when (highBackGroundShiftRegister and 0x80u) {
+                        0u -> 0u
+                        else -> 1u
+                    }
+
+                    val lowPaletteBit = when (lowPaletteShiftRegister and 0x80u) {
+                        0u -> 0u
+                        else -> 1u
+                    }
+
+                    val highPaletteBit = when (highPaletteShiftRegister and 0x80u) {
+                        0u -> 0u
+                        else -> 1u
+                    }
+
                     drawPixel(
                         scanline,
                         cycles,
-                        (lowerBackgroundShiftRegister and 0x1u) or ((upperBackGroundShiftRegister and 0x1u) shl 1),
-                        (lowerPaletteShiftRegister and 0x1u) or ((upperPaletteShiftRegister and 0x1u) shl 1),
+                        (highBackgroundBit shl 1) or lowBackgroundBit,
+                        (highPaletteBit shl 1) or lowPaletteBit,
                     )
                 }
 
-                lowerBackgroundShiftRegister = lowerPaletteShiftRegister shr 1
-                upperBackGroundShiftRegister = upperBackGroundShiftRegister shr 1
-                lowerPaletteShiftRegister = lowerPaletteShiftRegister shr 1
-                upperPaletteShiftRegister = upperPaletteShiftRegister shr 1
+                lowBackgroundShiftRegister = lowPaletteShiftRegister shl 1
+                highBackGroundShiftRegister = highBackGroundShiftRegister shl 1
+                lowPaletteShiftRegister = lowPaletteShiftRegister shl 1
+                highPaletteShiftRegister = highPaletteShiftRegister shl 1
             }
 
 
@@ -142,70 +165,49 @@ class PPU2C02(
             if (cycles in 1..336) {
                 when (cycles % 8) {
                     0 -> {
-                        nameTableAddress = vRegister.tileAddress
-                        patternTileAddress = readNameTableMemory(nameTableAddress)
-                        //println("NameTableAddress: ${nameTableAddress.to4DigitHexString()}")
-                        //println("TileAddress: ${patternTileAddress.to4DigitHexString()}")
+                        // Fetch the pattern tile at current name table address.
+                        patternTileAddress = readNameTableMemory(vRegister.tileAddress)
                     }
                     2 -> {
-                        // Attribute Byte
-                        var attributeData = readNameTableMemory(vRegister.attributeDataAddress)
-                        /*println("Attribute Address ${vRegister.attributeDataAddress.to4DigitHexString()}")
-                        println("Attribute Data ${attributeData.to4DigitHexString()}")*/
+                        // Fetch corresponding Attribute Byte
+                        val attributeData = readNameTableMemory(vRegister.attributeDataAddress)
+                        val quadrantAddress = ((vRegister.tileAddress and 0x40u) shr 5) or ((vRegister.tileAddress and 0x02u) shr 1)
+
+                        attributeBits = when (quadrantAddress) {
+                            0x00u -> attributeData and 0x03u
+                            0x01u -> (attributeData shl 2) and 0x03u
+                            0x10u -> (attributeData shl 4) and 0x03u
+                            else -> (attributeData shl 6) and 0x03u
+                        }
                     }
                     4 -> {
-                        //println("Fetching Low Pattern. ${(patternTileAddress + vRegister.fineY).to4DigitHexString()}")
-                        // Pattern Tile Low
-                        tileLowerBitPlane = readPatternTableMemory(patternTileAddress + vRegister.fineY)
-                        //println("Lower Pattern Plane ${tileLowerBitPlane.to2DigitHexString()}")
-
+                        // Fetch low bit plane of pattern tile
+                        tileLowBitPlane = readPatternTableMemory((patternTileAddress shl 4) + vRegister.fineY)
                     }
                     6 -> {
-                        // Pattern Tile High
-                        tileHigherBitPlane = readPatternTableMemory(patternTileAddress + vRegister.fineY + 8u)
-                        //println("Higher Pattern Plane ${tileHigherBitPlane.to2DigitHexString()}")
-
+                        // Fetch high bit plane of pattern tile
+                        tileHighBitPlane = readPatternTableMemory((patternTileAddress shl 4) + vRegister.fineY + 8u)
                     }
                     7 -> {
+
                         // Load shift registers.
-                        upperBackGroundShiftRegister = (upperBackGroundShiftRegister and 0xFF00u.inv()) or (tileHigherBitPlane shl 8)
-                        lowerBackgroundShiftRegister = (lowerBackgroundShiftRegister and 0xFF00u.inv()) or (tileLowerBitPlane shl 8)
-                        /*println("Upper BG SHIFT ${upperBackGroundShiftRegister.to4DigitHexString()}")
-                        println("Lower BG SHIFT ${lowerBackgroundShiftRegister.to4DigitHexString()}")*/
+                        lowBackgroundShiftRegister = (lowBackgroundShiftRegister and 0xFF00u) or tileLowBitPlane
+                        highBackGroundShiftRegister = (highBackGroundShiftRegister and 0xFF00u) or tileHighBitPlane
 
-                        var highBit = 0u
-                        var lowBit = 0u
-
-                        if (xPosition == 0u && yPosition == 0u) {
-                            highBit = topLeft and 0x2u
-                            lowBit = topLeft and 0x1u
+                        // Load palette registers with attribute bits.
+                        lowPaletteShiftRegister = when (attributeBits and 0x01u) {
+                            0u -> 0u
+                            else -> 0xFFu
                         }
 
-                        if (xPosition == 1u && yPosition == 0u) {
-                            highBit = topRight and 0x2u
-                            lowBit = topRight and 0x1u
+                        highPaletteShiftRegister = when (attributeBits and 0x02u) {
+                            0u -> 0u
+                            else -> 0xFFu
                         }
-
-                        if (xPosition == 0u && yPosition == 1u) {
-                            highBit = bottomLeft and 0x2u
-                            lowBit = bottomLeft and 0x1u
-                        }
-
-                        if (xPosition == 1u && yPosition == 1u) {
-                            highBit = bottomRight and 0x2u
-                            lowBit = bottomRight and 0x1u
-                        }
-
-                        upperPaletteShiftRegister = if (highBit == 1u) 0xFFu else 0u
-                        lowerPaletteShiftRegister = if (lowBit == 1u) 0xFFu else 0u
-
-                        /*println("Upper BG SHIFT ${upperPaletteShiftRegister.to4DigitHexString()}")
-                        println("Lower BG SHIFT ${lowerPaletteShiftRegister.to4DigitHexString()}")*/
 
                         // Increment X every 8 cycles when between 328 and 256 of next scanline.
                         if (328 >= cycles && cycles <= 256) {
                             if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
-                                println("Increment X called!")
                                 vRegister.incrementCoarseX()
                             }
                         }
@@ -232,14 +234,6 @@ class PPU2C02(
         // Post Render Scanline
         if (scanline == 240) {
             // DOES NOTHING
-
-            // TESTING
-            testPrintNameTable()
-            println("")
-            println("")
-            testPrintPaletteTable()
-            println("")
-            println("")
         }
 
         // Vertical Blanking Lines
@@ -285,12 +279,8 @@ class PPU2C02(
 
     private fun drawPixel(scanline: Int, cycle: Int, colorSelect: UInt, paletteSelect: UInt) {
 
-        /*println(readPaletteTableAddress(
-            (1u + (4u * paletteSelect) + colorSelect)
-        ).toUByte())*/
-
         frameBuffer[scanline][cycle] = readPaletteTableMemory(
-            (1u + (4u * paletteSelect) + colorSelect)
+            (paletteSelect shl 2) or colorSelect
         ).toUByte()
     }
 
@@ -485,7 +475,7 @@ class PPU2C02(
             in 0x2000u..0x3EFFu -> readNameTableMemory(address)
 
             // Pallet tables
-            in 0x3F00u..0x3FFFu -> readPaletteTableMemory(address)
+            in 0x3F00u..0x3FFFu -> readPaletteTableMemory(address - 0x3F00u)
 
             // I'd have no idea how you got here if you did.
             else -> 0u
@@ -505,7 +495,7 @@ class PPU2C02(
             in 0x2000u..0x3EFFu -> writeToNameTableMemory(address, data)
 
             // Pallet tables
-            in 0x3F00u..0x3FFFu -> writeToPaletteTableMemory(address, data)
+            in 0x3F00u..0x3FFFu -> writeToPaletteTableMemory(address - 0x3F00u, data)
         }
     }
 
@@ -613,14 +603,13 @@ class PPU2C02(
     }
 
     private fun readPaletteTableMemory(address: UInt): UInt {
-        val paletteAddress = (address - 0x3F00u).mod(0x20u)
+        val paletteAddress = address.mod(0x20u)
         return paletteTable[paletteAddress.toInt()].toUInt()
     }
 
     private fun writeToPaletteTableMemory(address: UInt, data: UInt) {
-        val paletteAddress = (address - 0x3F00u).mod(0x20u)
+        val paletteAddress = address.mod(0x20u)
         paletteTable[paletteAddress.toInt()] = data.toUByte()
-        //println("Writing to name table memory. ${address.to4DigitHexString()} : ${data.to2DigitHexString()}")
     }
 
 
@@ -628,7 +617,6 @@ class PPU2C02(
         const val NAMETABLE_MEMORY_SIZE = 0x800
         const val OAM_MEMORY_SIZE = 0x100
         const val PALETTE_TABLE_MEMORY_SIZE = 0x20
-        private val PALETTE_TABLE_ADDRESS_RANGE =  0x3F00u..0x3FFFu
 
         enum class NameTableMirroring {
             HORIZONTAL,

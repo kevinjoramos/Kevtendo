@@ -3,6 +3,11 @@ package ui
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -18,6 +23,7 @@ fun App() {
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,

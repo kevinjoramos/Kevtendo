@@ -3,6 +3,7 @@ package bus
 import cpu.CPU6502
 import cartridge.Cartridge
 import cartridge.MapperZero
+import controller.GameController
 import ppu.PPU2C02
 import mediator.Event
 import mediator.Mediator
@@ -20,6 +21,13 @@ class Bus(
     var ppu = PPU2C02(this)
     private var mapper = MapperZero(Cartridge(cartridgePath), this)
     val cpu = CPU6502(this)
+
+    val controller1 = GameController()
+    val controller2 = GameController()
+
+    var controller1Snap = 0u
+    var controller2Snap = 0u
+
 
     override fun notify(sender: Sender, event: Event) {
         when (sender) {
@@ -62,6 +70,18 @@ class Bus(
 
         // APU and I/O
         if (address in 0x4000u..0x4017u) {
+
+            if (address == (0x4016u).toUShort()) {
+                val data = when (controller1Snap and 0x80u) {
+                    0u -> 0u
+                    else -> 1u
+                }
+
+                controller1Snap = controller1Snap shl 1
+
+                return data.toUByte()
+            }
+
             return 0u
         }
 
@@ -109,6 +129,11 @@ class Bus(
 
         // APU and I/O
         if (address in 0x4000u..0x4017u) {
+
+            if (address == (0x4016u).toUShort()) {
+                controller1Snap = controller1.controllerState
+            }
+
             return
         }
 

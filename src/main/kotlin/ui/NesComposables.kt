@@ -10,20 +10,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-@OptIn(ExperimentalUnsignedTypes::class)
+@OptIn(ExperimentalUnsignedTypes::class, ExperimentalComposeUiApi::class)
 @Composable
 fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
+    val controller1 = uiState.controller1
+    val controller2 = uiState.controller2
+
     val gameViewUiState = uiState.gameViewUiState.collectAsState()
 
     val programCounterViewState = uiState.programCounterViewState.collectAsState()
@@ -66,7 +71,74 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
 
     Row(
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .onKeyEvent {
+                if (it.key == Key.J && it.type == KeyEventType.KeyDown) {
+                    controller1.buttonA = true
+                }
+
+                if (it.key == Key.J && it.type == KeyEventType.KeyUp) {
+                    controller1.buttonA = false
+                }
+
+                if (it.key == Key.K && it.type == KeyEventType.KeyDown) {
+                    controller1.buttonB = true
+                }
+
+                if (it.key == Key.K && it.type == KeyEventType.KeyUp) {
+                    controller1.buttonB = false
+                }
+
+                if (it.key == Key.NumPad1 && it.type == KeyEventType.KeyDown) {
+                    controller1.buttonSelect = true
+                }
+
+                if (it.key == Key.NumPad1 && it.type == KeyEventType.KeyUp) {
+                    controller1.buttonSelect = false
+                }
+
+                if (it.key == Key.NumPad2 && it.type == KeyEventType.KeyDown) {
+                    controller1.buttonStart = true
+                }
+
+                if (it.key == Key.NumPad2 && it.type == KeyEventType.KeyUp) {
+                    controller1.buttonStart = false
+                }
+
+                if (it.key == Key.W && it.type == KeyEventType.KeyDown) {
+                    controller1.buttonUp = true
+                }
+
+                if (it.key == Key.W && it.type == KeyEventType.KeyUp) {
+                    controller1.buttonUp = false
+                }
+
+                if (it.key == Key.S && it.type == KeyEventType.KeyDown) {
+                    controller1.buttonDown = true
+                }
+
+                if (it.key == Key.S && it.type == KeyEventType.KeyUp) {
+                    controller1.buttonDown = false
+                }
+
+                if (it.key == Key.A && it.type == KeyEventType.KeyDown) {
+                    controller1.buttonLeft = true
+                }
+
+                if (it.key == Key.A && it.type == KeyEventType.KeyUp) {
+                    controller1.buttonLeft = false
+                }
+
+                if (it.key == Key.D && it.type == KeyEventType.KeyDown) {
+                    controller1.buttonRight = true
+                }
+
+                if (it.key == Key.D && it.type == KeyEventType.KeyUp) {
+                    controller1.buttonRight = false
+                }
+
+                true
+            }
     ) {
         GameView(
             gameViewUiState,

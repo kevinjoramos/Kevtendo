@@ -17,6 +17,7 @@ class NesEmulatorUiState {
     private val projectRootPath = System.getProperty("user.dir")
 
     //private val pathToGame = "$projectRootPath/src/main/kotlin/games/Donkey Kong.nes"
+
     private val pathToGame = "$projectRootPath/src/main/kotlin/games/nestest.nes"
     private var bus = Bus(pathToGame)
 
@@ -65,6 +66,9 @@ class NesEmulatorUiState {
     private var systemClock = 0
 
     private var emulatorProcess: Job? = null
+
+    var controller1 = bus.controller1
+    var controller2 = bus.controller2
 
     @OptIn(DelicateCoroutinesApi::class)
     fun start() {
@@ -129,7 +133,7 @@ class NesEmulatorUiState {
     }
 
     private fun runSystem() {
-        emulatorProcess = GlobalScope.launch {
+        emulatorProcess = GlobalScope.launch(Dispatchers.Default) {
 
             while (isRunning) {
 
@@ -146,7 +150,7 @@ class NesEmulatorUiState {
         }
     }
 
-    private fun executeMainCycle() {
+    private suspend fun executeMainCycle() {
 
         while (systemClock < TOTAL_SYSTEM_CYCLES_PER_FRAME) {
             // execute one cycle of ppu (outputs one pixel)
@@ -160,7 +164,10 @@ class NesEmulatorUiState {
             // At this point visible scan lines are complete.
             if (systemClock == FIRST_CYCLE_AFTER_RENDER) {
                 //generateNoise()
+
                 updateGameViewState()
+
+
             }
 
             systemClock++
@@ -185,6 +192,10 @@ class NesEmulatorUiState {
             it.copy(pixelScreen = pixelScreen)
         }
     }*/
+
+    fun updateController() {
+
+    }
 
     companion object {
         const val TOTAL_SYSTEM_CYCLES_PER_FRAME = 89_342

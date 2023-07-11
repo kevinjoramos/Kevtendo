@@ -131,7 +131,7 @@ class PPU2C02(
             // 1 - 256 -> Visible Pixels.
             // 257 - 320 Garbage Tiles
             // 321 - 336 Next 2 Tiles
-            if (cycles in 1..256 || cycles in 320..336) {
+            if (cycles in 1..258 || cycles in 321..337) {
 
                 if (maskRegister.isShowingBackground) {
                     lowBackgroundShiftRegister = lowBackgroundShiftRegister shl 1
@@ -140,7 +140,7 @@ class PPU2C02(
                     highPaletteShiftRegister = highPaletteShiftRegister shl 1
                 }
 
-                when (cycles % 8) {
+                when ((cycles - 1) % 8) {
                     0 -> {
                         // Load shift registers.
                         lowBackgroundShiftRegister = (lowBackgroundShiftRegister and 0xFF00u) or tileLowBitPlane

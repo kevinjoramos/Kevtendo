@@ -36,7 +36,7 @@ class PPU2C02(
     private var fineX: UInt = 0u
         set(value) { field = value and 0x07u }
 
-    private val nameTableMirroring = NameTableMirroring.HORIZONTAL
+    private val nameTableMirroring = NameTableMirroring.VERTICAL
 
     /**
      * Memories
@@ -290,8 +290,7 @@ class PPU2C02(
     }
 
     private fun drawPixel(scanline: Int, cycle: Int, colorSelect: UInt, paletteSelect: UInt) {
-
-        frameBuffer[scanline][cycle] = readPaletteTableMemory(
+        frameBuffer[scanline][cycle] = readPaletteTableMemoryWhileRendering(
             (paletteSelect shl 2) + colorSelect
         ).toUByte()
     }
@@ -333,7 +332,7 @@ class PPU2C02(
         statusRegister.isInVBlank = false
 
         vRamHasFirstWrite = false
-        tRegister.value = 0u
+        //tRegister.value = 0u
 
         return value
     }
@@ -610,14 +609,45 @@ class PPU2C02(
 
     private fun readPaletteTableMemory(address: UInt): UInt {
         var paletteAddress = address.mod(0x20u)
+
+        when (paletteAddress) {
+            0x10u -> paletteAddress = 0x00u
+            0x14u -> paletteAddress = 0x04u
+            0x18u -> paletteAddress = 0x08u
+            0x1Cu -> paletteAddress = 0x0Cu
+        }
+
         return paletteTable[paletteAddress.toInt()].toUInt()
     }
 
     private fun writeToPaletteTableMemory(address: UInt, data: UInt) {
-        val paletteAddress = address.mod(0x20u)
+        var paletteAddress = address.mod(0x20u)
+
+        when (paletteAddress) {
+            0x10u -> paletteAddress = 0x00u
+            0x14u -> paletteAddress = 0x04u
+            0x18u -> paletteAddress = 0x08u
+            0x1Cu -> paletteAddress = 0x0Cu
+        }
+
         paletteTable[paletteAddress.toInt()] = data.toUByte()
     }
 
+    private fun readPaletteTableMemoryWhileRendering(address: UInt): UInt {
+        var paletteAddress = address.mod(0x20u)
+
+        when (paletteAddress) {
+            0x04u -> paletteAddress = 0x00u
+            0x08u -> paletteAddress = 0x00u
+            0x0Cu -> paletteAddress = 0x00u
+            0x10u -> paletteAddress = 0x00u
+            0x14u -> paletteAddress = 0x00u
+            0x18u -> paletteAddress = 0x00u
+            0x1Cu -> paletteAddress = 0x00u
+        }
+
+        return paletteTable[paletteAddress.toInt()].toUInt()
+    }
 
     companion object {
         const val NAMETABLE_MEMORY_SIZE = 0x800

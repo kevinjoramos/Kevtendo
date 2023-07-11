@@ -16,9 +16,10 @@ import kotlin.system.measureTimeMillis
 class NesEmulatorUiState {
     private val projectRootPath = System.getProperty("user.dir")
 
-    //private val pathToGame = "$projectRootPath/src/main/kotlin/games/Donkey Kong.nes"
-    private val pathToGame = "$projectRootPath/src/main/kotlin/games/Pac-Man (USA) (Namco).nes"
+    private val pathToGame = "$projectRootPath/src/main/kotlin/games/Donkey Kong.nes"
+    //private val pathToGame = "$projectRootPath/src/main/kotlin/games/PacMan.nes"
     //private val pathToGame = "$projectRootPath/src/main/kotlin/games/nestest.nes"
+    //private val pathToGame = "$projectRootPath/src/main/kotlin/games/Super Mario Bros.nes"
     private var bus = Bus(pathToGame)
 
     private val _gameViewUiState = MutableStateFlow(GameViewUiState())

@@ -59,12 +59,11 @@ class PPU2C02(
     /**
      * Shift Registers
      */
-    private var highBackGroundShiftRegister: UInt = 0u
+    private var highBackgroundShiftRegister: UInt = 0u
     private var lowBackgroundShiftRegister: UInt = 0u
     private var highPaletteShiftRegister: UInt = 0u
     private var lowPaletteShiftRegister: UInt = 0u
 
-    private var testCounter = 5
     fun testPrintNameTable() {
         val nameTables = nameTable.chunked(0x400)
         for (row in nameTables[0].chunked(32)) {
@@ -105,62 +104,67 @@ class PPU2C02(
         println("")
     }
 
+    private var testCounter = 31
+
+    private var testCounterY = 29
+
     fun run() {
 
         // Visible Scanlines + Pre-render
         if (scanline in 0..239 || scanline == 261) {
 
-            // Output Pixels
-            if (scanline != 261 && cycles in 0..256 ) {  /// TODO Unless rendering is turned off?
-                if (maskRegister.isShowingBackground) {
+            // Pre-Render Scanline
+            if (scanline == 261) {
+                if (cycles == 1) {
+                    statusRegister.isInVBlank = false
+                }
 
-                    val lowBackgroundBit = when (lowBackgroundShiftRegister and 0x8000u) {
-                        0u -> 0u
-                        else -> 1u
+                // Repeatedly copy vertical bits v = vertical bits t.
+                if (cycles in 280..304) {
+                    if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
+                        vRegister.value = vRegister.value and (0x7BE0u).inv()
+                        vRegister.value = vRegister.value or (tRegister.value and 0x7BE0u)
                     }
-
-                    val highBackgroundBit = when (highBackGroundShiftRegister and 0x8000u) {
-                        0u -> 0u
-                        else -> 1u
-                    }
-
-                    val lowPaletteBit = when (lowPaletteShiftRegister and 0x8000u) {
-                        0u -> 0u
-                        else -> 1u
-                    }
-
-                    val highPaletteBit = when (highPaletteShiftRegister and 0x8000u) {
-                        0u -> 0u
-                        else -> 1u
-                    }
-
-                    drawPixel(
-                        scanline,
-                        cycles,
-                        (highBackgroundBit shl 1) or lowBackgroundBit,
-                        (highPaletteBit shl 1) or lowPaletteBit,
-                    )
                 }
             }
-
-            lowBackgroundShiftRegister = lowPaletteShiftRegister shl 1
-            highBackGroundShiftRegister = highBackGroundShiftRegister shl 1
-            lowPaletteShiftRegister = lowPaletteShiftRegister shl 1
-            highPaletteShiftRegister = highPaletteShiftRegister shl 1
 
             // 1 - 256 -> Visible Pixels.
             // 257 - 320 Garbage Tiles
             // 321 - 336 Next 2 Tiles
-            if (cycles in 1..336) {
+            if (cycles in 1..256 || cycles in 320..336) {
+
+                if (maskRegister.isShowingBackground) {
+                    lowBackgroundShiftRegister = lowBackgroundShiftRegister shl 1
+                    highBackgroundShiftRegister = highBackgroundShiftRegister shl 1
+                    lowPaletteShiftRegister = lowPaletteShiftRegister shl 1
+                    highPaletteShiftRegister = highPaletteShiftRegister shl 1
+                }
+
                 when (cycles % 8) {
                     0 -> {
+                        // Load shift registers.
+                        lowBackgroundShiftRegister = (lowBackgroundShiftRegister and 0xFF00u) or tileLowBitPlane
+                        highBackgroundShiftRegister = (highBackgroundShiftRegister and 0xFF00u) or tileHighBitPlane
+
+                        // Load palette registers with attribute bits.
+                        lowPaletteShiftRegister = when (attributeBits and 0x01u) {
+                            0u -> 0u
+                            else -> 0xFFFFu
+                        }
+
+                        highPaletteShiftRegister = when (attributeBits and 0x02u) {
+                            0u -> 0u
+                            else -> 0xFFFFu
+                        }
+
                         // Fetch the pattern tile at current name table address.
                         patternTileAddress = readNameTableMemory(vRegister.tileAddress)
                     }
                     2 -> {
                         // Fetch corresponding Attribute Byte
                         val attributeData = readNameTableMemory(vRegister.attributeDataAddress)
-                        val quadrantAddress = (((vRegister.coarseY and 0x02u) shl 1) or (vRegister.coarseX and 0x02u))
+
+                        val quadrantAddress = ((vRegister.coarseY and 0x02u) or (vRegister.coarseX and 0x02u) shr 1)
 
                         attributeBits = when (quadrantAddress) {
                             0x00u -> attributeData and 0x03u
@@ -186,24 +190,8 @@ class PPU2C02(
                         )
                     }
                     7 -> {
-
-                        // Load shift registers.
-                        lowBackgroundShiftRegister = (lowBackgroundShiftRegister and 0xFFu.inv()) or tileLowBitPlane
-                        highBackGroundShiftRegister = (highBackGroundShiftRegister and 0xFFu.inv()) or tileHighBitPlane
-
-                        // Load palette registers with attribute bits.
-                        lowPaletteShiftRegister = when (attributeBits and 0x01u) {
-                            0u -> 0u
-                            else -> 0xFFFFu
-                        }
-
-                        highPaletteShiftRegister = when (attributeBits and 0x02u) {
-                            0u -> 0u
-                            else -> 0xFFFFu
-                        }
-
                         // Increment X every 8 cycles when between 328 and 256 of next scanline.
-                        if (cycles in 328..340 || cycles in 0..256) {
+                        if (cycles in 328..336 || cycles in 0..256) {
                             if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
                                 vRegister.incrementCoarseX()
                             }
@@ -240,6 +228,41 @@ class PPU2C02(
 
         }
 
+        // Output Pixels
+        if (scanline in 0..239 && cycles in 0..256) {
+            if (maskRegister.isShowingBackground) {
+
+                val multiplexer = 0x8000u shr fineX.toInt()
+
+                val lowBackgroundBit = when (lowBackgroundShiftRegister and multiplexer) {
+                    0u -> 0u
+                    else -> 1u
+                }
+
+                val highBackgroundBit = when (highBackgroundShiftRegister and multiplexer) {
+                    0u -> 0u
+                    else -> 1u
+                }
+
+                val lowPaletteBit = when (lowPaletteShiftRegister and multiplexer) {
+                    0u -> 0u
+                    else -> 1u
+                }
+
+                val highPaletteBit = when (highPaletteShiftRegister and multiplexer) {
+                    0u -> 0u
+                    else -> 1u
+                }
+
+                drawPixel(
+                    scanline,
+                    cycles,
+                    (highBackgroundBit shl 1) or lowBackgroundBit,
+                    (highPaletteBit shl 1) or lowPaletteBit,
+                )
+            }
+        }
+
         // Vertical Blanking Lines
         if (scanline in 241..260) {
 
@@ -251,21 +274,6 @@ class PPU2C02(
                 }
             }
 
-        }
-
-        // Pre-Render Scanline
-        if (scanline == 261) {
-            if (cycles == 1) {
-                statusRegister.isInVBlank = false
-            }
-
-            // Repeatedly copy vertical bits v = vertical bits t.
-            if (cycles in 280..304) {
-                if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
-                    vRegister.value = vRegister.value and (0x7BE0u).inv()
-                    vRegister.value = (vRegister.value) or (tRegister.value and (0x7BE0u))
-                }
-            }
         }
 
         // Increment X And Y Over Entire Area.

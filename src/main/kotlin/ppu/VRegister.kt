@@ -78,7 +78,7 @@ class VRegister {
     }
 
     fun incrementY() {
-        if (fineY < 7u) {
+        if (fineY != 7u) {
             value += 0x1000u
         } else {
             value = value and (0x7000u).inv()

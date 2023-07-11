@@ -73,6 +73,8 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
         modifier = Modifier
             .fillMaxSize()
             .onKeyEvent {
+
+                // Controller 1 Inputs.
                 if (it.key == Key.J && it.type == KeyEventType.KeyDown) {
                     controller1.buttonA = true
                 }
@@ -137,6 +139,8 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
                     controller1.buttonRight = false
                 }
 
+
+                // Controller 2 Inputs
                 true
             }
     ) {

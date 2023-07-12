@@ -1,5 +1,6 @@
 package mediator
 
 enum class Event {
-    NMI
+    NMI,
+    DMA
 }

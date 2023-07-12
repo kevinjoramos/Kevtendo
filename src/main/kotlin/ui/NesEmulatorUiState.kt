@@ -1,25 +1,22 @@
 package ui
 
 import bus.Bus
-import androidx.compose.ui.graphics.Color
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import util.Logger
-import util.to2DigitHexString
-import util.to4DigitHexString
 import kotlin.system.measureTimeMillis
 
 @ExperimentalUnsignedTypes
 class NesEmulatorUiState {
     private val projectRootPath = System.getProperty("user.dir")
 
-    //private val pathToGame = "$projectRootPath/src/main/kotlin/games/Donkey Kong.nes"
+    private val pathToGame = "$projectRootPath/src/main/kotlin/games/Donkey Kong.nes"
     //private val pathToGame = "$projectRootPath/src/main/kotlin/games/PacMan.nes"
     //private val pathToGame = "$projectRootPath/src/main/kotlin/games/nestest.nes"
-    private val pathToGame = "$projectRootPath/src/main/kotlin/games/Super Mario Bros.nes"
+    //private val pathToGame = "$projectRootPath/src/main/kotlin/games/Super Mario Bros.nes"
     private var bus = Bus(pathToGame)
 
     private val _gameViewUiState = MutableStateFlow(GameViewUiState())
@@ -65,6 +62,15 @@ class NesEmulatorUiState {
     var isPaused = false
 
     private var systemClock = 0
+
+
+    /**
+     * DMA
+     */
+    private var isDMAReady = false
+    private var highByteDMAPointer = 0u
+    private var lowByteDMAPointer = 0u
+    private var currentDMAData = 0u
 
     private var emulatorProcess: Job? = null
 
@@ -151,16 +157,60 @@ class NesEmulatorUiState {
         }
     }
 
-    private suspend fun executeMainCycle() {
+    private fun executeMainCycle() {
 
         while (systemClock < TOTAL_SYSTEM_CYCLES_PER_FRAME) {
             // execute one cycle of ppu (outputs one pixel)
             bus.ppu.run()
 
             // execute one cycle of cpu (1 cpu cycle for every 3 ppu cycles).
+            // we also need to check for DMA suspends.
             if (systemClock % 3 == 0) {
-                bus.cpu.run()
+
+                if (bus.cpu.isSuspendedForDMA) {
+
+                    // When a dma suspend is pending we need to wait for a read cycle (for my emulation this is every even cycle).
+                    if (systemClock.mod(2) == 0 && !isDMAReady) {
+
+                        // Here we set up our values to intercept the cpu clock cycles.
+                        isDMAReady = true
+                        highByteDMAPointer = bus.ppu.dmaRegister
+                        lowByteDMAPointer = 0u
+                    }
+
+                    // When we get the right cycle, we can start writing (odd) / reading (even).
+                    if (isDMAReady) {
+
+                        // Read
+                        if (systemClock.mod(2) == 0) {
+                            currentDMAData = bus.readAddress(((highByteDMAPointer shl 8) or lowByteDMAPointer).toUShort()).toUInt()
+                        }
+
+                        // Write
+                        else {
+                            println("Writing to OAM data register")
+                            bus.ppu.writeToOamDataRegister(currentDMAData)
+
+                            // When we are done, go back to normal cpu activities.
+                            if (lowByteDMAPointer == 0xFFu) {
+                                bus.cpu.isSuspendedForDMA = false
+                                isDMAReady = false
+                                highByteDMAPointer = 0u
+                                lowByteDMAPointer = 0u
+                                currentDMAData = 0u
+                            } else {
+                                lowByteDMAPointer++
+                            }
+                        }
+                    }
+                }
+
+                // Run normally
+                else {
+                    bus.cpu.run()
+                }
             }
+
 
             // At this point visible scan lines are complete.
             if (systemClock == FIRST_CYCLE_AFTER_RENDER) {

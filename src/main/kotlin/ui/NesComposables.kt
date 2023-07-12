@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import util.to2DigitHexString
 
 @OptIn(ExperimentalUnsignedTypes::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -305,6 +306,7 @@ fun GameView(
 State<String>
  */
 
+@OptIn(ExperimentalUnsignedTypes::class)
 @Composable
 fun EmulatorHudView(
     programCounterViewState: State<String>,
@@ -401,6 +403,7 @@ fun EmulatorHudView(
             zeroPageRow15ViewState = zeroPageRow15ViewState,
             zeroPageRow16ViewState = zeroPageRow16ViewState
         )
+
     }
         /*
         Spacer(modifier.height(10.dp))

@@ -181,6 +181,8 @@ class CPU6502(override var bus: Mediator) : Component {
     var isPendingIRQ = false
     var isPendingReset = false
 
+    var isSuspendedForDMA = false
+
     private var disassembler: Disassembler = Disassembler()
 
     private val opcodeTable: Map<UByte, Triple<AddressingMode, Operation, Int>> = mapOf(

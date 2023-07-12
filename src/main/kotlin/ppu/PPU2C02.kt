@@ -1,5 +1,6 @@
 package ppu
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import mediator.Component
 import mediator.Event
 import mediator.Mediator
@@ -18,14 +19,18 @@ class PPU2C02(
     private val controllerRegister = ControllerRegister()
     private val maskRegister = MaskRegister()
     private val statusRegister = StatusRegister()
-    private var oamAddressRegister = OamAddressRegister()
-    private var oamDataRegister: UInt = 0u
-    private var dataRegister: UInt = 0u
-    private val dmaRegister = OamDma()
-    private var staleBus: UInt = 0u
 
-    private var addressRegister: UInt = 0u
-        set(value) { field = value and 0x3FFFu }
+    private var oamAddressRegister: UInt = 0u
+        set(value) { field = value and 0xFFu }
+
+    private var oamDataRegister: UInt = 0u
+        set(value) { field = value and 0xFFu }
+
+    private var dataRegister: UInt = 0u
+    var dmaRegister: UInt = 0u
+        set(value) {field = value and 0xFFu}
+
+    private var staleBus: UInt = 0u
 
     /**
      * VRam Registers
@@ -42,13 +47,13 @@ class PPU2C02(
      * Memories
      */
     private val nameTable: UByteArray = UByteArray(NAMETABLE_MEMORY_SIZE)
-    private val objectAttributeMemory: UByteArray = UByteArray(OAM_MEMORY_SIZE)
+    val objectAttributeMemory: UByteArray = UByteArray(OAM_MEMORY_SIZE)
     private val paletteTable = UByteArray(PALETTE_TABLE_MEMORY_SIZE)
 
     /**
      * Scanline Rendering
      */
-    val frameBuffer = Array(240) { Array(257) { (0x01u).toUByte() } }
+    val frameBuffer = Array(240) { Array(257) { (0x0Fu).toUByte() } }
     private var scanline = 0
     private var cycles = 0
     private var patternTileAddress = 0x0000u
@@ -219,13 +224,6 @@ class PPU2C02(
         // Post Render Scanline
         if (scanline == 240) {
             // DOES NOTHING
-
-            //println()
-            //testPrintPaletteTable()
-
-            //testPrintNameTable()
-            //println()
-
         }
 
         // Output Pixels
@@ -403,23 +401,31 @@ class PPU2C02(
 
     fun writeToOamAddressRegister(data: UInt) {
         staleBus = data
-        oamAddressRegister.value = data
+        oamAddressRegister = data
     }
 
     /**
      * Read And Writes To OAM Data Register
      */
     fun readOamDataRegister(): UInt {
-        return objectAttributeMemory[oamAddressRegister.value.toInt()].toUInt()
+        return objectAttributeMemory[oamAddressRegister.toInt()].toUInt()
     }
 
     fun writeToOamDataRegister(data: UInt) {
         staleBus = data
 
         oamDataRegister = data
-        objectAttributeMemory[oamAddressRegister.value.toInt()] = data.toUByte()
-        oamAddressRegister.increment()
+
+        // In case programmer does not initialize oam address to 0.
+        if (oamAddressRegister <= 0xFFu) {
+            objectAttributeMemory[oamAddressRegister.toInt()] = data.toUByte()
+        }
+
+        oamAddressRegister++
+        testCounter++
     }
+
+    private var testOamCounter = 0
 
     /**
      * Read And Writes To Scroll Register $2005
@@ -452,8 +458,9 @@ class PPU2C02(
     fun writeToDMARegister(data: UInt) {
         staleBus = data
 
-        dmaRegister.value = data
-        //TODO copy over page from cpu memory into oam.
+        dmaRegister = data
+
+        notify(Sender.PPU, Event.DMA)
     }
 
     /**

@@ -38,6 +38,9 @@ class Bus(
                     Event.NMI -> {
                         cpu.isPendingNMI = true
                     }
+                    Event.DMA -> {
+                        cpu.isSuspendedForDMA = true
+                    }
                 }
 
             }
@@ -129,6 +132,10 @@ class Bus(
 
         // APU and I/O
         if (address in 0x4000u..0x4017u) {
+
+            if (address == (0x4014u).toUShort()) {
+                ppu.writeToDMARegister(data.toUInt())
+            }
 
             if (address == (0x4016u).toUShort()) {
                 controller1Snap = controller1.controllerState

@@ -1,6 +1,5 @@
 package ppu
 
-import kotlinx.coroutines.flow.MutableStateFlow
 import mediator.Component
 import mediator.Event
 import mediator.Mediator
@@ -47,7 +46,8 @@ class PPU2C02(
      * Memories
      */
     private val nameTable: UByteArray = UByteArray(NAMETABLE_MEMORY_SIZE)
-    val objectAttributeMemory: UByteArray = UByteArray(OAM_MEMORY_SIZE)
+    //val objectAttributeMemory: UByteArray = UByteArray(OAM_MEMORY_SIZE)
+    private val objectAttributeMemory = ObjectAttributeMemory()
     private val paletteTable = UByteArray(PALETTE_TABLE_MEMORY_SIZE)
 
     /**
@@ -408,7 +408,7 @@ class PPU2C02(
      * Read And Writes To OAM Data Register
      */
     fun readOamDataRegister(): UInt {
-        return objectAttributeMemory[oamAddressRegister.toInt()].toUInt()
+        return objectAttributeMemory.primaryMemory[oamAddressRegister.toInt()].toUInt()
     }
 
     fun writeToOamDataRegister(data: UInt) {
@@ -418,7 +418,7 @@ class PPU2C02(
 
         // In case programmer does not initialize oam address to 0.
         if (oamAddressRegister <= 0xFFu) {
-            objectAttributeMemory[oamAddressRegister.toInt()] = data.toUByte()
+            objectAttributeMemory.primaryMemory[oamAddressRegister.toInt()] = data.toUByte()
         }
 
         oamAddressRegister++

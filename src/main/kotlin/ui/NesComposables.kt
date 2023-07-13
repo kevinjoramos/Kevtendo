@@ -1,6 +1,7 @@
 package ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -17,12 +18,18 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.skia.Bitmap
+import org.jetbrains.skiko.toBitmap
+import org.jetbrains.skiko.toImage
 import util.to2DigitHexString
+import java.awt.image.BufferedImage
 
 @OptIn(ExperimentalUnsignedTypes::class, ExperimentalComposeUiApi::class)
 @Composable

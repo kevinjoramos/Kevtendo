@@ -167,6 +167,7 @@ class PPU2C02(
                     }
                     2 -> {
                         // Fetch corresponding Attribute Byte
+
                         val attributeData = readNameTableMemory(vRegister.attributeDataAddress)
 
                         val quadrantAddress = ((vRegister.coarseY and 0x02u) or (vRegister.coarseX and 0x02u) shr 1)
@@ -176,6 +177,15 @@ class PPU2C02(
                             0x01u -> (attributeData shr 2) and 0x03u
                             0x10u -> (attributeData shr 4) and 0x03u
                             else -> (attributeData shr 6) and 0x03u
+                        }
+
+                        if (vRegister.tileAddress == 0x2083u) {
+                            println("ATTRIB ADD: ${vRegister.attributeDataAddress.to4DigitHexString()}")
+                            println("ATTRIB: ${attributeData.to4DigitHexString()}")
+                            println("QUADRANT: ${quadrantAddress.to4DigitHexString()}")
+                            println("AttributeBits: ${attributeBits.to4DigitHexString()}")
+                            testPrintPaletteTable()
+                            println("")
                         }
                     }
                     4 -> {
@@ -288,9 +298,20 @@ class PPU2C02(
     }
 
     private fun drawPixel(scanline: Int, cycle: Int, colorSelect: UInt, paletteSelect: UInt) {
-        frameBuffer[scanline][cycle] = readPaletteTableMemoryWhileRendering(
-            (paletteSelect shl 2) + colorSelect
-        ).toUByte()
+        if ((vRegister.tileAddress and 0xFFu) == 0u /*0x2080u*/) {
+            println("Scanline: $scanline")
+            println("Cycle: $cycle")
+            println("ColorSelect: ${colorSelect.to2DigitHexString()}")
+            println("PaletteSelect: ${paletteSelect.to2DigitHexString()}")
+            testPrintPaletteTable()
+            println(fineX.to2DigitHexString())
+            println("")
+            frameBuffer[scanline][cycle] = 0x20u
+        } else {
+            frameBuffer[scanline][cycle] = readPaletteTableMemoryWhileRendering(
+                (paletteSelect shl 2) + colorSelect
+            ).toUByte()
+        }
     }
 
     private fun emitNMISignal() {

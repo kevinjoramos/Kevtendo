@@ -156,7 +156,7 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
             gameViewUiState,
             modifier = Modifier
                 .weight(1f)
-                .background(Color.Black)
+                .background(Color.Red)
 
             //.fillMaxSize()
         )

@@ -115,7 +115,208 @@ class PPU2C02(
 
     fun run() {
 
-        // Visible Scanlines + Pre-render
+        /**
+         * Pre-Render Scanline
+         * - Fill the shift registers with data for first 2 tiles of next scanline.
+         * - No pixels rendered, but make same memory access.
+         * - For odd frames, last cycle is skipped.
+         * - Reload vertical bits v = t.
+         */
+        if (scanline == 261) {
+            if (cycles == 1) {
+                statusRegister.isInVBlank = false
+            }
+
+            // v: 0GHI A.BC DEF. .... <- t: 0GHI A.BC DEF. ....
+            if (cycles in 280..304) {
+                if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
+                    vRegister.value = vRegister.value and (0x7BE0u).inv()
+                    vRegister.value = vRegister.value or (tRegister.value and 0x7BE0u)
+                }
+            }
+        }
+
+        /**
+         * Visible Scanlines
+         * cycle 0 -> idle cycle.
+         * cycles 1 - 256 -> Memory access loops.
+         * every 8 cycles from 9..257 reload registers.
+         */
+        if (scanline in 0..239 || scanline == 261) {
+            if (cycles == 0) {
+                // IDLE
+            } else {
+
+                //Reload shift Registers
+                if ((cycles in 9..257 || cycles in 329..337 ) && (cycles.mod(8)) == 1) {
+                    // Load shift registers.
+                    lowBackgroundShiftRegister = (lowBackgroundShiftRegister and 0xFF00u) or tileLowBitPlane
+                    highBackgroundShiftRegister = (highBackgroundShiftRegister and 0xFF00u) or tileHighBitPlane
+
+                    // Load palette registers with attribute bits.
+                    lowPaletteShiftRegister = when (attributeBits and 0x01u) {
+                        0u -> 0u
+                        else -> 0xFFFFu
+                    }
+
+                    highPaletteShiftRegister = when (attributeBits and 0x02u) {
+                        0u -> 0u
+                        else -> 0xFFFFu
+                    }
+                }
+
+                // 1..256 Visible cycles
+                // 257..320 Junk
+                // 321..336 next 2 tiles on next scanline.
+                if (cycles in 1..256 || cycles in 321..336) {
+                    when ((cycles - 1).mod(8)) {
+                        0 -> {
+                            // Fetch the pattern tile at current name table address.
+                            patternTileAddress = readNameTableMemory(vRegister.tileAddress)
+                        }
+
+                        2 -> {
+                            // Fetch corresponding Attribute Byte
+
+                            val attributeData = readNameTableMemory(vRegister.attributeDataAddress)
+
+                            val quadrantAddress = ((vRegister.coarseY and 0x02u) or (vRegister.coarseX and 0x02u) shr 1)
+
+                            attributeBits = when (quadrantAddress) {
+                                0x00u -> attributeData and 0x03u
+                                0x01u -> (attributeData shr 2) and 0x03u
+                                0x10u -> (attributeData shr 4) and 0x03u
+                                else -> (attributeData shr 6) and 0x03u
+                            }
+                        }
+
+                        4 -> {
+                            // Fetch low bit plane of pattern tile
+                            tileLowBitPlane = readPatternTableMemory(
+                                controllerRegister.backgroundPatternTableAddress +
+                                        (patternTileAddress shl 4) +
+                                        vRegister.fineY
+                            )
+                        }
+
+                        6 -> {
+                            // Fetch high bit plane of pattern tile
+                            tileHighBitPlane = readPatternTableMemory(
+                                controllerRegister.backgroundPatternTableAddress +
+                                        (patternTileAddress shl 4) +
+                                        (vRegister.fineY) + 8u
+                            )
+                        }
+                    }
+                }
+
+                if (cycles in 328..340 || cycles in 1..256) {
+                    if (cycles.mod(8) == 0) {
+                        if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
+                            vRegister.incrementCoarseX()
+                        }
+                    }
+                }
+
+                // Increment Y values in vRegister. Skips attribute tables.
+                if (cycles == 256) {
+                    if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
+                        vRegister.incrementY()
+                    }
+                }
+
+                // Horizontal bits in V = Horizontal bits in T
+                // v: 0... .A.. ...B CDEF <- t: 0... .A.. ...B CDEF
+                if (cycles == 257) {
+                    if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
+                        vRegister.value = vRegister.value and (0x041Fu).inv()
+                        vRegister.value = vRegister.value or (tRegister.value and 0x041Fu)
+                    }
+                }
+
+
+                if (cycles in 257..320) {
+                    // GARBAGE FETCHES
+                }
+            }
+
+
+        }
+
+        // Post-Render scanline
+        if (scanline == 240) {
+            // IDLE SCANLINE
+        }
+
+        // Vertical Blanking Lines
+        if (scanline in 241..260) {
+            // Emit NMI on 2nd tick of scanline 241
+            if (scanline == 241 && cycles == 1) {
+                statusRegister.isInVBlank = true
+                if (controllerRegister.generateNMIAtStartVBlank) {
+                    emitNMISignal()
+                }
+            }
+        }
+
+        // Output Pixels
+        if (scanline in 0..239 && cycles in 1..256) {
+            if (maskRegister.isShowingBackground) {
+
+                val multiplexer = 0x8000u shr fineX.toInt()
+
+                val lowBackgroundBit = when (lowBackgroundShiftRegister and multiplexer) {
+                    0u -> 0u
+                    else -> 1u
+                }
+
+                val highBackgroundBit = when (highBackgroundShiftRegister and multiplexer) {
+                    0u -> 0u
+                    else -> 1u
+                }
+
+                val lowPaletteBit = when (lowPaletteShiftRegister and multiplexer) {
+                    0u -> 0u
+                    else -> 1u
+                }
+
+                val highPaletteBit = when (highPaletteShiftRegister and multiplexer) {
+                    0u -> 0u
+                    else -> 1u
+                }
+
+                drawPixel(
+                    scanline,
+                    cycles,
+                    (highBackgroundBit shl 1) or lowBackgroundBit,
+                    (highPaletteBit shl 1) or lowPaletteBit,
+                )
+            }
+        }
+
+        if ((scanline in 0..239 || scanline == 261) && (cycles in /*0..256 || cycles in 320*/1..336)) {
+            if (maskRegister.isShowingBackground) {
+                lowBackgroundShiftRegister = lowBackgroundShiftRegister shl 1
+                highBackgroundShiftRegister = highBackgroundShiftRegister shl 1
+                lowPaletteShiftRegister = lowPaletteShiftRegister shl 1
+                highPaletteShiftRegister = highPaletteShiftRegister shl 1
+            }
+        }
+
+        // Increment X And Y Over Entire Area.
+        if (cycles < 340) {
+            cycles++
+        } else {
+            cycles  = 0
+
+            if (scanline < 261) {
+                scanline++
+            } else {
+                scanline = 0
+            }
+        }
+
+        /*// Visible Scanlines + Pre-render
         if (scanline in 0..239 || scanline == 261) {
 
             // Pre-Render Scanline
@@ -295,6 +496,7 @@ class PPU2C02(
             }
             cycles  = 0
         }
+        */
     }
 
     private fun drawPixel(scanline: Int, cycle: Int, colorSelect: UInt, paletteSelect: UInt) {

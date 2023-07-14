@@ -53,7 +53,7 @@ class PPU2C02(
     /**
      * Scanline Rendering
      */
-    val frameBuffer = Array(240) { Array(257) { (0x0Fu).toUByte() } }
+    val frameBuffer = Array(240) { Array(256) { (0x0Fu).toUByte() } }
     private var scanline = 0
     private var cycles = 0
     private var patternTileAddress = 0x0000u
@@ -188,6 +188,13 @@ class PPU2C02(
                                 0x10u -> (attributeData shr 4) and 0x03u
                                 else -> (attributeData shr 6) and 0x03u
                             }
+
+                            println("ATTRIB ADD: ${vRegister.attributeDataAddress.to4DigitHexString()}")
+                            println("ATTRIB: ${attributeData.to4DigitHexString()}")
+                            println("QUADRANT: ${quadrantAddress.to4DigitHexString()}")
+                            println("AttributeBits: ${attributeBits.to4DigitHexString()}")
+                            testPrintPaletteTable()
+                            println("")
                         }
 
                         4 -> {
@@ -294,7 +301,7 @@ class PPU2C02(
             }
         }
 
-        if ((scanline in 0..239 || scanline == 261) && (cycles in /*0..256 || cycles in 320*/1..336)) {
+        if ((scanline in 0..239 || scanline == 261) && (cycles in 1..256 || cycles in 321..336)) {
             if (maskRegister.isShowingBackground) {
                 lowBackgroundShiftRegister = lowBackgroundShiftRegister shl 1
                 highBackgroundShiftRegister = highBackgroundShiftRegister shl 1
@@ -500,17 +507,20 @@ class PPU2C02(
     }
 
     private fun drawPixel(scanline: Int, cycle: Int, colorSelect: UInt, paletteSelect: UInt) {
-        if ((vRegister.tileAddress and 0xFFu) == 0u /*0x2080u*/) {
+        if (vRegister.tileAddress == 0x2085u) {
             println("Scanline: $scanline")
             println("Cycle: $cycle")
             println("ColorSelect: ${colorSelect.to2DigitHexString()}")
             println("PaletteSelect: ${paletteSelect.to2DigitHexString()}")
             testPrintPaletteTable()
             println(fineX.to2DigitHexString())
+            println(readPaletteTableMemoryWhileRendering(
+                (paletteSelect shl 2) + colorSelect
+            ).to2DigitHexString())
             println("")
-            frameBuffer[scanline][cycle] = 0x20u
+            frameBuffer[scanline][cycle - 1] = 0x20u
         } else {
-            frameBuffer[scanline][cycle] = readPaletteTableMemoryWhileRendering(
+            frameBuffer[scanline][cycle - 1] = readPaletteTableMemoryWhileRendering(
                 (paletteSelect shl 2) + colorSelect
             ).toUByte()
         }

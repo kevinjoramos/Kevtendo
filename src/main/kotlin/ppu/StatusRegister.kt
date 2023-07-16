@@ -50,8 +50,8 @@ class StatusRegister {
         }
         set(value) {
             when(value) {
-                false -> {}
-                true -> {}
+                false -> { this.value = this.value and (0x20u).inv()}
+                true -> {this.value = this.value or 0x20u}
             }
         }
 

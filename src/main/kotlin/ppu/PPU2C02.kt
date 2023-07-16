@@ -4,6 +4,7 @@ import mediator.Component
 import mediator.Event
 import mediator.Mediator
 import mediator.Sender
+import util.reverse
 import util.to2DigitHexString
 import util.to4DigitHexString
 
@@ -124,6 +125,7 @@ class PPU2C02(
         if (scanline == 261) {
             if (cycles == 1) {
                 statusRegister.isInVBlank = false
+                statusRegister.hasSpriteOverflow = false
             }
 
             // v: 0GHI A.BC DEF. .... <- t: 0GHI A.BC DEF. ....
@@ -237,14 +239,127 @@ class PPU2C02(
                 }
             }
 
-            if (cycles == 257 && scanline in 0..239) {
-                objectAttributeMemory.evaluateNextEightSprites(scanline.toUInt(), controllerRegister.isSpriteSize8x16)
+            if (scanline in 0..239) {
+
+                if (cycles == 257) {
+                    // Sprite Evaluation.
+                    statusRegister.hasSpriteOverflow = objectAttributeMemory.evaluateNextEightSprites(
+                        scanline.toUInt(),
+                        controllerRegister.isSpriteSize8x16
+                    )
+                }
+
+                if (cycles == 340) {
+
+                    objectAttributeMemory.secondaryMemory.forEach { sprite ->
+                        if (!controllerRegister.isSpriteSize8x16) {
+                            if (sprite.isFlippedVertically) {
+                                sprite.lowSpriteShiftRegister = readPatternTableMemory(
+                                    controllerRegister.squareSpritePatternTableAddress +
+                                            (sprite.tileIndex shl 4) + (7u - (scanline.toUInt() - sprite.yPosition))
+                                )
+
+                                sprite.highSpriteShiftRegister = readPatternTableMemory(
+                                    controllerRegister.squareSpritePatternTableAddress +
+                                            (sprite.tileIndex shl 4) + (7u - (scanline.toUInt() - sprite.yPosition)) + 8u
+                                )
+                            } else {
+                                sprite.lowSpriteShiftRegister = readPatternTableMemory(
+                                    controllerRegister.squareSpritePatternTableAddress +
+                                            (sprite.tileIndex shl 4) + (scanline.toUInt() - sprite.yPosition)
+                                )
+
+                                sprite.highSpriteShiftRegister = readPatternTableMemory(
+                                    controllerRegister.squareSpritePatternTableAddress +
+                                            (sprite.tileIndex shl 4) + (scanline.toUInt() - sprite.yPosition) + 8u
+                                )
+                            }
+
+                        } else {
+                            if (sprite.isFlippedVertically) {
+                                if (sprite.yPosition - scanline.toUInt() < 8u) {
+
+                                    // Top Half
+                                    sprite.lowSpriteShiftRegister = readPatternTableMemory(
+                                        ((sprite.tileIndex and 0x01u) shl 12) +
+                                                (((sprite.tileIndex and 0xFEu) + 1u) shl 4) +
+                                                (7u - (scanline.toUInt() - sprite.yPosition) and 0x07u)
+                                    )
+
+                                    sprite.highSpriteShiftRegister = readPatternTableMemory(
+                                        ((sprite.tileIndex and 0x01u) shl 12) +
+                                                (((sprite.tileIndex and 0xFEu) + 1u) shl 4) +
+                                                (7u - (scanline.toUInt() - sprite.yPosition) and 0x07u) + 8u
+                                    )
+
+                                } else {
+
+                                    // Bottom Half
+
+
+                                    sprite.lowSpriteShiftRegister = readPatternTableMemory(
+                                        ((sprite.tileIndex and 0x01u) shl 12) +
+                                                ((sprite.tileIndex and 0xFEu) shl 4) +
+                                                ((scanline.toUInt() - sprite.yPosition) and 0x07u)
+                                    )
+
+                                    sprite.highSpriteShiftRegister = readPatternTableMemory(
+                                        ((sprite.tileIndex and 0x01u) shl 12) +
+                                                ((sprite.tileIndex and 0xFEu) shl 4) +
+                                                ((scanline.toUInt() - sprite.yPosition) and 0x07u) + 8u
+                                    )
+
+                                }
+                            } else { // not flipped vertically.
+                                if (sprite.yPosition - scanline.toUInt() < 8u) {
+
+                                    // Top Half
+                                    sprite.lowSpriteShiftRegister = readPatternTableMemory(
+                                        ((sprite.tileIndex and 0x01u) shl 12) +
+                                                ((sprite.tileIndex and 0xFEu) shl 4) +
+                                                ((scanline.toUInt() - sprite.yPosition) and 0x07u)
+                                    )
+
+                                    sprite.highSpriteShiftRegister = readPatternTableMemory(
+                                        ((sprite.tileIndex and 0x01u) shl 12) +
+                                                ((sprite.tileIndex and 0xFEu) shl 4) +
+                                                ((scanline.toUInt() - sprite.yPosition) and 0x07u) + 8u
+                                    )
+                                } else {
+
+                                    // Bottom Half
+                                    sprite.lowSpriteShiftRegister = readPatternTableMemory(
+                                        ((sprite.tileIndex and 0x01u) shl 12) +
+                                                (((sprite.tileIndex and 0xFEu) + 1u) shl 4) +
+                                                ((scanline.toUInt() - sprite.yPosition) and 0x07u)
+                                    )
+
+                                    sprite.highSpriteShiftRegister = readPatternTableMemory(
+                                        ((sprite.tileIndex and 0x01u) shl 12) +
+                                                (((sprite.tileIndex and 0xFEu) + 1u) shl 4) +
+                                                ((scanline.toUInt() - sprite.yPosition) and 0x07u) + 8u
+                                    )
+
+                                }
+                            }
+                        }
+
+                        // Flip horizontally if necessary.
+                        if (sprite.isFlippedHorizontally) {
+                            sprite.lowSpriteShiftRegister = sprite.lowSpriteShiftRegister.toUByte().reverse().toUInt()
+                            sprite.highSpriteShiftRegister = sprite.highSpriteShiftRegister.toUByte().reverse().toUInt()
+                        }
+
+                    }
+                }
             }
 
 
             if (cycles in 257..320) {
                 // GARBAGE FETCHES
             }
+
+
         }
 
         // Post-Render scanline
@@ -265,6 +380,28 @@ class PPU2C02(
 
         // Output Pixels
         if (scanline in 0..239 && cycles in 1..256) {
+
+            var spriteColorSelect = 0u
+            var spritePaletteSelect = 0u
+            var spritePriority = false
+            if (maskRegister.isShowingSprites) {
+                val activeSprite = objectAttributeMemory.getPrioritizedActiveSprite()
+
+                if (activeSprite == null) {
+                    spriteColorSelect = 0u
+                    spritePaletteSelect = 0u
+                    spritePriority = false
+                } else {
+                    spriteColorSelect = (((activeSprite.highSpriteShiftRegister and 0x80u) shr 6) or ((activeSprite.lowSpriteShiftRegister and 0x80u) shr 7))
+                    spritePaletteSelect = activeSprite.palette
+                    spritePriority = activeSprite.hasPriority
+                }
+
+                objectAttributeMemory.shiftAllActiveSprites()
+            }
+
+            var backgroundColorSelect = 0u
+            var backgroundPaletteSelect = 0u
             if (maskRegister.isShowingBackground) {
 
                 val multiplexer = 0x8000u shr fineX.toInt()
@@ -289,11 +426,45 @@ class PPU2C02(
                     else -> 1u
                 }
 
+                backgroundColorSelect = (highBackgroundBit shl 1) or lowBackgroundBit
+                backgroundPaletteSelect = (highPaletteBit shl 1) or lowPaletteBit
+            }
+
+            if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
+
+                var finalColorSelect = 0u
+                var finalPaletteSelect = 0u
+
+                if (backgroundColorSelect == 0u && spriteColorSelect == 0u) {
+                    finalColorSelect = 0u
+                    finalPaletteSelect = 0u
+                }
+
+                if (backgroundColorSelect == 0u && spriteColorSelect != 0u) {
+                    finalColorSelect = spriteColorSelect
+                    finalPaletteSelect = spritePaletteSelect
+                }
+
+                if (backgroundColorSelect != 0u && spriteColorSelect == 0u) {
+                    finalColorSelect = backgroundColorSelect
+                    finalPaletteSelect = backgroundPaletteSelect
+                }
+
+                if (backgroundColorSelect != 0u && spriteColorSelect != 0u && !spritePriority) {
+                    finalColorSelect = spriteColorSelect
+                    finalPaletteSelect = spritePaletteSelect
+                }
+
+                if (backgroundColorSelect != 0u && spriteColorSelect != 0u && spritePriority) {
+                    finalColorSelect = backgroundColorSelect
+                    finalPaletteSelect = backgroundPaletteSelect
+                }
+
                 drawPixel(
                     scanline,
                     cycles,
-                    (highBackgroundBit shl 1) or lowBackgroundBit,
-                    (highPaletteBit shl 1) or lowPaletteBit,
+                    finalColorSelect,
+                    finalPaletteSelect
                 )
             }
         }
@@ -304,6 +475,12 @@ class PPU2C02(
                 highBackgroundShiftRegister = highBackgroundShiftRegister shl 1
                 lowPaletteShiftRegister = lowPaletteShiftRegister shl 1
                 highPaletteShiftRegister = highPaletteShiftRegister shl 1
+            }
+        }
+
+        if ((scanline in 0..239) && cycles in 1..256) {
+            if (maskRegister.isShowingSprites) {
+                objectAttributeMemory.decrementAllX()
             }
         }
 
@@ -322,7 +499,7 @@ class PPU2C02(
     }
 
     private fun drawPixel(scanline: Int, cycle: Int, colorSelect: UInt, paletteSelect: UInt) {
-        if (vRegister.tileAddress == 0x2345u) {
+        /*if (vRegister.tileAddress == 0x2345u) {
             println("Scanline: $scanline")
             println("Cycle: $cycle")
             println("ColorSelect: ${colorSelect.to2DigitHexString()}")
@@ -334,11 +511,11 @@ class PPU2C02(
             ).to2DigitHexString())
             println("")
             frameBuffer[scanline][cycle - 1] = 0x20u
-        } else {
+        } else {*/
             frameBuffer[scanline][cycle - 1] = readPaletteTableMemoryWhileRendering(
                 (paletteSelect shl 2) + colorSelect
             ).toUByte()
-        }
+        //}
     }
 
     private fun emitNMISignal() {
@@ -470,7 +647,6 @@ class PPU2C02(
         }
 
         oamAddressRegister++
-        testCounter++
     }
 
     private var testOamCounter = 0

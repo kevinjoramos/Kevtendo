@@ -13,8 +13,8 @@ import kotlin.system.measureTimeMillis
 class NesEmulatorUiState {
     private val projectRootPath = System.getProperty("user.dir")
 
-    private val pathToGame = "$projectRootPath/src/main/kotlin/games/Donkey Kong.nes"
-    //private val pathToGame = "$projectRootPath/src/main/kotlin/games/PacMan.nes"
+    //private val pathToGame = "$projectRootPath/src/main/kotlin/games/Donkey Kong.nes"
+    private val pathToGame = "$projectRootPath/src/main/kotlin/games/PacMan.nes"
     //private val pathToGame = "$projectRootPath/src/main/kotlin/games/nestest.nes"
     //private val pathToGame = "$projectRootPath/src/main/kotlin/games/Super Mario Bros.nes"
     private var bus = Bus(pathToGame)
@@ -188,7 +188,6 @@ class NesEmulatorUiState {
 
                         // Write
                         else {
-                            println("Writing to OAM data register")
                             bus.ppu.writeToOamDataRegister(currentDMAData)
 
                             // When we are done, go back to normal cpu activities.

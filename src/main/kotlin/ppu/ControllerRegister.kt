@@ -60,10 +60,10 @@ class ControllerRegister {
      * Sprite size
      * (0: 8x8 pixels; 1: 8x16 pixels – see PPU OAM#Byte 1)
      */
-    val spriteSize: SpriteSize
+    val isSpriteSize8x16: Boolean
         get() = when (value and 0x20u) {
-            0u -> SpriteSize.EIGHT_X_EIGHT
-            else -> SpriteSize.EIGHT_X_SIXTEEN
+            0u -> false
+            else -> true
         }
 
     /**
@@ -88,9 +88,6 @@ class ControllerRegister {
         }
 
     companion object {
-        enum class SpriteSize {
-            EIGHT_X_EIGHT, EIGHT_X_SIXTEEN
-        }
 
         enum class MasterSlaveSelect {
             READ_BACKDROP_FROM_EXT_PINS,

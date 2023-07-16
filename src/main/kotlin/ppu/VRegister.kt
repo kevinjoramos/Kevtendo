@@ -65,7 +65,7 @@ class VRegister {
      * The free bits become the attribute offset. Attribute tiles start at 23C0
      */
     val attributeDataAddress: UInt
-        get() = 0x23C0u or (value and 0x0C00u) or ((value shr 4) and 0x38u) or ((value shr 2) and 0x07u)
+        get() = 0x23C0u or ((value and 0x0C00u) or ((coarseY and 0x1Cu) shl 1) or ((coarseX and 0x1Cu) shr 2))
 
 
     fun incrementCoarseX() {

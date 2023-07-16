@@ -43,10 +43,16 @@ class StatusRegister {
      * evaluation and cleared at dot 1 (the second dot) of the
      * pre-render line.
      */
-    val hasSpriteOverflow
+    var hasSpriteOverflow
         get() = when (value and 0x20u) {
             0u -> false
             else -> true
+        }
+        set(value) {
+            when(value) {
+                false -> {}
+                true -> {}
+            }
         }
 
     /**

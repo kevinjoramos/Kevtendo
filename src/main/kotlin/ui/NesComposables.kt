@@ -30,6 +30,7 @@ import org.jetbrains.skiko.toBitmap
 import org.jetbrains.skiko.toImage
 import util.to2DigitHexString
 import java.awt.image.BufferedImage
+import kotlin.math.floor
 
 @OptIn(ExperimentalUnsignedTypes::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -224,8 +225,8 @@ fun GameView(
                 .aspectRatio(1.07f)
                 .fillMaxSize()
                 .drawWithCache {
-                    val pixelWidth = size.width / 256f
-                    val pixelHeight = size.height / 240f
+                    val pixelWidth = floor(size.width / 256f)
+                    val pixelHeight = floor(size.height / 240f)
                     val pixelSize = Size(width = pixelWidth, height = pixelHeight)
 
                     onDrawWithContent {

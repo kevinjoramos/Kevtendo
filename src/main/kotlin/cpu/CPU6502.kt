@@ -27,14 +27,14 @@ class CPU6502(override var bus: Mediator) : Component {
     var programCounter: UShort = 0xC000u
         set(value) {
             field = value
-            _programCounterState.value = programCounter.to4DigitHexString()
+            /*_programCounterState.value = programCounter.to4DigitHexString()
             _instructionState1.value = disassembler.allInstructions[(programCounter - 2u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
             _instructionState2.value = disassembler.allInstructions[(programCounter - 1u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
             _instructionState3.value = disassembler.allInstructions[programCounter] ?: "${programCounter.to4DigitHexString()}:"
             _instructionState4.value = disassembler.allInstructions[(programCounter + 1u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
             _instructionState5.value = disassembler.allInstructions[(programCounter + 2u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
             _instructionState6.value = disassembler.allInstructions[(programCounter + 3u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
-        }
+        */}
     private val _programCounterState = MutableStateFlow("0000")
     val programCounterState = _programCounterState.asStateFlow()
 

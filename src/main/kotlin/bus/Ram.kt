@@ -9,7 +9,7 @@ class Ram {
 
     fun writeToMemory(address: UShort, data: UByte) {
         memory[address.toInt()] = data
-        when (address.toUInt()) {
+        /*when (address.toUInt()) {
             in FIRST_SIXTEEN_UBYTES -> {
                 val row = memory.slice(FIRST_SIXTEEN_BYTES)
                 _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
@@ -75,7 +75,7 @@ class Ram {
                 val row = memory.slice(SIXTEENTH_SIXTEEN_BYTES)
                 _zeroPageRow1StateFlow.value = "${row[0].to2DigitHexString()} ${row[1].to2DigitHexString()} ${row[2].to2DigitHexString()} ${row[3].to2DigitHexString()} ${row[4].to2DigitHexString()} ${row[5].to2DigitHexString()} ${row[6].to2DigitHexString()} ${row[7].to2DigitHexString()} ${row[8].to2DigitHexString()} ${row[9].to2DigitHexString()} ${row[10].to2DigitHexString()} ${row[11].to2DigitHexString()} ${row[12].to2DigitHexString()} ${row[13].to2DigitHexString()} ${row[14].to2DigitHexString()} ${row[15].to2DigitHexString()}"
             }
-        }
+        }*/
     }
 
     private val _zeroPageRow1StateFlow = MutableStateFlow("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")

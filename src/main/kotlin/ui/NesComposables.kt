@@ -44,7 +44,7 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
     val patternTableState = uiState.patternTableState
     val paletteColorsState = uiState.paletteColorsState
 
-    val isDebuggerVisible = remember { mutableStateOf(true) }
+    val isDebuggerVisible = uiState.isHudVisible
 
     Row(
         modifier = Modifier

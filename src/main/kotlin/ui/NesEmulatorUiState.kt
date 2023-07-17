@@ -32,7 +32,7 @@ class NesEmulatorUiState {
     var disassemblerState = mutableStateOf("$0000: 00")
     var patternTableState = mutableStateOf(listOf<UInt>())
     var paletteColorsState = mutableStateOf(List(32) { 0x0fu })
-
+    var isHudVisible = mutableStateOf(true)
     private var isRunning = false
     var isPaused = false
 
@@ -157,13 +157,15 @@ class NesEmulatorUiState {
 
 
             // At this point visible scan lines are complete.
-            if (systemClock == FIRST_CYCLE_AFTER_RENDER + 100) {
+            if ((systemClock == FIRST_CYCLE_AFTER_RENDER)) {
                 //generateNoise()
-
                 updateGameViewState()
-                updateDisassemblerState()
-                updateMainCpuState()
-                updateZeroPageState()
+
+                if (isHudVisible.value) {
+                    updateDisassemblerState()
+                    updateMainCpuState()
+                    updateZeroPageState()
+                }
             }
 
             systemClock++

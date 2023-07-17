@@ -148,20 +148,20 @@ class PPU2C02(
         if (scanline in 0..239 || scanline == 261) {
 
             //Reload shift Registers
-            if ((cycles in 9..257 || cycles in 329..337 ) && (cycles.mod(8)) == 1) {
+            if ((cycles in 9..257 || cycles in 321..337 ) && (cycles.mod(8)) == 1) {
                 // Load shift registers.
                 lowBackgroundShiftRegister = (lowBackgroundShiftRegister and 0xFF00u) or tileLowBitPlane
                 highBackgroundShiftRegister = (highBackgroundShiftRegister and 0xFF00u) or tileHighBitPlane
 
                 // Load palette registers with attribute bits.
                 lowPaletteShiftRegister = when (attributeBits and 0x01u) {
-                    0u -> 0u
-                    else -> 0xFFFFu
+                    0u -> (lowPaletteShiftRegister and 0xFF00u)
+                    else -> (lowPaletteShiftRegister and 0xFF00u) or 0xFFu
                 }
 
-                highPaletteShiftRegister = when (attributeBits and 0x02u) {
-                    0u -> 0u
-                    else -> 0xFFFFu
+                highPaletteShiftRegister = when ((attributeBits shr 1) and 0x01u) {
+                    0u -> (highPaletteShiftRegister and 0xFF00u)
+                    else -> (highPaletteShiftRegister and 0xFF00u) or 0xFFu
                 }
             }
 
@@ -180,7 +180,7 @@ class PPU2C02(
 
                         val attributeData = readNameTableMemory(vRegister.attributeDataAddress)
 
-                        val quadrantAddress = ((vRegister.coarseY and 0x02u) or (vRegister.coarseX and 0x02u) shr 1)
+                        val quadrantAddress = ((vRegister.coarseY and 0x02u) or ((vRegister.coarseX and 0x02u) shr 1))
 
                         attributeBits = when (quadrantAddress) {
                             0u -> attributeData and 0x03u
@@ -501,23 +501,9 @@ class PPU2C02(
     }
 
     private fun drawPixel(scanline: Int, cycle: Int, colorSelect: UInt, paletteSelect: UInt) {
-        /*if (vRegister.tileAddress == 0x2345u) {
-            println("Scanline: $scanline")
-            println("Cycle: $cycle")
-            println("ColorSelect: ${colorSelect.to2DigitHexString()}")
-            println("PaletteSelect: ${paletteSelect.to2DigitHexString()}")
-            testPrintPaletteTable()
-            println(fineX.to2DigitHexString())
-            println(readPaletteTableMemoryWhileRendering(
-                (paletteSelect shl 2) + colorSelect
-            ).to2DigitHexString())
-            println("")
-            frameBuffer[scanline][cycle - 1] = 0x20u
-        } else {*/
-            frameBuffer[scanline][cycle - 1] = readPaletteTableMemoryWhileRendering(
-                ((overridingPalette?.shl(2)) ?: (paletteSelect shl 2)) + colorSelect
-            ).toUByte()
-        //}
+        frameBuffer[scanline][cycle - 1] = readPaletteTableMemoryWhileRendering(
+            ((overridingPalette?.shl(2)) ?: (paletteSelect shl 2)) + colorSelect
+        ).toUByte()
     }
 
     private fun emitNMISignal() {

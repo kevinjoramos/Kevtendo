@@ -10,6 +10,8 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -32,9 +34,11 @@ import kotlin.math.floor
 
 @OptIn(ExperimentalUnsignedTypes::class, ExperimentalComposeUiApi::class)
 @Composable
-fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
-    val controller1 = uiState.controller1
-    val controller2 = uiState.controller2
+fun NesEmulatorScreen(
+    uiState: NesEmulatorUiState,
+    isDebuggerVisible: MutableState<Boolean>
+) {
+
 
     val gameViewUiState = uiState.gameViewUiState.collectAsState()
     val zeroPageState = uiState.zeroPageState
@@ -44,115 +48,47 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
     val patternTableState = uiState.patternTableState
     val paletteColorsState = uiState.paletteColorsState
 
-    val isDebuggerVisible = uiState.isHudVisible
-
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .onKeyEvent {
+            .focusable()
+            .focusRequester(focusRequester = FocusRequester())
 
-                // Controller 1 Inputs.
-                if (it.key == Key.J && it.type == KeyEventType.KeyDown) {
-                    controller1.buttonA = true
-                }
-
-                if (it.key == Key.J && it.type == KeyEventType.KeyUp) {
-                    controller1.buttonA = false
-                }
-
-                if (it.key == Key.K && it.type == KeyEventType.KeyDown) {
-                    controller1.buttonB = true
-                }
-
-                if (it.key == Key.K && it.type == KeyEventType.KeyUp) {
-                    controller1.buttonB = false
-                }
-
-                if (it.key == Key.NumPad1 && it.type == KeyEventType.KeyDown) {
-                    controller1.buttonSelect = true
-                }
-
-                if (it.key == Key.NumPad1 && it.type == KeyEventType.KeyUp) {
-                    controller1.buttonSelect = false
-                }
-
-                if (it.key == Key.NumPad2 && it.type == KeyEventType.KeyDown) {
-                    controller1.buttonStart = true
-                }
-
-                if (it.key == Key.NumPad2 && it.type == KeyEventType.KeyUp) {
-                    controller1.buttonStart = false
-                }
-
-                if (it.key == Key.W && it.type == KeyEventType.KeyDown) {
-                    controller1.buttonUp = true
-                }
-
-                if (it.key == Key.W && it.type == KeyEventType.KeyUp) {
-                    controller1.buttonUp = false
-                }
-
-                if (it.key == Key.S && it.type == KeyEventType.KeyDown) {
-                    controller1.buttonDown = true
-                }
-
-                if (it.key == Key.S && it.type == KeyEventType.KeyUp) {
-                    controller1.buttonDown = false
-                }
-
-                if (it.key == Key.A && it.type == KeyEventType.KeyDown) {
-                    controller1.buttonLeft = true
-                }
-
-                if (it.key == Key.A && it.type == KeyEventType.KeyUp) {
-                    controller1.buttonLeft = false
-                }
-
-                if (it.key == Key.D && it.type == KeyEventType.KeyDown) {
-                    controller1.buttonRight = true
-                }
-
-                if (it.key == Key.D && it.type == KeyEventType.KeyUp) {
-                    controller1.buttonRight = false
-                }
-                if (it.key == Key.F3 && it.type == KeyEventType.KeyDown) {
-                    isDebuggerVisible.value = when (isDebuggerVisible.value) {
-                        false -> true
-                        true -> false
-                    }
-                }
-
-                // Controller 2 Inputs
-                true
-            }
     ) {
-        GameView(
-            gameViewUiState,
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .background(Color.Black)
+                .fillMaxSize()
 
-            //.fillMaxSize()
-        )
-
-        if (isDebuggerVisible.value) {
-            EmulatorHudView(
-                zeroPageState = zeroPageState,
-                mainRegistersState = mainRegistersState,
-                mainFlagsState = mainFlagsState,
-                disassemblerState = disassemblerState,
-                patternTableState = patternTableState,
-                paletteColorsState = paletteColorsState,
-                onStart = uiState::start,
-                onStep = uiState::step,
-                onReset = uiState::reset,
-                onStop = uiState::stop,
-                forcePaletteSelect = uiState::forcePaletteSwap,
+        ) {
+            GameView(
+                gameViewUiState,
                 modifier = Modifier
-                    .background(ProjectColors.DarkGreen100)
-                    .padding(12.dp)
-                    .fillMaxHeight()
+                    .focusable()
+                    .weight(1f)
+                    .background(Color.Black)
+
+                //.fillMaxSize()
             )
+
+            if (isDebuggerVisible.value) {
+                EmulatorHudView(
+                    zeroPageState = zeroPageState,
+                    mainRegistersState = mainRegistersState,
+                    mainFlagsState = mainFlagsState,
+                    disassemblerState = disassemblerState,
+                    patternTableState = patternTableState,
+                    paletteColorsState = paletteColorsState,
+                    onStart = uiState::start,
+                    onStep = uiState::step,
+                    onReset = uiState::reset,
+                    onStop = uiState::stop,
+                    forcePaletteSelect = uiState::forcePaletteSwap,
+                    modifier = Modifier
+                        .background(ProjectColors.DarkGreen100)
+                        .padding(12.dp)
+                        .fillMaxHeight()
+                )
+            }
         }
     }
 }

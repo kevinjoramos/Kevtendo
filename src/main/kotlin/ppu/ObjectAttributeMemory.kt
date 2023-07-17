@@ -9,6 +9,9 @@ class ObjectAttributeMemory {
     val secondaryMemory = List(8) { Sprite() }
     var openSlot = 0
 
+    var isSpriteZeroPossible = false
+    var isSpriteZeroBeingRendered = false
+
     // This is the actual space that stores the 64 sprites.
     val primaryMemory = UByteArray(0x100) { 0u }
 
@@ -27,11 +30,18 @@ class ObjectAttributeMemory {
         }
         openSlot = 0
 
+        isSpriteZeroPossible = false
+
         // Pick out the first 8 sprites on this scanline to draw
         for (index in 0..255 step 4) {
 
             // if the current y value is in between the height of the tile, it is being rendered.
             if (scanline >= primaryMemory[index] && (scanline <= primaryMemory[index] + if (isSpriteSize8x16) 15u else 7u)) {
+
+                // Check for sprite 0
+                if (index == 0) {
+                    isSpriteZeroPossible = true
+                }
 
                 // If 8 sprites are found check to see if we need to set the sprite overflow flag.
                 if (openSlot == 8) {
@@ -78,10 +88,12 @@ class ObjectAttributeMemory {
     fun getPrioritizedActiveSprite(): Sprite? {
 
         // Look for first active sprite with non 0 pixel value.
-        for (sprite in secondaryMemory) {
+        isSpriteZeroBeingRendered = false
+        for ((index, sprite) in secondaryMemory.withIndex()) {
             if (sprite.xPosition == 0u) {
                 val colorSelect = ((sprite.highSpriteShiftRegister and 0x80u) shr 6) or ((sprite.lowSpriteShiftRegister and 0x80u) shr 7)
                 if (colorSelect != 0u) {
+                    if (index == 0 && isSpriteZeroPossible) isSpriteZeroBeingRendered = true
                     return sprite
                 }
             }

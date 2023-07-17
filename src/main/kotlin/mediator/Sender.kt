@@ -5,4 +5,5 @@ enum class Sender {
     PPU,
     CARTRIDGE,
     CONTROLLER,
+    UI
 }

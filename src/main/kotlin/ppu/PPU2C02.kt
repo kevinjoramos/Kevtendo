@@ -32,6 +32,8 @@ class PPU2C02(
 
     private var staleBus: UInt = 0u
 
+    var overridingPalette: UInt? = null
+
     /**
      * VRam Registers
      */
@@ -48,7 +50,7 @@ class PPU2C02(
      */
     private val nameTable: UByteArray = UByteArray(NAMETABLE_MEMORY_SIZE)
     private val objectAttributeMemory = ObjectAttributeMemory()
-    private val paletteTable = UByteArray(PALETTE_TABLE_MEMORY_SIZE)
+    val paletteTable = UByteArray(PALETTE_TABLE_MEMORY_SIZE)
 
     /**
      * Scanline Rendering
@@ -513,7 +515,7 @@ class PPU2C02(
             frameBuffer[scanline][cycle - 1] = 0x20u
         } else {*/
             frameBuffer[scanline][cycle - 1] = readPaletteTableMemoryWhileRendering(
-                (paletteSelect shl 2) + colorSelect
+                ((overridingPalette?.shl(2)) ?: (paletteSelect shl 2)) + colorSelect
             ).toUByte()
         //}
     }

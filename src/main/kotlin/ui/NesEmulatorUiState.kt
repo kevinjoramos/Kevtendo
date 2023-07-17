@@ -7,6 +7,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import mediator.Event
+import mediator.Sender
 import util.Logger
 import util.to4DigitHexString
 import kotlin.system.measureTimeMillis
@@ -24,12 +26,12 @@ class NesEmulatorUiState {
     private val _gameViewUiState = MutableStateFlow(GameViewUiState())
     val gameViewUiState = _gameViewUiState.asStateFlow()
 
-    //var zeroPageState = mutableStateListOf<UByte>()
     var zeroPageState = mutableStateOf(List<UByte>(256) { 0u })
     var mainRegistersState = mutableStateOf(List<UInt>(5) {0u} )
     var mainFlagsState = mutableStateOf(List<Boolean>(8) { false })
     var disassemblerState = mutableStateOf("$0000: 00")
     var patternTableState = mutableStateOf(listOf<UInt>())
+    var paletteColorsState = mutableStateOf(List(32) { 0x0fu })
 
     private var isRunning = false
     var isPaused = false
@@ -50,11 +52,9 @@ class NesEmulatorUiState {
     var controller1 = bus.controller1
     var controller2 = bus.controller2
 
-    @OptIn(DelicateCoroutinesApi::class)
     fun start() {
         isRunning = true
         GlobalScope.launch(Dispatchers.Default) {
-            updatePatternTableState()
             runSystem()
         }
     }
@@ -83,6 +83,7 @@ class NesEmulatorUiState {
 
             val elapsedTime = measureTimeMillis {
                 executeMainCycle()
+                updatePaletteTableState()
             }
 
             println(elapsedTime)
@@ -146,23 +147,23 @@ class NesEmulatorUiState {
 
                     // update debugger.
                     if (bus.cpu.cycleCount == 0) {
-                        updateDisassemblerState()
-                        updateMainCpuState()
+
                     }
                 }
             }
 
             if (systemClock.mod(500) == 0) {
-                updateZeroPageState()
             }
 
 
             // At this point visible scan lines are complete.
-            if (systemClock == FIRST_CYCLE_AFTER_RENDER) {
+            if (systemClock == FIRST_CYCLE_AFTER_RENDER + 100) {
                 //generateNoise()
 
                 updateGameViewState()
-
+                updateDisassemblerState()
+                updateMainCpuState()
+                updateZeroPageState()
             }
 
             systemClock++
@@ -212,6 +213,8 @@ class NesEmulatorUiState {
 
     private fun updatePatternTableState() {
         val patternBuffer = mutableListOf<UInt>()
+        val palettes = bus.ppu.paletteTable.map { it.toUInt() }
+        val palette = bus.ppu.paletteTable.take(4).map { it.toUInt() }
 
         for (tileBitPlanes in bus.mapper.cartridge.characterRom.chunked(16)) {
             for (index in 0..7) {
@@ -228,8 +231,27 @@ class NesEmulatorUiState {
                 patternBuffer.add(((highTile and 0x01u) shl 1) or ((lowTile and 0x01u) shr 0))
             }
         }
+        val paletteIndex = (bus.ppu.overridingPalette ?: 0u) shl 2
+        patternTableState.value = patternBuffer.map { palettes[(paletteIndex + it).toInt()] }.toImmutableList()
+    }
 
-        patternTableState.value = patternBuffer.toImmutableList()
+    fun updatePaletteTableState() {
+        val palettes = bus.ppu.paletteTable.map { it.toUInt() }.toMutableList()
+        for (i in 0..palettes.lastIndex step 4) {
+            palettes[i] = palettes[0]
+        }
+        paletteColorsState.value = palettes.toImmutableList()
+        updatePatternTableState()
+    }
+
+    fun forcePaletteSwap(paletteSelect: UInt) {
+
+        if (bus.ppu.overridingPalette == paletteSelect) {
+            bus.ppu.overridingPalette = null
+        } else {
+            bus.ppu.overridingPalette = paletteSelect
+        }
+
     }
 
     /*private fun generateNoise() {

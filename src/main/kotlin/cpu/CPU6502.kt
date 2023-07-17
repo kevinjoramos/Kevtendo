@@ -4,10 +4,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import mediator.Component
 import mediator.Mediator
-import util.Logger
 import util.to2DigitHexString
 import util.to4DigitHexString
-import java.util.SortedMap
 
 /**
  * Emulation of the 6502 processor.
@@ -174,7 +172,7 @@ class CPU6502(override var bus: Mediator) : Component {
     private var targetAddress: UShort? = null
     private var immediateOperand: UByte? = null
 
-    private var cycleCount: Int = 0
+    var cycleCount: Int = 0
     private var hasOverflowCycle = false
 
     var isPendingNMI = false
@@ -183,7 +181,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
     var isSuspendedForDMA = false
 
-    private var disassembler: Disassembler = Disassembler()
+    var disassembler: Disassembler = Disassembler()
 
     private val opcodeTable: Map<UByte, Triple<AddressingMode, Operation, Int>> = mapOf(
         (0x00u).toUByte() to Triple(AddressingMode.IMP, BRK(), 7),
@@ -2061,10 +2059,12 @@ class CPU6502(override var bus: Mediator) : Component {
     }
 
     inner class Disassembler() {
-       var allInstructions: MutableMap<UShort, String> = mutableMapOf()
+        var instructionIndexMap: MutableMap<UShort, Int> = mutableMapOf()
+        var instructionList = mutableListOf<String>()
 
         fun disassembleAssemblyCode(startAddress: UInt, endAddress: UInt) {
             var currentAddress = startAddress
+            var currentIndex = 0
             while (currentAddress <= endAddress) {
 
                 val instruction = fetchInstruction(readAddress(currentAddress.toUShort()))
@@ -2127,7 +2127,9 @@ class CPU6502(override var bus: Mediator) : Component {
                     }
                 }
 
-                allInstructions[currentAddress.toUShort()] = "$${currentAddress.to4DigitHexString()}: $mnemonic {${instruction.first}}"
+                instructionIndexMap[currentAddress.toUShort()] = currentIndex
+                instructionList.add( "$${currentAddress.to4DigitHexString()}: $mnemonic {${instruction.first}}" )
+                currentIndex++
 
                 currentAddress += when (instruction.first) {
                     AddressingMode.IMP -> if (instruction.second.opcodeName == "BRK") 2u else 1u

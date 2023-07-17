@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -29,6 +30,7 @@ import org.jetbrains.skia.Bitmap
 import org.jetbrains.skiko.toBitmap
 import org.jetbrains.skiko.toImage
 import util.to2DigitHexString
+import util.to4DigitHexString
 import java.awt.image.BufferedImage
 import kotlin.math.floor
 
@@ -77,6 +79,11 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
     val zeroPageRow14ViewState = uiState.zeroPageRow14ViewState.collectAsState()
     val zeroPageRow15ViewState = uiState.zeroPageRow15ViewState.collectAsState()
     val zeroPageRow16ViewState = uiState.zeroPageRow16ViewState.collectAsState()
+
+    val zeroPageState = uiState.zeroPageState
+    val mainRegistersState = uiState.mainRegistersState
+    val mainFlagsState = uiState.mainFlagsState
+    val disassemblerState = uiState.disassemblerState
 
     Row(
         modifier = Modifier
@@ -199,6 +206,10 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
             zeroPageRow14ViewState = zeroPageRow14ViewState,
             zeroPageRow15ViewState = zeroPageRow15ViewState,
             zeroPageRow16ViewState = zeroPageRow16ViewState,
+            zeroPageState = zeroPageState,
+            mainRegistersState = mainRegistersState,
+            mainFlagsState = mainFlagsState,
+            disassemblerState = disassemblerState,
             onStart = uiState::start,
             onStep = uiState::step,
             onReset = uiState::reset,
@@ -352,6 +363,10 @@ fun EmulatorHudView(
     zeroPageRow14ViewState: State<String>,
     zeroPageRow15ViewState: State<String>,
     zeroPageRow16ViewState: State<String>,
+    zeroPageState: MutableState<List<UByte>>,
+    mainRegistersState: MutableState<List<UInt>>,
+    mainFlagsState: MutableState<List<Boolean>>,
+    disassemblerState: MutableState<String>,
     onStart: () -> Unit,
     onStep: () -> Unit,
     onReset: () -> Unit,
@@ -382,6 +397,8 @@ fun EmulatorHudView(
             interruptDisableViewState = interruptDisableViewState,
             zeroFlagViewState = zeroFlagViewState,
             carryFlagViewState = carryFlagViewState,
+            mainRegistersState = mainRegistersState,
+            mainFlagsState = mainFlagsState
         )
         Spacer(modifier = Modifier.height(12.dp))
         CurrentInstructionView(
@@ -391,9 +408,10 @@ fun EmulatorHudView(
             instructionViewState4 = instructionViewState4,
             instructionViewState5 = instructionViewState5,
             instructionViewState6 = instructionViewState6,
+            disassemblerState = disassemblerState
         )
         Spacer(modifier = Modifier.height(12.dp))
-        ZeroPageView(
+        /*ZeroPageView(
             zeroPageRow1ViewState = zeroPageRow1ViewState,
             zeroPageRow2ViewState = zeroPageRow2ViewState,
             zeroPageRow3ViewState = zeroPageRow3ViewState,
@@ -410,7 +428,27 @@ fun EmulatorHudView(
             zeroPageRow14ViewState = zeroPageRow14ViewState,
             zeroPageRow15ViewState = zeroPageRow15ViewState,
             zeroPageRow16ViewState = zeroPageRow16ViewState
-        )
+        )*/
+
+        for (index in 0..255 step 16) {
+            Row {
+                for (j in index..index + 15) {
+                    Text(
+                        text = zeroPageState.value[j].toUInt().to2DigitHexString(),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White,
+                        fontFamily = FontFamily.Monospace
+                    )
+                    Spacer(
+                        modifier = Modifier
+                            .width(5.dp)
+                    )
+                }
+            }
+        }
+
+
 
     }
         /*
@@ -516,6 +554,8 @@ fun MainCpuView(
     interruptDisableViewState: State<Boolean>,
     zeroFlagViewState: State<Boolean>,
     carryFlagViewState: State<Boolean>,
+    mainRegistersState: MutableState<List<UInt>>,
+    mainFlagsState: MutableState<List<Boolean>>
 ) {
     Column {
         StatusFlagsView(
@@ -527,13 +567,14 @@ fun MainCpuView(
             interruptDisableViewState = interruptDisableViewState,
             zeroFlagViewState = zeroFlagViewState,
             carryFlagViewState = carryFlagViewState,
+            mainFlagsState = mainFlagsState
         )
 
-        RegisterView("PC:", programCounterViewState.value)
-        RegisterView("A:", accumulatorViewState.value)
-        RegisterView("X:", xRegisterViewState.value)
-        RegisterView("Y:", yRegisterViewState.value)
-        RegisterView("SP:", stackPointerViewState.value)
+        RegisterView("PC:", mainRegistersState.value[0].to4DigitHexString())
+        RegisterView("A:", mainRegistersState.value[1].to2DigitHexString())
+        RegisterView("X:", mainRegistersState.value[2].to2DigitHexString())
+        RegisterView("Y:", mainRegistersState.value[3].to2DigitHexString())
+        RegisterView("SP:", mainRegistersState.value[4].to4DigitHexString())
     }
 }
 
@@ -546,7 +587,8 @@ fun StatusFlagsView(
     decimalFlagViewState: State<Boolean>,
     interruptDisableViewState: State<Boolean>,
     zeroFlagViewState: State<Boolean>,
-    carryFlagViewState: State<Boolean>
+    carryFlagViewState: State<Boolean>,
+    mainFlagsState: MutableState<List<Boolean>>
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -560,14 +602,14 @@ fun StatusFlagsView(
             fontFamily = FontFamily.Monospace
         )
 
-       FlagView("N", negativeFlagViewState.value)
-       FlagView("V", overflowFlagViewState.value)
-       FlagView("-", extraFlagViewState.value)
-       FlagView("B", breakFlagViewState.value)
-       FlagView("D", decimalFlagViewState.value)
-       FlagView("I", interruptDisableViewState.value)
-       FlagView("Z", zeroFlagViewState.value)
-       FlagView("C", carryFlagViewState.value)
+       FlagView("N", mainFlagsState.value[0])
+       FlagView("V", mainFlagsState.value[1])
+       FlagView("-", mainFlagsState.value[2])
+       FlagView("B", mainFlagsState.value[3])
+       FlagView("D", mainFlagsState.value[4])
+       FlagView("I", mainFlagsState.value[5])
+       FlagView("Z", mainFlagsState.value[6])
+       FlagView("C", mainFlagsState.value[7])
     }
 }
 
@@ -662,44 +704,10 @@ fun CurrentInstructionView(
     instructionViewState4: State<String>,
     instructionViewState5: State<String>,
     instructionViewState6: State<String>,
+    disassemblerState: MutableState<String>
 ) {
     Text(
-        text = instructionViewState1.value,
-        fontWeight = FontWeight.Bold,
-        fontSize = 16.sp,
-        color = Color.White,
-        fontFamily = FontFamily.Monospace
-    )
-    Text(
-        text = instructionViewState2.value,
-        fontWeight = FontWeight.Bold,
-        fontSize = 16.sp,
-        color = Color.White,
-        fontFamily = FontFamily.Monospace
-    )
-    Text(
-        text = instructionViewState3.value,
-        fontWeight = FontWeight.Bold,
-        fontSize = 16.sp,
-        color = Color.White,
-        fontFamily = FontFamily.Monospace
-    )
-    Text(
-        text =instructionViewState4.value,
-        fontWeight = FontWeight.Bold,
-        fontSize = 16.sp,
-        color = Color.White,
-        fontFamily = FontFamily.Monospace
-    )
-    Text(
-        text = instructionViewState5.value,
-        fontWeight = FontWeight.Bold,
-        fontSize = 16.sp,
-        color = Color.White,
-        fontFamily = FontFamily.Monospace
-    )
-    Text(
-        text = instructionViewState6.value,
+        text = disassemblerState.value,
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
         color = Color.White,

@@ -1,5 +1,6 @@
 package ui
 
+import androidx.compose.runtime.*
 import bus.Bus
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.*
@@ -7,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import util.Logger
+import util.to4DigitHexString
 import kotlin.system.measureTimeMillis
 
 @ExperimentalUnsignedTypes
@@ -58,6 +60,12 @@ class NesEmulatorUiState {
     var zeroPageRow15ViewState = bus.ram.zeroPageRow15StateFlow
     var zeroPageRow16ViewState = bus.ram.zeroPageRow16StateFlow
 
+    //var zeroPageState = mutableStateListOf<UByte>()
+    var zeroPageState = mutableStateOf(List<UByte>(256) { 0u })
+    var mainRegistersState = mutableStateOf(List<UInt>(5) {0u} )
+    var mainFlagsState = mutableStateOf(List<Boolean>(8) { false })
+    var disassemblerState = mutableStateOf("$0000: 00")
+
     private var isRunning = false
     var isPaused = false
 
@@ -80,7 +88,9 @@ class NesEmulatorUiState {
     @OptIn(DelicateCoroutinesApi::class)
     fun start() {
         isRunning = true
-        runSystem()
+        GlobalScope.launch(Dispatchers.Default) {
+            runSystem()
+        }
     }
 
     fun step() {
@@ -139,21 +149,18 @@ class NesEmulatorUiState {
         isRunning = false
     }
 
-    private fun runSystem() {
-        emulatorProcess = GlobalScope.launch(Dispatchers.Default) {
+    private suspend fun runSystem() {
+        while (isRunning) {
 
-            while (isRunning) {
-
-                val elapsedTime = measureTimeMillis {
-                    executeMainCycle()
-                }
-
-                println(elapsedTime)
-
-                systemClock = 0
+            val elapsedTime = measureTimeMillis {
+                executeMainCycle()
             }
 
-            Logger.writeLogsToFile()
+            println(elapsedTime)
+
+            delay(MILLISECONDS_PER_FRAME - elapsedTime)
+
+            systemClock = 0
         }
     }
 
@@ -207,7 +214,17 @@ class NesEmulatorUiState {
                 // Run normally
                 else {
                     bus.cpu.run()
+
+                    // update debugger.
+                    if (bus.cpu.cycleCount == 0) {
+                        updateDisassemblerState()
+                        updateMainCpuState()
+                    }
                 }
+            }
+
+            if (systemClock.mod(500) == 0) {
+                updateZeroPageState()
             }
 
 
@@ -216,7 +233,6 @@ class NesEmulatorUiState {
                 //generateNoise()
 
                 updateGameViewState()
-
 
             }
 
@@ -228,6 +244,40 @@ class NesEmulatorUiState {
         val pixelScreen = bus.ppu.frameBuffer.map { it.toList().toImmutableList() }.toImmutableList()
         _gameViewUiState.update {
             it.copy(pixelScreen = pixelScreen)
+        }
+    }
+
+    private fun updateZeroPageState() {
+        zeroPageState.value = bus.ram.memory.take(256).toImmutableList()
+    }
+
+    private fun updateMainCpuState() {
+        mainRegistersState.value = listOf<UInt>(
+            bus.cpu.programCounter.toUInt(),
+            bus.cpu.accumulator.toUInt(),
+            bus.cpu.xRegister.toUInt(),
+            bus.cpu.yRegister.toUInt(),
+            bus.cpu.stackPointer.toUInt()
+        ).toImmutableList()
+
+        mainFlagsState.value = listOf<Boolean>(
+            bus.cpu.negativeFlag,
+            bus.cpu.overflowFlag,
+            bus.cpu.extraFlag,
+            bus.cpu.breakFlag,
+            bus.cpu.decimalFlag,
+            bus.cpu.interruptDisableFlag,
+            bus.cpu.zeroFlag,
+            bus.cpu.carryFlag
+        ).toImmutableList()
+    }
+
+    private fun updateDisassemblerState() {
+        val currentIndex = bus.cpu.disassembler.instructionIndexMap[bus.cpu.programCounter]
+        if (currentIndex == null) {
+            disassemblerState.value = "$${bus.cpu.programCounter.to4DigitHexString()}: ???"
+        } else {
+            disassemblerState.value = bus.cpu.disassembler.instructionList[currentIndex]
         }
     }
 
@@ -252,6 +302,6 @@ class NesEmulatorUiState {
         const val FIRST_CYCLE_AFTER_RENDER = 81_841
         //const val FIRST_CYCLE_AFTER_RENDER = 82_080
 
-        const val MILLISECONDS_PER_FRAME = 17
+        const val MILLISECONDS_PER_FRAME = 14
     }
 }

@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -22,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,49 +43,11 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
     val controller2 = uiState.controller2
 
     val gameViewUiState = uiState.gameViewUiState.collectAsState()
-
-    val programCounterViewState = uiState.programCounterViewState.collectAsState()
-    val accumulatorViewState = uiState.accumulatorViewState.collectAsState()
-    val xRegisterViewState = uiState.xRegisterViewState.collectAsState()
-    val yRegisterViewState = uiState.yRegisterViewState.collectAsState()
-    val stackPointerViewState = uiState.stackPointerViewState.collectAsState()
-    val negativeFlagViewState = uiState.negativeFlagViewState.collectAsState()
-    val overflowFlagViewState = uiState.overflowFlagViewState.collectAsState()
-    val extraFlagViewState = uiState.extraFlagViewState.collectAsState()
-    val breakFlagViewState = uiState.breakFlagViewState.collectAsState()
-    val decimalFlagViewState = uiState.decimalFlagViewState.collectAsState()
-    val interruptDisableViewState = uiState.interruptDisableViewState.collectAsState()
-    val zeroFlagViewState = uiState.zeroFlagViewState.collectAsState()
-    val carryFlagViewState = uiState.carryFlagViewState.collectAsState()
-
-    val instructionViewState1 = uiState.instructionViewState1.collectAsState()
-    val instructionViewState2 = uiState.instructionViewState2.collectAsState()
-    val instructionViewState3 = uiState.instructionViewState3.collectAsState()
-    val instructionViewState4 = uiState.instructionViewState4.collectAsState()
-    val instructionViewState5 = uiState.instructionViewState5.collectAsState()
-    val instructionViewState6 = uiState.instructionViewState6.collectAsState()
-
-    val zeroPageRow1ViewState = uiState.zeroPageRow1ViewState.collectAsState()
-    val zeroPageRow2ViewState = uiState.zeroPageRow2ViewState.collectAsState()
-    val zeroPageRow3ViewState = uiState.zeroPageRow3ViewState.collectAsState()
-    val zeroPageRow4ViewState = uiState.zeroPageRow4ViewState.collectAsState()
-    val zeroPageRow5ViewState = uiState.zeroPageRow5ViewState.collectAsState()
-    val zeroPageRow6ViewState = uiState.zeroPageRow6ViewState.collectAsState()
-    val zeroPageRow7ViewState = uiState.zeroPageRow7ViewState.collectAsState()
-    val zeroPageRow8ViewState = uiState.zeroPageRow8ViewState.collectAsState()
-    val zeroPageRow9ViewState = uiState.zeroPageRow9ViewState.collectAsState()
-    val zeroPageRow10ViewState = uiState.zeroPageRow10ViewState.collectAsState()
-    val zeroPageRow11ViewState = uiState.zeroPageRow11ViewState.collectAsState()
-    val zeroPageRow12ViewState = uiState.zeroPageRow12ViewState.collectAsState()
-    val zeroPageRow13ViewState = uiState.zeroPageRow13ViewState.collectAsState()
-    val zeroPageRow14ViewState = uiState.zeroPageRow14ViewState.collectAsState()
-    val zeroPageRow15ViewState = uiState.zeroPageRow15ViewState.collectAsState()
-    val zeroPageRow16ViewState = uiState.zeroPageRow16ViewState.collectAsState()
-
     val zeroPageState = uiState.zeroPageState
     val mainRegistersState = uiState.mainRegistersState
     val mainFlagsState = uiState.mainFlagsState
     val disassemblerState = uiState.disassemblerState
+    val patternTableState = uiState.patternTableState
 
     Row(
         modifier = Modifier
@@ -169,47 +133,11 @@ fun NesEmulatorScreen(uiState: NesEmulatorUiState) {
             //.fillMaxSize()
         )
         EmulatorHudView(
-            programCounterViewState = programCounterViewState,
-            accumulatorViewState = accumulatorViewState,
-            xRegisterViewState = xRegisterViewState,
-            yRegisterViewState = yRegisterViewState,
-            stackPointerViewState = stackPointerViewState,
-            negativeFlagViewState = negativeFlagViewState,
-            overflowFlagViewState = overflowFlagViewState,
-            extraFlagViewState = extraFlagViewState,
-            breakFlagViewState = breakFlagViewState,
-            decimalFlagViewState = decimalFlagViewState,
-            interruptDisableViewState = interruptDisableViewState,
-            zeroFlagViewState = zeroFlagViewState,
-            carryFlagViewState = carryFlagViewState,
-
-            instructionViewState1 = instructionViewState1,
-            instructionViewState2 = instructionViewState2,
-            instructionViewState3 = instructionViewState3,
-            instructionViewState4 = instructionViewState4,
-            instructionViewState5 = instructionViewState5,
-            instructionViewState6 = instructionViewState6,
-
-            zeroPageRow1ViewState = zeroPageRow1ViewState,
-            zeroPageRow2ViewState = zeroPageRow2ViewState,
-            zeroPageRow3ViewState = zeroPageRow3ViewState,
-            zeroPageRow4ViewState = zeroPageRow4ViewState,
-            zeroPageRow5ViewState = zeroPageRow5ViewState,
-            zeroPageRow6ViewState = zeroPageRow6ViewState,
-            zeroPageRow7ViewState = zeroPageRow7ViewState,
-            zeroPageRow8ViewState = zeroPageRow8ViewState,
-            zeroPageRow9ViewState = zeroPageRow9ViewState,
-            zeroPageRow10ViewState = zeroPageRow10ViewState,
-            zeroPageRow11ViewState = zeroPageRow11ViewState,
-            zeroPageRow12ViewState = zeroPageRow12ViewState,
-            zeroPageRow13ViewState = zeroPageRow13ViewState,
-            zeroPageRow14ViewState = zeroPageRow14ViewState,
-            zeroPageRow15ViewState = zeroPageRow15ViewState,
-            zeroPageRow16ViewState = zeroPageRow16ViewState,
             zeroPageState = zeroPageState,
             mainRegistersState = mainRegistersState,
             mainFlagsState = mainFlagsState,
             disassemblerState = disassemblerState,
+            patternTableState = patternTableState,
             onStart = uiState::start,
             onStep = uiState::step,
             onReset = uiState::reset,
@@ -321,52 +249,13 @@ fun GameView(
     }
 }
 
-/*
-State<String>
- */
-
-@OptIn(ExperimentalUnsignedTypes::class)
 @Composable
 fun EmulatorHudView(
-    programCounterViewState: State<String>,
-    accumulatorViewState: State<String>,
-    xRegisterViewState: State<String>,
-    yRegisterViewState: State<String>,
-    stackPointerViewState: State<String>,
-    negativeFlagViewState: State<Boolean>,
-    overflowFlagViewState: State<Boolean>,
-    extraFlagViewState: State<Boolean>,
-    breakFlagViewState: State<Boolean>,
-    decimalFlagViewState: State<Boolean>,
-    interruptDisableViewState: State<Boolean>,
-    zeroFlagViewState: State<Boolean>,
-    carryFlagViewState: State<Boolean>,
-    instructionViewState1: State<String>,
-    instructionViewState2: State<String>,
-    instructionViewState3: State<String>,
-    instructionViewState4: State<String>,
-    instructionViewState5: State<String>,
-    instructionViewState6: State<String>,
-    zeroPageRow1ViewState: State<String>,
-    zeroPageRow2ViewState: State<String>,
-    zeroPageRow3ViewState: State<String>,
-    zeroPageRow4ViewState: State<String>,
-    zeroPageRow5ViewState: State<String>,
-    zeroPageRow6ViewState: State<String>,
-    zeroPageRow7ViewState: State<String>,
-    zeroPageRow8ViewState: State<String>,
-    zeroPageRow9ViewState: State<String>,
-    zeroPageRow10ViewState: State<String>,
-    zeroPageRow11ViewState: State<String>,
-    zeroPageRow12ViewState: State<String>,
-    zeroPageRow13ViewState: State<String>,
-    zeroPageRow14ViewState: State<String>,
-    zeroPageRow15ViewState: State<String>,
-    zeroPageRow16ViewState: State<String>,
     zeroPageState: MutableState<List<UByte>>,
     mainRegistersState: MutableState<List<UInt>>,
     mainFlagsState: MutableState<List<Boolean>>,
     disassemblerState: MutableState<String>,
+    patternTableState: MutableState<List<UInt>>,
     onStart: () -> Unit,
     onStep: () -> Unit,
     onReset: () -> Unit,
@@ -376,6 +265,10 @@ fun EmulatorHudView(
     Column(
         modifier = modifier
     ) {
+        PatternTablesView(
+            patternTableState = patternTableState
+        )
+        Spacer(modifier = Modifier.height(12.dp))
         ButtonsView(
             onStart,
             onStep,
@@ -384,79 +277,16 @@ fun EmulatorHudView(
         )
         Spacer(modifier = Modifier.height(12.dp))
         MainCpuView(
-            programCounterViewState = programCounterViewState,
-            accumulatorViewState = accumulatorViewState,
-            xRegisterViewState = xRegisterViewState,
-            yRegisterViewState = yRegisterViewState,
-            stackPointerViewState = stackPointerViewState,
-            negativeFlagViewState = negativeFlagViewState,
-            overflowFlagViewState = overflowFlagViewState,
-            extraFlagViewState = extraFlagViewState,
-            breakFlagViewState = breakFlagViewState,
-            decimalFlagViewState = decimalFlagViewState,
-            interruptDisableViewState = interruptDisableViewState,
-            zeroFlagViewState = zeroFlagViewState,
-            carryFlagViewState = carryFlagViewState,
             mainRegistersState = mainRegistersState,
             mainFlagsState = mainFlagsState
         )
         Spacer(modifier = Modifier.height(12.dp))
         CurrentInstructionView(
-            instructionViewState1 = instructionViewState1,
-            instructionViewState2 = instructionViewState2,
-            instructionViewState3 = instructionViewState3,
-            instructionViewState4 = instructionViewState4,
-            instructionViewState5 = instructionViewState5,
-            instructionViewState6 = instructionViewState6,
             disassemblerState = disassemblerState
         )
         Spacer(modifier = Modifier.height(12.dp))
-        /*ZeroPageView(
-            zeroPageRow1ViewState = zeroPageRow1ViewState,
-            zeroPageRow2ViewState = zeroPageRow2ViewState,
-            zeroPageRow3ViewState = zeroPageRow3ViewState,
-            zeroPageRow4ViewState = zeroPageRow4ViewState,
-            zeroPageRow5ViewState = zeroPageRow5ViewState,
-            zeroPageRow6ViewState = zeroPageRow6ViewState,
-            zeroPageRow7ViewState = zeroPageRow7ViewState,
-            zeroPageRow8ViewState = zeroPageRow8ViewState,
-            zeroPageRow9ViewState = zeroPageRow9ViewState,
-            zeroPageRow10ViewState = zeroPageRow10ViewState,
-            zeroPageRow11ViewState = zeroPageRow11ViewState,
-            zeroPageRow12ViewState = zeroPageRow12ViewState,
-            zeroPageRow13ViewState = zeroPageRow13ViewState,
-            zeroPageRow14ViewState = zeroPageRow14ViewState,
-            zeroPageRow15ViewState = zeroPageRow15ViewState,
-            zeroPageRow16ViewState = zeroPageRow16ViewState
-        )*/
-
-        for (index in 0..255 step 16) {
-            Row {
-                for (j in index..index + 15) {
-                    Text(
-                        text = zeroPageState.value[j].toUInt().to2DigitHexString(),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = Color.White,
-                        fontFamily = FontFamily.Monospace
-                    )
-                    Spacer(
-                        modifier = Modifier
-                            .width(5.dp)
-                    )
-                }
-            }
-        }
-
-
-
+        ZeroPageView(zeroPageState = zeroPageState)
     }
-        /*
-        Spacer(modifier.height(10.dp))
-
-
-
-    }*/
 }
 
 @Composable
@@ -541,32 +371,11 @@ fun ButtonsView(
 }
 @Composable
 fun MainCpuView(
-    programCounterViewState: State<String>,
-    accumulatorViewState: State<String>,
-    xRegisterViewState: State<String>,
-    yRegisterViewState: State<String>,
-    stackPointerViewState: State<String>,
-    negativeFlagViewState: State<Boolean>,
-    overflowFlagViewState: State<Boolean>,
-    extraFlagViewState: State<Boolean>,
-    breakFlagViewState: State<Boolean>,
-    decimalFlagViewState: State<Boolean>,
-    interruptDisableViewState: State<Boolean>,
-    zeroFlagViewState: State<Boolean>,
-    carryFlagViewState: State<Boolean>,
     mainRegistersState: MutableState<List<UInt>>,
     mainFlagsState: MutableState<List<Boolean>>
 ) {
     Column {
         StatusFlagsView(
-            negativeFlagViewState = negativeFlagViewState,
-            overflowFlagViewState = overflowFlagViewState,
-            extraFlagViewState = extraFlagViewState,
-            breakFlagViewState = breakFlagViewState,
-            decimalFlagViewState = decimalFlagViewState,
-            interruptDisableViewState = interruptDisableViewState,
-            zeroFlagViewState = zeroFlagViewState,
-            carryFlagViewState = carryFlagViewState,
             mainFlagsState = mainFlagsState
         )
 
@@ -580,14 +389,6 @@ fun MainCpuView(
 
 @Composable
 fun StatusFlagsView(
-    negativeFlagViewState: State<Boolean>,
-    overflowFlagViewState: State<Boolean>,
-    extraFlagViewState: State<Boolean>,
-    breakFlagViewState: State<Boolean>,
-    decimalFlagViewState: State<Boolean>,
-    interruptDisableViewState: State<Boolean>,
-    zeroFlagViewState: State<Boolean>,
-    carryFlagViewState: State<Boolean>,
     mainFlagsState: MutableState<List<Boolean>>
 ) {
     Row(
@@ -640,70 +441,35 @@ fun RegisterView(label: String, value: String) {
 
 @Composable
 fun ZeroPageView(
-    zeroPageRow1ViewState: State<String>,
-    zeroPageRow2ViewState: State<String>,
-    zeroPageRow3ViewState: State<String>,
-    zeroPageRow4ViewState: State<String>,
-    zeroPageRow5ViewState: State<String>,
-    zeroPageRow6ViewState: State<String>,
-    zeroPageRow7ViewState: State<String>,
-    zeroPageRow8ViewState: State<String>,
-    zeroPageRow9ViewState: State<String>,
-    zeroPageRow10ViewState: State<String>,
-    zeroPageRow11ViewState: State<String>,
-    zeroPageRow12ViewState: State<String>,
-    zeroPageRow13ViewState: State<String>,
-    zeroPageRow14ViewState: State<String>,
-    zeroPageRow15ViewState: State<String>,
-    zeroPageRow16ViewState: State<String>,
+    zeroPageState: MutableState<List<UByte>>
 ) {
     Column(
         modifier = Modifier
             .border(1.dp, Color.White)
             .padding(5.dp, 5.dp, 5.dp, 0.dp)
     ) {
-        ZeroPageRowView(zeroPageRow1ViewState.value)
-        ZeroPageRowView(zeroPageRow2ViewState.value)
-        ZeroPageRowView(zeroPageRow3ViewState.value)
-        ZeroPageRowView(zeroPageRow4ViewState.value)
-        ZeroPageRowView(zeroPageRow5ViewState.value)
-        ZeroPageRowView(zeroPageRow6ViewState.value)
-        ZeroPageRowView(zeroPageRow7ViewState.value)
-        ZeroPageRowView(zeroPageRow8ViewState.value)
-        ZeroPageRowView(zeroPageRow9ViewState.value)
-        ZeroPageRowView(zeroPageRow10ViewState.value)
-        ZeroPageRowView(zeroPageRow11ViewState.value)
-        ZeroPageRowView(zeroPageRow12ViewState.value)
-        ZeroPageRowView(zeroPageRow13ViewState.value)
-        ZeroPageRowView(zeroPageRow14ViewState.value)
-        ZeroPageRowView(zeroPageRow15ViewState.value)
-        ZeroPageRowView(zeroPageRow16ViewState.value)
+        for (index in 0..255 step 16) {
+            Row {
+                for (j in index..index + 15) {
+                    Text(
+                        text = zeroPageState.value[j].toUInt().to2DigitHexString(),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White,
+                        fontFamily = FontFamily.Monospace
+                    )
+                    Spacer(
+                        modifier = Modifier
+                            .width(5.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
-fun ZeroPageRowView(row: String) {
-    Text(
-        text = row,
-        fontWeight = FontWeight.Bold,
-        fontSize = 14.sp,
-        color = Color.White,
-        fontFamily = FontFamily.Monospace
-    )
-    Spacer(
-        modifier = Modifier
-            .width(5.dp)
-    )
-}
-
-@Composable
 fun CurrentInstructionView(
-    instructionViewState1: State<String>,
-    instructionViewState2: State<String>,
-    instructionViewState3: State<String>,
-    instructionViewState4: State<String>,
-    instructionViewState5: State<String>,
-    instructionViewState6: State<String>,
     disassemblerState: MutableState<String>
 ) {
     Text(
@@ -713,5 +479,130 @@ fun CurrentInstructionView(
         color = Color.White,
         fontFamily = FontFamily.Monospace
     )
+}
+
+@Composable
+fun PatternTablesView(
+    patternTableState: MutableState<List<UInt>>
+) {
+    Row(
+
+    ) {
+        PatternTable(
+            section = patternTableState.value.take(16384),
+            modifier = Modifier
+                .background(Color.Black))
+        Spacer(modifier = Modifier.width(5.dp))
+        PatternTable(
+            section = patternTableState.value.takeLast(16384),
+            modifier = Modifier
+                .background(Color.Black)
+        )
+    }
+}
+
+@Composable
+fun PatternTable(
+    section: List<UInt>,
+    modifier: Modifier
+) {
+    Box(
+        modifier = modifier
+    ) {
+        Spacer(
+            Modifier
+                .size(300.dp)
+                .drawWithCache {
+                    val pixelWidth = floor(size.width / 128f)
+                    val pixelHeight = floor(size.height / 128f)
+                    val pixelSize = Size(width = pixelWidth, height = pixelHeight)
+
+                    onDrawWithContent {
+
+                        for ((i, row) in section.chunked(1024).withIndex()) {
+                            for ((j, tile) in row.chunked(64).withIndex()) {
+                                for ((k, tileRow) in tile.chunked(8).withIndex()) {
+                                    for ((l, pixel) in tileRow.withIndex()) {
+                                        drawRect(
+                                            topLeft = Offset(
+                                                (pixelWidth * l) + (j * 8 * pixelWidth),
+                                                (pixelHeight * k) + (i * 8 * pixelHeight),
+                                            ),
+                                            size = pixelSize,
+                                            color = when (pixel) {
+                                                0x00u -> ProjectColors.COLOR_00
+                                                0x01u -> ProjectColors.COLOR_01
+                                                0x02u -> ProjectColors.COLOR_02
+                                                0x03u -> ProjectColors.COLOR_03
+                                                0x04u -> ProjectColors.COLOR_04
+                                                0x05u -> ProjectColors.COLOR_05
+                                                0x06u -> ProjectColors.COLOR_06
+                                                0x07u -> ProjectColors.COLOR_07
+                                                0x08u -> ProjectColors.COLOR_08
+                                                0x09u -> ProjectColors.COLOR_09
+                                                0x0Au -> ProjectColors.COLOR_0A
+                                                0x0Bu -> ProjectColors.COLOR_0B
+                                                0x0Cu -> ProjectColors.COLOR_0C
+                                                0x0Du -> ProjectColors.COLOR_0D
+                                                0x0Eu -> ProjectColors.COLOR_0E
+                                                0x0Fu -> ProjectColors.COLOR_0F
+                                                0x10u -> ProjectColors.COLOR_10
+                                                0x11u -> ProjectColors.COLOR_11
+                                                0x12u -> ProjectColors.COLOR_12
+                                                0x13u -> ProjectColors.COLOR_13
+                                                0x14u -> ProjectColors.COLOR_14
+                                                0x15u -> ProjectColors.COLOR_15
+                                                0x16u -> ProjectColors.COLOR_16
+                                                0x17u -> ProjectColors.COLOR_17
+                                                0x18u -> ProjectColors.COLOR_18
+                                                0x19u -> ProjectColors.COLOR_19
+                                                0x1Au -> ProjectColors.COLOR_1A
+                                                0x1Bu -> ProjectColors.COLOR_1B
+                                                0x1Cu -> ProjectColors.COLOR_1C
+                                                0x1Du -> ProjectColors.COLOR_1D
+                                                0x1Eu -> ProjectColors.COLOR_1E
+                                                0x1Fu -> ProjectColors.COLOR_1F
+                                                0x20u -> ProjectColors.COLOR_20
+                                                0x21u -> ProjectColors.COLOR_21
+                                                0x22u -> ProjectColors.COLOR_22
+                                                0x23u -> ProjectColors.COLOR_23
+                                                0x24u -> ProjectColors.COLOR_24
+                                                0x25u -> ProjectColors.COLOR_25
+                                                0x26u -> ProjectColors.COLOR_26
+                                                0x27u -> ProjectColors.COLOR_27
+                                                0x28u -> ProjectColors.COLOR_28
+                                                0x29u -> ProjectColors.COLOR_29
+                                                0x2Au -> ProjectColors.COLOR_2A
+                                                0x2Bu -> ProjectColors.COLOR_2B
+                                                0x2Cu -> ProjectColors.COLOR_2C
+                                                0x2Du -> ProjectColors.COLOR_2D
+                                                0x2Eu -> ProjectColors.COLOR_2E
+                                                0x2Fu -> ProjectColors.COLOR_1F
+                                                0x30u -> ProjectColors.COLOR_30
+                                                0x31u -> ProjectColors.COLOR_31
+                                                0x32u -> ProjectColors.COLOR_32
+                                                0x33u -> ProjectColors.COLOR_33
+                                                0x34u -> ProjectColors.COLOR_34
+                                                0x35u -> ProjectColors.COLOR_35
+                                                0x36u -> ProjectColors.COLOR_36
+                                                0x37u -> ProjectColors.COLOR_37
+                                                0x38u -> ProjectColors.COLOR_38
+                                                0x39u -> ProjectColors.COLOR_39
+                                                0x3Au -> ProjectColors.COLOR_3A
+                                                0x3Bu -> ProjectColors.COLOR_3B
+                                                0x3Cu -> ProjectColors.COLOR_3C
+                                                0x3Du -> ProjectColors.COLOR_3D
+                                                0x3Eu -> ProjectColors.COLOR_3E
+                                                else -> ProjectColors.COLOR_3F
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+        )
+    }
 }
 

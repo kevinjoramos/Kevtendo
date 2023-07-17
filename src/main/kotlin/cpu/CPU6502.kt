@@ -23,145 +23,74 @@ class CPU6502(override var bus: Mediator) : Component {
      * 6502 Architecture components
      */
     var programCounter: UShort = 0xC000u
-        set(value) {
-            field = value
-            /*_programCounterState.value = programCounter.to4DigitHexString()
-            _instructionState1.value = disassembler.allInstructions[(programCounter - 2u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
-            _instructionState2.value = disassembler.allInstructions[(programCounter - 1u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
-            _instructionState3.value = disassembler.allInstructions[programCounter] ?: "${programCounter.to4DigitHexString()}:"
-            _instructionState4.value = disassembler.allInstructions[(programCounter + 1u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
-            _instructionState5.value = disassembler.allInstructions[(programCounter + 2u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
-            _instructionState6.value = disassembler.allInstructions[(programCounter + 3u).toUShort()] ?: "${programCounter.to4DigitHexString()}:"
-        */}
-    private val _programCounterState = MutableStateFlow("0000")
-    val programCounterState = _programCounterState.asStateFlow()
 
     var stackPointer: UShort = 0x0000u
         set(value: UShort) {
             field = (0x0100u).toUShort() or value.toUByte().toUShort()
-            _stackPointerState.value = stackPointer.to4DigitHexString()
         }
-    private val _stackPointerState = MutableStateFlow("0000")
-    val stackPointerState = _stackPointerState.asStateFlow()
 
     var accumulator: UByte = 0x00u
-        set(value) {
-            field = value
-            _accumulatorState.value = accumulator.to4DigitHexString()
-        }
-    private val _accumulatorState = MutableStateFlow("00")
-    val accumulatorState = _accumulatorState.asStateFlow()
 
     var xRegister: UByte = 0x00u
-        set(value) {
-            field = value
-            _xRegisterState.value = xRegister.to2DigitHexString()
-        }
-    private val _xRegisterState = MutableStateFlow("00")
-    val xRegisterState = _xRegisterState.asStateFlow()
 
     var yRegister: UByte = 0x00u
-        set(value) {
-            field = value
-            _yRegisterState.value = yRegister.to2DigitHexString()
-        }
-    val _yRegisterState = MutableStateFlow("00")
-    val yRegisterState = _yRegisterState.asStateFlow()
 
     var statusRegister: UByte = 0x34u
-    val _statusRegisterState = MutableStateFlow(statusRegister)
-    val statusRegisterState = _statusRegisterState.asStateFlow()
+
 
     var negativeFlag: Boolean
         get() = getFlagValue(NEGATIVE_BITMASK)
         set(value) {
             setFlagValue(value, NEGATIVE_BITMASK)
-            _negativeFlagState.value = negativeFlag
         }
-    private val _negativeFlagState = MutableStateFlow(false)
-    val negativeFlagState = _negativeFlagState.asStateFlow()
 
     var overflowFlag: Boolean
         get() = getFlagValue(OVERFLOW_BITMASK)
         set(value) {
             setFlagValue(value, OVERFLOW_BITMASK)
         }
-    private val _overflowFlagState = MutableStateFlow(false)
-    val overflowFlagState = _overflowFlagState.asStateFlow()
 
     var extraFlag: Boolean
         get() = getFlagValue(EXTRA_BITMASK)
         set(value) {
             setFlagValue(value, EXTRA_BITMASK)
-            _extraFlagState.value = extraFlag
         }
-    private val _extraFlagState = MutableStateFlow(false)
-    val extraFlagState = _extraFlagState.asStateFlow()
 
     var breakFlag: Boolean
         get() = getFlagValue(BREAK_BITMASK)
         set(value) {
             setFlagValue(value, BREAK_BITMASK)
-            _breakFlagState.value = breakFlag
         }
-    private val _breakFlagState = MutableStateFlow(false)
-    val breakFlagState = _breakFlagState.asStateFlow()
 
     var decimalFlag: Boolean
         get() = getFlagValue(DECIMAL_BITMASK)
         set(value) {
             setFlagValue(value, DECIMAL_BITMASK)
-            _decimalFlagState.value = decimalFlag
         }
-    private val _decimalFlagState = MutableStateFlow(false)
-    val decimalFlagState = _decimalFlagState.asStateFlow()
 
     var interruptDisableFlag: Boolean
         get() = getFlagValue(INTERRUPT_DISABLE_BITMASK)
         set(value) {
             setFlagValue(value, INTERRUPT_DISABLE_BITMASK)
-            _interruptDisableFlagState.value = interruptDisableFlag
         }
-    private val _interruptDisableFlagState = MutableStateFlow(false)
-    val interruptDisableFlagState = _interruptDisableFlagState.asStateFlow()
 
     var zeroFlag: Boolean
         get() = getFlagValue(ZERO_BITMASK)
         set(value) {
             setFlagValue(value, ZERO_BITMASK)
-            _zeroFlagState.value = zeroFlag
         }
-    private val _zeroFlagState = MutableStateFlow(false)
-    val zeroFlagState = _zeroFlagState.asStateFlow()
 
     var carryFlag: Boolean
         get() = getFlagValue(CARRY_BITMASK)
         set(value) {
             setFlagValue(value, CARRY_BITMASK)
-            _carryFlagState.value = carryFlag
         }
-    private val _carryFlagState = MutableStateFlow(carryFlag)
-    val carryFlagState = _carryFlagState.asStateFlow()
 
     private fun getFlagValue(bitMask: UByte): Boolean = (statusRegister and bitMask) == bitMask
 
     private fun setFlagValue(value: Boolean, bitMask: UByte) {
         statusRegister = if (value) statusRegister or bitMask else statusRegister and bitMask.inv()
     }
-
-    private val _instructionState1 = MutableStateFlow("$0000:")
-    private val _instructionState2 = MutableStateFlow("$0000:")
-    private val _instructionState3 = MutableStateFlow("$0000:")
-    private val _instructionState4 = MutableStateFlow("$0000:")
-    private val _instructionState5 = MutableStateFlow("$0000:")
-    private val _instructionState6 = MutableStateFlow("$0000:")
-
-    val instructionState1 = _instructionState1.asStateFlow()
-    val instructionState2 = _instructionState2.asStateFlow()
-    val instructionState3 = _instructionState3.asStateFlow()
-    val instructionState4 = _instructionState4.asStateFlow()
-    val instructionState5 = _instructionState5.asStateFlow()
-    val instructionState6 = _instructionState6.asStateFlow()
 
     /**
      * Other member variables for developer convenience

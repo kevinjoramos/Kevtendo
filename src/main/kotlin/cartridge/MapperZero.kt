@@ -5,10 +5,9 @@ import util.to2DigitHexString
 import util.to4DigitHexString
 
 @ExperimentalUnsignedTypes
-class MapperZero(private val cartridge: Cartridge, bus: Mediator) : Mapper(cartridge, bus) {
+class MapperZero(val cartridge: Cartridge, bus: Mediator) : Mapper(cartridge, bus) {
     init {
         mirrorCharacterMemory() //TODO("This needs to be toggled by the header.")
-
     }
     override fun readCartridgeAddress(address: UShort): UByte {
         if (address in 0x6000u..0x7FFFu) {

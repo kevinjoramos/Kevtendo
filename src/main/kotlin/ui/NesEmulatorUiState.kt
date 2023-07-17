@@ -24,47 +24,12 @@ class NesEmulatorUiState {
     private val _gameViewUiState = MutableStateFlow(GameViewUiState())
     val gameViewUiState = _gameViewUiState.asStateFlow()
 
-    var programCounterViewState = bus.cpu.programCounterState
-    var accumulatorViewState = bus.cpu.accumulatorState
-    var xRegisterViewState = bus.cpu.xRegisterState
-    var yRegisterViewState = bus.cpu.yRegisterState
-    var stackPointerViewState = bus.cpu.stackPointerState
-    var negativeFlagViewState = bus.cpu.negativeFlagState
-    var overflowFlagViewState = bus.cpu.overflowFlagState
-    var extraFlagViewState = bus.cpu.extraFlagState
-    var breakFlagViewState = bus.cpu.breakFlagState
-    var decimalFlagViewState = bus.cpu.decimalFlagState
-    var interruptDisableViewState = bus.cpu.interruptDisableFlagState
-    var zeroFlagViewState = bus.cpu.zeroFlagState
-    var carryFlagViewState = bus.cpu.carryFlagState
-    var instructionViewState1 = bus.cpu.instructionState1
-    var instructionViewState2 = bus.cpu.instructionState2
-    var instructionViewState3 = bus.cpu.instructionState3
-    var instructionViewState4 = bus.cpu.instructionState4
-    var instructionViewState5 = bus.cpu.instructionState5
-    var instructionViewState6 = bus.cpu.instructionState6
-    var zeroPageRow1ViewState = bus.ram.zeroPageRow1StateFlow
-    var zeroPageRow2ViewState = bus.ram.zeroPageRow2StateFlow
-    var zeroPageRow3ViewState = bus.ram.zeroPageRow3StateFlow
-    var zeroPageRow4ViewState = bus.ram.zeroPageRow4StateFlow
-    var zeroPageRow5ViewState = bus.ram.zeroPageRow5StateFlow
-    var zeroPageRow6ViewState = bus.ram.zeroPageRow6StateFlow
-    var zeroPageRow7ViewState = bus.ram.zeroPageRow7StateFlow
-    var zeroPageRow8ViewState = bus.ram.zeroPageRow8StateFlow
-    var zeroPageRow9ViewState = bus.ram.zeroPageRow9StateFlow
-    var zeroPageRow10ViewState = bus.ram.zeroPageRow10StateFlow
-    var zeroPageRow11ViewState = bus.ram.zeroPageRow11StateFlow
-    var zeroPageRow12ViewState = bus.ram.zeroPageRow12StateFlow
-    var zeroPageRow13ViewState = bus.ram.zeroPageRow13StateFlow
-    var zeroPageRow14ViewState = bus.ram.zeroPageRow14StateFlow
-    var zeroPageRow15ViewState = bus.ram.zeroPageRow15StateFlow
-    var zeroPageRow16ViewState = bus.ram.zeroPageRow16StateFlow
-
     //var zeroPageState = mutableStateListOf<UByte>()
     var zeroPageState = mutableStateOf(List<UByte>(256) { 0u })
     var mainRegistersState = mutableStateOf(List<UInt>(5) {0u} )
     var mainFlagsState = mutableStateOf(List<Boolean>(8) { false })
     var disassemblerState = mutableStateOf("$0000: 00")
+    var patternTableState = mutableStateOf(listOf<UInt>())
 
     private var isRunning = false
     var isPaused = false
@@ -89,6 +54,7 @@ class NesEmulatorUiState {
     fun start() {
         isRunning = true
         GlobalScope.launch(Dispatchers.Default) {
+            updatePatternTableState()
             runSystem()
         }
     }
@@ -104,43 +70,6 @@ class NesEmulatorUiState {
         isRunning = false
         emulatorProcess?.cancel()
         this.bus = Bus(pathToGame)
-        programCounterViewState = bus.cpu.programCounterState
-        accumulatorViewState = bus.cpu.accumulatorState
-        xRegisterViewState = bus.cpu.xRegisterState
-        yRegisterViewState = bus.cpu.yRegisterState
-        stackPointerViewState = bus.cpu.stackPointerState
-        negativeFlagViewState = bus.cpu.negativeFlagState
-        overflowFlagViewState = bus.cpu.overflowFlagState
-        extraFlagViewState = bus.cpu.extraFlagState
-        breakFlagViewState = bus.cpu.breakFlagState
-        decimalFlagViewState = bus.cpu.decimalFlagState
-        interruptDisableViewState = bus.cpu.interruptDisableFlagState
-        zeroFlagViewState = bus.cpu.zeroFlagState
-        carryFlagViewState = bus.cpu.carryFlagState
-
-        instructionViewState1 = bus.cpu.instructionState1
-        instructionViewState2 = bus.cpu.instructionState2
-        instructionViewState3 = bus.cpu.instructionState3
-        instructionViewState4 = bus.cpu.instructionState4
-        instructionViewState5 = bus.cpu.instructionState5
-        instructionViewState6 = bus.cpu.instructionState6
-
-        zeroPageRow1ViewState = bus.ram.zeroPageRow1StateFlow
-        zeroPageRow2ViewState = bus.ram.zeroPageRow2StateFlow
-        zeroPageRow3ViewState = bus.ram.zeroPageRow3StateFlow
-        zeroPageRow4ViewState = bus.ram.zeroPageRow4StateFlow
-        zeroPageRow5ViewState = bus.ram.zeroPageRow5StateFlow
-        zeroPageRow6ViewState = bus.ram.zeroPageRow6StateFlow
-        zeroPageRow7ViewState = bus.ram.zeroPageRow7StateFlow
-        zeroPageRow8ViewState = bus.ram.zeroPageRow8StateFlow
-        zeroPageRow9ViewState = bus.ram.zeroPageRow9StateFlow
-        zeroPageRow10ViewState = bus.ram.zeroPageRow10StateFlow
-        zeroPageRow11ViewState = bus.ram.zeroPageRow11StateFlow
-        zeroPageRow12ViewState = bus.ram.zeroPageRow12StateFlow
-        zeroPageRow13ViewState = bus.ram.zeroPageRow13StateFlow
-        zeroPageRow14ViewState = bus.ram.zeroPageRow14StateFlow
-        zeroPageRow15ViewState = bus.ram.zeroPageRow15StateFlow
-        zeroPageRow16ViewState = bus.ram.zeroPageRow16StateFlow
 
         start()
     }
@@ -279,6 +208,28 @@ class NesEmulatorUiState {
         } else {
             disassemblerState.value = bus.cpu.disassembler.instructionList[currentIndex]
         }
+    }
+
+    private fun updatePatternTableState() {
+        val patternBuffer = mutableListOf<UInt>()
+
+        for (tileBitPlanes in bus.mapper.cartridge.characterRom.chunked(16)) {
+            for (index in 0..7) {
+                val lowTile = tileBitPlanes[index].toUInt()
+                val highTile = tileBitPlanes[index + 8].toUInt()
+
+                patternBuffer.add(((highTile and 0x80u) shr 6) or ((lowTile and 0x80u) shr 7))
+                patternBuffer.add(((highTile and 0x40u) shr 5) or ((lowTile and 0x40u) shr 6))
+                patternBuffer.add(((highTile and 0x20u) shr 4) or ((lowTile and 0x20u) shr 5))
+                patternBuffer.add(((highTile and 0x10u) shr 3) or ((lowTile and 0x10u) shr 4))
+                patternBuffer.add(((highTile and 0x08u) shr 2) or ((lowTile and 0x08u) shr 3))
+                patternBuffer.add(((highTile and 0x04u) shr 1) or ((lowTile and 0x04u) shr 2))
+                patternBuffer.add(((highTile and 0x02u) shr 0) or ((lowTile and 0x02u) shr 1))
+                patternBuffer.add(((highTile and 0x01u) shl 1) or ((lowTile and 0x01u) shr 0))
+            }
+        }
+
+        patternTableState.value = patternBuffer.toImmutableList()
     }
 
     /*private fun generateNoise() {

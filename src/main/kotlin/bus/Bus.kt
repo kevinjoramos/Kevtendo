@@ -19,7 +19,7 @@ class Bus(
 ) : Mediator {
     var ram = Ram()
     var ppu = PPU2C02(this)
-    private var mapper = MapperZero(Cartridge(cartridgePath), this)
+    var mapper = MapperZero(Cartridge(cartridgePath), this)
     val cpu = CPU6502(this)
 
     val controller1 = GameController()

@@ -33,10 +33,10 @@ class ObjectAttributeMemory {
         isSpriteZeroPossible = false
 
         // Pick out the first 8 sprites on this scanline to draw
-        for (index in 0..255 step 4) {
+        for (index in 0..primaryMemory.lastIndex step 4) {
 
             // if the current y value is in between the height of the tile, it is being rendered.
-            if (scanline >= primaryMemory[index] && (scanline <= primaryMemory[index] + if (isSpriteSize8x16) 15u else 7u)) {
+            if ((scanline >= primaryMemory[index]) && (scanline <= (primaryMemory[index] + if (isSpriteSize8x16) 15u else 7u))) {
 
                 // Check for sprite 0
                 if (index == 0) {
@@ -54,10 +54,6 @@ class ObjectAttributeMemory {
                 secondaryMemory[openSlot].tileIndex = primaryMemory[index + 1].toUInt()
                 secondaryMemory[openSlot].attributes = primaryMemory[index + 2].toUInt()
                 secondaryMemory[openSlot].xPosition = primaryMemory[index + 3].toUInt()
-
-                //val sprite = secondaryMemory[openSlot]
-                /*println("${sprite.yPosition.to2DigitHexString()} ${sprite.tileIndex.to2DigitHexString()} ${sprite.attributes.to2DigitHexString()} ${sprite.xPosition.to2DigitHexString()}")
-                println("")*/
 
                 openSlot++
             }

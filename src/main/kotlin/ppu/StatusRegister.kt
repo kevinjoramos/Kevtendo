@@ -49,9 +49,9 @@ class StatusRegister {
             else -> true
         }
         set(value) {
-            when(value) {
-                false -> { this.value = this.value and (0x20u).inv()}
-                true -> {this.value = this.value or 0x20u}
+            this.value = when(value) {
+                false -> { this.value and (0x20u).inv()}
+                true -> { this.value or 0x20u}
             }
         }
 
@@ -60,10 +60,16 @@ class StatusRegister {
      * a nonzero background pixel; cleared at dot 1 of the pre-render
      * line.  Used for raster timing.
      */
-    val hasSpriteHit
+    var hasSpriteHit
         get() = when (value and 0x40u) {
             0u -> false
             else -> true
+        }
+        set(value) {
+            this.value = when (value) {
+                true -> this.value or 0x40u
+                false -> this.value and (0x40u).inv()
+            }
         }
 
 

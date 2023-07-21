@@ -128,6 +128,7 @@ class PPU2C02(
             if (cycles == 1) {
                 statusRegister.isInVBlank = false
                 statusRegister.hasSpriteOverflow = false
+                statusRegister.hasSpriteHit = false
             }
 
             // v: 0GHI A.BC DEF. .... <- t: 0GHI A.BC DEF. ....
@@ -455,11 +456,39 @@ class PPU2C02(
                 if (backgroundColorSelect != 0u && spriteColorSelect != 0u && !spritePriority) {
                     finalColorSelect = spriteColorSelect
                     finalPaletteSelect = spritePaletteSelect
+
+                    if (objectAttributeMemory.isSpriteZeroPossible && objectAttributeMemory.isSpriteZeroBeingRendered) {
+                        if (maskRegister.isShowingBackground  || maskRegister.isShowingSprites) {
+                            if (cycles != 255) {
+                                if (!(maskRegister.isShowingBackgroundInLeftMost8Pixels || maskRegister.isShowingSpritesInLeftMost8Pixels)) {
+                                    if (cycles in 8..256) {
+                                        statusRegister.hasSpriteHit = true
+                                    }
+                                } else {
+                                    statusRegister.hasSpriteHit = true
+                                }
+                            }
+                        }
+                    }
                 }
 
                 if (backgroundColorSelect != 0u && spriteColorSelect != 0u && spritePriority) {
                     finalColorSelect = backgroundColorSelect
                     finalPaletteSelect = backgroundPaletteSelect
+
+                    if (objectAttributeMemory.isSpriteZeroPossible && objectAttributeMemory.isSpriteZeroBeingRendered) {
+                        if (maskRegister.isShowingBackground  || maskRegister.isShowingSprites) {
+                            if (cycles != 255) {
+                                if (!(maskRegister.isShowingBackgroundInLeftMost8Pixels || maskRegister.isShowingSpritesInLeftMost8Pixels)) {
+                                    if (cycles in 8..256) {
+                                        statusRegister.hasSpriteHit = true
+                                    }
+                                } else {
+                                    statusRegister.hasSpriteHit = true
+                                }
+                            }
+                        }
+                    }
                 }
 
                 drawPixel(

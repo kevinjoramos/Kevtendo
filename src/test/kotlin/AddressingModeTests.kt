@@ -1,4 +1,6 @@
-import CPU.CPU6502
+import bus.Bus
+import bus.TestBus
+import cpu.CPU6502
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -10,9 +12,9 @@ class AddressingModeTests {
 
     @BeforeEach
     fun setup() {
-        val testRam = UByteArray(65_535)
-        testBus = Bus(testRam)
-        testCPU = CPU6502(testBus)
+        val testRamSize = 65_536
+        val testBus = TestBus(testRamSize)
+        testCPU = testBus.cpu
     }
 
     /**
@@ -40,10 +42,17 @@ class AddressingModeTests {
         val leastSignificantByte: UByte = 0x10u
         val result: UShort = 0x3010u
 
+        testBus.apply {
+            testBus.ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
+            testBus.ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
+        }
+
+        testBus.apply {
+
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
-            bus.ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
-            bus.ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
         }
 
         testCPU.also {
@@ -60,11 +69,18 @@ class AddressingModeTests {
         val xRegisterValue: UByte = 0x12u
         val result: UShort = 0x3132u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
+            ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
+        }
+
+        testBus.apply {
+
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             xRegister = xRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
-            bus.ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
         }
 
         testCPU.also {
@@ -81,11 +97,18 @@ class AddressingModeTests {
         val xRegisterValue: UByte = 0x12u
         val result: UShort = 0x10u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
+            ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
+        }
+
+        testBus.apply {
+
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             xRegister = xRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
-            bus.ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
         }
 
         testCPU.also {
@@ -102,11 +125,18 @@ class AddressingModeTests {
         val yRegisterValue: UByte = 0x12u
         val result: UShort = 0x3132u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
+            ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
+        }
+
+        testBus.apply {
+
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             yRegister = yRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
-            bus.ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
         }
 
         testCPU.also {
@@ -123,11 +153,18 @@ class AddressingModeTests {
         val yRegisterValue: UByte = 0x12u
         val result: UShort = 0x10u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
+            ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
+        }
+
+        testBus.apply {
+
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             yRegister = yRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = leastSignificantByte
-            bus.ram[(opcodeAddress + 2u).toInt()] = mostSignificantByte
         }
 
         testCPU.also {
@@ -146,9 +183,16 @@ class AddressingModeTests {
         val zeroPageAddress: UByte = 0x80u
         val result: UShort = 0x0080u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
+        }
+
+        testBus.apply {
+
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
-            bus.ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
         }
 
         testCPU.also {
@@ -164,10 +208,17 @@ class AddressingModeTests {
         val xRegisterValue: UByte = 0x02u
         val result: UShort = 0x0082u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
+        }
+
+        testBus.apply {
+
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             xRegister = xRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
         }
 
         testCPU.also {
@@ -183,10 +234,17 @@ class AddressingModeTests {
         val xRegisterValue: UByte = 0xFFu
         val result: UShort = 0x007Fu
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
+        }
+
+        testBus.apply {
+
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             xRegister = xRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
         }
 
         testCPU.also {
@@ -202,10 +260,13 @@ class AddressingModeTests {
         val yRegisterValue: UByte = 0x02u
         val result: UShort = 0x0082u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             yRegister = yRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
         }
 
         testCPU.also {
@@ -221,10 +282,13 @@ class AddressingModeTests {
         val yRegisterValue: UByte = 0xFFu
         val result: UShort = 0x007Fu
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             yRegister = yRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = zeroPageAddress
         }
 
         testCPU.also {
@@ -247,12 +311,15 @@ class AddressingModeTests {
         val targetLeastSignificantByte: UByte = 0xC4u
         val resultTargetAddress: UShort = 0x80C4u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = operandLeastSignificantByte
+            ram[(opcodeAddress + 2u).toInt()] = operandMostSignificantByte
+            ram[(operandResultAddress).toInt()] = targetLeastSignificantByte
+            ram[(operandResultAddress + 1u).toInt()] = targetMostSignificantByte
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
-            bus.ram[(opcodeAddress + 1u).toInt()] = operandLeastSignificantByte
-            bus.ram[(opcodeAddress + 2u).toInt()] = operandMostSignificantByte
-            bus.ram[(operandResultAddress).toInt()] = targetLeastSignificantByte
-            bus.ram[(operandResultAddress + 1u).toInt()] = targetMostSignificantByte
         }
 
         testCPU.also {
@@ -271,12 +338,15 @@ class AddressingModeTests {
         val targetLeastSignificantByte: UByte = 0x32u
         val targetAddress: UShort = 0x3032u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = operand
+            ram[(indirectAddress).toInt()] = targetLeastSignificantByte
+            ram[(indirectAddress + 1u).toInt()] = targetMostSignificantByte
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             xRegister = xRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = operand
-            bus.ram[(indirectAddress).toInt()] = targetLeastSignificantByte
-            bus.ram[(indirectAddress + 1u).toInt()] = targetMostSignificantByte
         }
 
         testCPU.also {
@@ -295,12 +365,15 @@ class AddressingModeTests {
         val targetLeastSignificantByte: UByte = 0x32u
         val targetAddress: UShort = 0x3032u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = operand
+            ram[(indirectAddress).toInt()] = targetLeastSignificantByte
+            ram[(indirectAddress + 1u).toInt()] = targetMostSignificantByte
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             xRegister = xRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = operand
-            bus.ram[(indirectAddress).toInt()] = targetLeastSignificantByte
-            bus.ram[(indirectAddress + 1u).toInt()] = targetMostSignificantByte
         }
 
         testCPU.also {
@@ -319,12 +392,15 @@ class AddressingModeTests {
         val targetLeastSignificantByte: UByte = 0x32u
         val targetAddress: UShort = 0x3032u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = operand
+            ram[(indirectAddress).toInt()] = targetLeastSignificantByte
+            ram[0] = targetMostSignificantByte
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             xRegister = xRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = operand
-            bus.ram[(indirectAddress).toInt()] = targetLeastSignificantByte
-            bus.ram[0] = targetMostSignificantByte
         }
 
         testCPU.also {
@@ -343,12 +419,15 @@ class AddressingModeTests {
         val yRegisterValue: UByte = 0x10u
         val targetAddress: UShort = 0x3553u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = operand
+            ram[(indirectAddress).toInt()] = targetLeastSignificantByte
+            ram[(indirectAddress + 1u).toInt()] = targetMostSignificantByte
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             yRegister = yRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = operand
-            bus.ram[(indirectAddress).toInt()] = targetLeastSignificantByte
-            bus.ram[(indirectAddress + 1u).toInt()] = targetMostSignificantByte
         }
 
         testCPU.also {
@@ -367,12 +446,15 @@ class AddressingModeTests {
         val yRegisterValue: UByte = 0x10u
         val targetAddress: UShort = 0x000Fu
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = operand
+            ram[(indirectAddress).toInt()] = targetLeastSignificantByte
+            ram[(indirectAddress + 1u).toInt()] = targetMostSignificantByte
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
             yRegister = yRegisterValue
-            bus.ram[(opcodeAddress + 1u).toInt()] = operand
-            bus.ram[(indirectAddress).toInt()] = targetLeastSignificantByte
-            bus.ram[(indirectAddress + 1u).toInt()] = targetMostSignificantByte
         }
 
         testCPU.also {
@@ -387,9 +469,12 @@ class AddressingModeTests {
         val offset: UByte = 0x03u
         val targetAddress: UShort = 0x1005u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = offset
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
-            bus.ram[(opcodeAddress + 1u).toInt()] = offset
         }
 
         testCPU.also {
@@ -403,9 +488,12 @@ class AddressingModeTests {
         val offset: UByte = 0x80u
         val targetAddress: UShort = 0xFF82u
 
+        testBus.apply {
+            ram[(opcodeAddress + 1u).toInt()] = offset
+        }
+
         testCPU.apply {
             programCounter = opcodeAddress
-            bus.ram[(opcodeAddress + 1u).toInt()] = offset
         }
 
         testCPU.also {

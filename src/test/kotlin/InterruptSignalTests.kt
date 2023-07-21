@@ -1,8 +1,9 @@
-import CPU.CPU6502
+import bus.Bus
+import cpu.CPU6502
+import ppu.PPU2C02
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import kotlin.test.assertContentEquals
 
 @ExperimentalUnsignedTypes
 class InterruptSignalTests {
@@ -12,8 +13,9 @@ class InterruptSignalTests {
     @BeforeEach
     fun setup() {
         val testRam = UByteArray(65_536)
-        testBus = Bus(testRam)
-        testCPU = CPU6502(testBus)
+        val testPPU = PPU2C02()
+        testCPU = CPU6502()
+        testBus = Bus(testCPU, testRam, testPPU)
     }
 
     @Test

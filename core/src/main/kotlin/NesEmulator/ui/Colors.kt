@@ -1,3 +1,4 @@
+/*
 package ui
 
 import androidx.compose.ui.graphics.Color
@@ -6,9 +7,11 @@ object ProjectColors {
     val DarkGreen100 = Color(0xff1c4645)
     val LightGreen100 = Color(0xff1f5150)
 
-    /**
+    */
+/**
      * NES Graphics Colors
-     */
+     *//*
+
 
     val COLOR_00 = Color(0xFF626262)
     val COLOR_01 = Color(0xFF0D226B)
@@ -77,4 +80,4 @@ object ProjectColors {
     val COLOR_3D = Color(0xFFB8B8B8)
     val COLOR_3E = Color(0xFF000000)
     val COLOR_3F = Color(0xFF000000)
-}
+}*/

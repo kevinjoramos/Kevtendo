@@ -10,6 +10,8 @@ class GameScreen : KtxScreen {
         log.debug { "GameScreen got shown!" }
     }
 
+
+
     companion object {
         private val log = logger<GameScreen>()
     }

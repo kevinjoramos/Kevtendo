@@ -22,7 +22,6 @@ class Kevtendo : KtxGame<KtxScreen>() {
 
     override fun create() {
         super.create()
-
         camera = OrthographicCamera()
         viewport = FitViewport(256f, 240f, camera)
         viewport.apply()
@@ -73,4 +72,6 @@ class Kevtendo : KtxGame<KtxScreen>() {
 
         frameBuffer.dispose()
     }
+
+
 }

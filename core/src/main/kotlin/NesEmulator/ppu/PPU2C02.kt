@@ -55,7 +55,7 @@ class PPU2C02(
     /**
      * Scanline Rendering
      */
-    val frameBuffer = Array(240) { Array(256) { (0x0Fu).toUByte() } }
+    val frameBuffer = Array(240) { UByteArray(256) { (0x0Fu).toUByte() } }
     private var scanline = 0
     private var cycles = 0
     private var patternTileAddress = 0x0000u

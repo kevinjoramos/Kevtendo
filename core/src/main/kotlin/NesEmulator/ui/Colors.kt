@@ -1,83 +1,72 @@
-/*
 package ui
 
-import androidx.compose.ui.graphics.Color
-
-object ProjectColors {
-    val DarkGreen100 = Color(0xff1c4645)
-    val LightGreen100 = Color(0xff1f5150)
-
-    */
-/**
-     * NES Graphics Colors
-     *//*
+object NesColors {
+    //val DarkGreen100 = Color(0xff1c4645)
+    //val LightGreen100 = Color(0xff1f5150)
 
 
-    val COLOR_00 = Color(0xFF626262)
-    val COLOR_01 = Color(0xFF0D226B)
-    val COLOR_02 = Color(0xFF241476)
-    val COLOR_03 = Color(0xFF3B0A6B)
-    val COLOR_04 = Color(0xFF4C074D)
-    val COLOR_05 = Color(0xFF520C24)
-    val COLOR_06 = Color(0xFF4C1700)
-    val COLOR_07 = Color(0xFF3B2600)
-    val COLOR_08 = Color(0xFF243400)
-    val COLOR_09 = Color(0xFF0D3D00)
-    val COLOR_0A = Color(0xFF227C15)
-    val COLOR_0B = Color(0xFF003B24)
-    val COLOR_0C = Color(0xFF00304D)
-    val COLOR_0D = Color(0xFF000000)
-    val COLOR_0E = Color(0xFF000000)
-    val COLOR_0F = Color(0xFF000000)
-
-    val COLOR_10 = Color(0xFFABABAB)
-    val COLOR_11 = Color(0xFF3156B1)
-    val COLOR_12 = Color(0xFF5043C5)
-    val COLOR_13 = Color(0xFF7034BB)
-    val COLOR_14 = Color(0xFF892F95)
-    val COLOR_15 = Color(0xFF94345F)
-    val COLOR_16 = Color(0xFF8E4226)
-    val COLOR_17 = Color(0xFF795500)
-    val COLOR_18 = Color(0xFF5B6800)
-    val COLOR_19 = Color(0xFF3B7700)
-    val COLOR_1A = Color(0xFF227C15)
-    val COLOR_1B = Color(0xFF17774C)
-    val COLOR_1C = Color(0xFF1D6985)
-    val COLOR_1D = Color(0xFF000000)
-    val COLOR_1E = Color(0xFF000000)
-    val COLOR_1F = Color(0xFF000000)
-
-    val COLOR_20 = Color(0xFFFFFFFF)
-    val COLOR_21 = Color(0xFF7CAAFF)
-    val COLOR_22 = Color(0xFF9B96FF)
-    val COLOR_23 = Color(0xFFBD86FF)
-    val COLOR_24 = Color(0xFFD87EF1)
-    val COLOR_25 = Color(0xFFE682BA)
-    val COLOR_26 = Color(0xFFE38F7F)
-    val COLOR_27 = Color(0xFFD0A24E)
-    val COLOR_28 = Color(0xFFB2B734)
-    val COLOR_29 = Color(0xFF90C739)
-    val COLOR_2A = Color(0xFF74CE5C)
-    val COLOR_2B = Color(0xFF66CB92)
-    val COLOR_2C = Color(0xFF69BECE)
-    val COLOR_2D = Color(0xFF4E4E4E)
-    val COLOR_2E = Color(0xFF000000)
-    val COLOR_2F = Color(0xFF000000)
-
-    val COLOR_30 = Color(0xFFFFFFFF)
-    val COLOR_31 = Color(0xFFC9DEFC)
-    val COLOR_32 = Color(0xFFD5D6FF)
-    val COLOR_33 = Color(0xFFE2CFFF)
-    val COLOR_34 = Color(0xFFEECCFC)
-    val COLOR_35 = Color(0xFFF5CCE7)
-    val COLOR_36 = Color(0xFFF5D1CF)
-    val COLOR_37 = Color(0xFFEED8BB)
-    val COLOR_38 = Color(0xFFE2E1AE)
-    val COLOR_39 = Color(0xFFD5E8AE)
-    val COLOR_3A = Color(0xFFC9EBBB)
-    val COLOR_3B = Color(0xFFC2EBCF)
-    val COLOR_3C = Color(0xFFC2E6E7)
-    val COLOR_3D = Color(0xFFB8B8B8)
-    val COLOR_3E = Color(0xFF000000)
-    val COLOR_3F = Color(0xFF000000)
-}*/
+    const val COLOR_00 = 0x626262FF
+    const val COLOR_01 = 0x0D226BFF
+    const val COLOR_02 = 0x241476FF
+    const val COLOR_03 = 0x3B0A6BFF
+    const val COLOR_04 = 0x4C074DFF
+    const val COLOR_05 = 0x520C24FF
+    const val COLOR_06 = 0x4C1700FF
+    const val COLOR_07 = 0x3B2600FF
+    const val COLOR_08 = 0x243400FF
+    const val COLOR_09 = 0x0D3D00FF
+    const val COLOR_0A = 0x227C15FF
+    const val COLOR_0B = 0x003B24FF
+    const val COLOR_0C = 0x00304DFF
+    const val COLOR_0D = 0x000000FF
+    const val COLOR_0E = 0x000000FF
+    const val COLOR_0F = 0x000000FF
+    const val COLOR_10 = 0xABABABFF
+    const val COLOR_11 = 0x3156B1FF
+    const val COLOR_12 = 0x5043C5FF
+    const val COLOR_13 = 0x7034BBFF
+    const val COLOR_14 = 0x892F95FF
+    const val COLOR_15 = 0x94345FFF
+    const val COLOR_16 = 0x8E4226FF
+    const val COLOR_17 = 0x795500FF
+    const val COLOR_18 = 0x5B6800FF
+    const val COLOR_19 = 0x3B7700FF
+    const val COLOR_1A = 0x227C15FF
+    const val COLOR_1B = 0x17774CFF
+    const val COLOR_1C = 0x1D6985FF
+    const val COLOR_1D = 0x000000FF
+    const val COLOR_1E = 0x000000FF
+    const val COLOR_1F = 0x000000FF
+    const val COLOR_20 = 0xFFFFFFFF
+    const val COLOR_21 = 0x7CAAFFFF
+    const val COLOR_22 = 0x9B96FFFF
+    const val COLOR_23 = 0xBD86FFFF
+    const val COLOR_24 = 0xD87EF1FF
+    const val COLOR_25 = 0xE682BAFF
+    const val COLOR_26 = 0xE38F7FFF
+    const val COLOR_27 = 0xD0A24EFF
+    const val COLOR_28 = 0xB2B734FF
+    const val COLOR_29 = 0x90C739FF
+    const val COLOR_2A = 0x74CE5CFF
+    const val COLOR_2B = 0x66CB92FF
+    const val COLOR_2C = 0x69BECEFF
+    const val COLOR_2D = 0x4E4E4EFF
+    const val COLOR_2E = 0x000000FF
+    const val COLOR_2F = 0x000000FF
+    const val COLOR_30 = 0xFFFFFFFF
+    const val COLOR_31 = 0xC9DEFCFF
+    const val COLOR_32 = 0xD5D6FFFF
+    const val COLOR_33 = 0xE2CFFFFF
+    const val COLOR_34 = 0xEECCFCFF
+    const val COLOR_35 = 0xF5CCE7FF
+    const val COLOR_36 = 0xF5D1CFFF
+    const val COLOR_37 = 0xEED8BBFF
+    const val COLOR_38 = 0xE2E1AEFF
+    const val COLOR_39 = 0xD5E8AEFF
+    const val COLOR_3A = 0xC9EBBBFF
+    const val COLOR_3B = 0xC2EBCFFF
+    const val COLOR_3C = 0xC2E6E7FF
+    const val COLOR_3D = 0xB8B8B8FF
+    const val COLOR_3E = 0x000000FF
+    const val COLOR_3F = 0x000000FF
+}

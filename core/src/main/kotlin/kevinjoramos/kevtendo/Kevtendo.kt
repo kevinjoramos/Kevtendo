@@ -3,6 +3,7 @@ package kevinjoramos.kevtendo
 import bus.Bus
 import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.Camera
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
@@ -11,6 +12,7 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.viewport.FitViewport
 import com.badlogic.gdx.utils.viewport.Viewport
+import controller.GameController
 import ktx.app.KtxGame
 import ktx.app.KtxScreen
 import ktx.log.debug
@@ -27,6 +29,8 @@ class Kevtendo : KtxGame<KtxScreen>() {
 
     private var systemClock = 0
     private lateinit var bus: Bus
+    private lateinit var controller1: GameController
+    private lateinit var controller2: GameController
 
     private var isDMAReady = false
     private var highByteDMAPointer = 0u
@@ -58,9 +62,13 @@ class Kevtendo : KtxGame<KtxScreen>() {
         //setScreen<GameScreen>()
 
         // NES setup.
-        val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Donkey Kong.nes"
+        //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Donkey Kong.nes"
+        val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Super Mario Bros.nes"
+
 
         bus = Bus(pathToGame)
+        controller1 = bus.controller1
+        controller2 = bus.controller2
     }
 
     override fun resize(width: Int, height: Int) {
@@ -72,6 +80,9 @@ class Kevtendo : KtxGame<KtxScreen>() {
 
     override fun render() {
         super.render()
+
+        // Snapshot controller input.
+        pollControllers()
 
         // Run emulation for one frame.
         executeFrameCycle()
@@ -169,6 +180,20 @@ class Kevtendo : KtxGame<KtxScreen>() {
 
             systemClock++
         }
+    }
+
+    private fun pollControllers() {
+        controller1.buttonUp = Gdx.input.isKeyPressed(Input.Keys.W)
+        controller1.buttonRight = Gdx.input.isKeyPressed(Input.Keys.D)
+        controller1.buttonDown = Gdx.input.isKeyPressed(Input.Keys.S)
+        controller1.buttonLeft = Gdx.input.isKeyPressed(Input.Keys.A)
+        controller1.buttonA = Gdx.input.isKeyPressed(Input.Keys.J)
+        controller1.buttonB = Gdx.input.isKeyPressed(Input.Keys.K)
+        controller1.buttonStart = Gdx.input.isKeyPressed(Input.Keys.NUMPAD_2)
+        controller1.buttonSelect = Gdx.input.isKeyPressed(Input.Keys.NUMPAD_1)
+
+
+
     }
 
 

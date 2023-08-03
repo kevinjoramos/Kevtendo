@@ -1,5 +1,6 @@
 package ppu
 
+import common.MirroringMode
 import mediator.Component
 import mediator.Event
 import mediator.Mediator
@@ -43,7 +44,7 @@ class PPU2C02(
     private var fineX: UInt = 0u
         set(value) { field = value and 0x07u }
 
-    private val nameTableMirroring = NameTableMirroring.VERTICAL
+    private val nameTableMirroring = MirroringMode.VERTICAL
 
     /**
      * Memories
@@ -759,7 +760,7 @@ class PPU2C02(
             nameTableAddress -= 0x1000u
         }
 
-        if (nameTableMirroring == NameTableMirroring.VERTICAL) {
+        if (nameTableMirroring == MirroringMode.VERTICAL) {
             if (nameTableAddress in 0x2000u..0x23FFu) {
                 return nameTable[(nameTableAddress - 0x2000u).toInt()].toUInt()
             }
@@ -778,7 +779,7 @@ class PPU2C02(
         }
 
 
-        if (nameTableMirroring == NameTableMirroring.HORIZONTAL) {
+        if (nameTableMirroring == MirroringMode.HORIZONTAL) {
             if (nameTableAddress in 0x2000u..0x23FFu) {
                 return nameTable[(nameTableAddress - 0x2000u).toInt()].toUInt()
             }
@@ -808,7 +809,7 @@ class PPU2C02(
             nameTableAddress -= 0x1000u
         }
 
-        if (nameTableMirroring == NameTableMirroring.VERTICAL) {
+        if (nameTableMirroring == MirroringMode.VERTICAL) {
             if (nameTableAddress in 0x2000u..0x23FFu) {
                 nameTable[(nameTableAddress - 0x2000u).toInt()] = data.toUByte()
                 return
@@ -830,7 +831,7 @@ class PPU2C02(
             }
         }
 
-        if (nameTableMirroring == NameTableMirroring.HORIZONTAL) {
+        if (nameTableMirroring == MirroringMode.HORIZONTAL) {
             if (nameTableAddress in 0x2000u..0x23FFu) {
                 nameTable[(nameTableAddress - 0x2000u).toInt()] = data.toUByte()
                 return
@@ -901,10 +902,5 @@ class PPU2C02(
         const val NAMETABLE_MEMORY_SIZE = 0x800
         const val OAM_MEMORY_SIZE = 0x100
         const val PALETTE_TABLE_MEMORY_SIZE = 0x20
-
-        enum class NameTableMirroring {
-            HORIZONTAL,
-            VERTICAL
-        }
     }
 }

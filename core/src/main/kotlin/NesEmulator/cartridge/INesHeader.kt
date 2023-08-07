@@ -1,16 +1,16 @@
 package cartridge
 
+import NesEmulator.cartridge.TvSystem
 import common.MirroringMode
-import ppu.PPU2C02
 
 @ExperimentalUnsignedTypes
 class INesHeader(
     private val headerByteCode: UByteArray
 )  {
 
-    val programRomSize = headerByteCode[PROGRAM_ROM_INDEX] * SixteenKilobyteUnitSize
+    val programRomSize = headerByteCode[PROGRAM_ROM_INDEX] * KILOBYTES_SIZE_16
 
-    val characterRomSize = headerByteCode[CHARACTER_ROM_INDEX] * EightKilobyteUnitSize
+    val characterRomSize = headerByteCode[CHARACTER_ROM_INDEX] * KILOBYTES_SIZE_8
 
     lateinit var mirroringMode: MirroringMode
 
@@ -87,19 +87,80 @@ class INesHeader(
             else -> false
         }
 
+    val upperNibbleMapperId: UInt
+        get() = (flag7 and 0xF0u) shr 4
+
+
+    /**
+     * 76543210
+     * ||||||||
+     * ++++++++- PRG RAM size
+     */
     private val flag8: UInt = headerByteCode[FLAG_8_INDEX].toUInt()
 
+    val programRamSize: UInt
+        get() = flag8 * KILOBYTES_SIZE_8
+
+
+    /**
+     * 7654321 0
+     * ||||||| |
+     * ||||||| +- TV system (0: NTSC; 1: PAL)
+     * +++++++-- Reserved, set to zero
+     */
     private val flag9: UInt = headerByteCode[FLAG_9_INDEX].toUInt()
 
+    val isPAL: Boolean
+        get() = when(flag9 and 1u) {
+            0u -> false
+            else -> true
+        }
+
+
+    /**
+     * 76 5 4 32 10
+     *    | |    ||
+     *    | |    ++- TV system (0: NTSC; 2: PAL; 1/3: dual compatible)
+     *    | +----- PRG RAM ($6000-$7FFF) (0: present; 1: not present)
+     *    +------ 0: Board has no bus conflicts; 1: Board has bus conflicts
+     */
     private val flag10: UInt = headerByteCode[FLAG_10_INDEX].toUInt()
+
+    val tvSystem: TvSystem
+        get() = when (flag10 and 0x03u) {
+            0u -> TvSystem.NTSC
+            2u -> TvSystem.PAL
+            else -> TvSystem.DUAL
+        }
+
+    val isNotPresentProgramRam: Boolean
+        get() = when (flag10 and 0x10u) {
+            0u -> true
+            else -> false
+        }
+
+    val hasBusConflicts: Boolean
+        get() = when (flag10 and 0x20u) {
+            0u -> false
+            else -> true
+        }
+
+
+    /**
+     * VERSION 2.0 NES
+     */
+
+
+
+
 
     init {
 
     }
 
     companion object {
-        const val SixteenKilobyteUnitSize = 16384u
-        const val EightKilobyteUnitSize = 8192u
+        const val KILOBYTES_SIZE_16 = 16384u
+        const val KILOBYTES_SIZE_8 = 8192u
 
         const val PROGRAM_ROM_INDEX = 4
         const val CHARACTER_ROM_INDEX = 5

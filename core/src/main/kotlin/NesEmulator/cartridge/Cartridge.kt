@@ -6,7 +6,7 @@ import java.io.File
 class Cartridge(
     cartridgeFilePath: String
 ) {
-    private val header: INesHeader
+    private val header: NesFileHeader
     var programRom: UByteArray
     var characterRom: UByteArray
 

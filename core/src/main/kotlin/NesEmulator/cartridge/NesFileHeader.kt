@@ -1,8 +1,6 @@
 package NesEmulator.cartridge
 
-import cartridge.INesHeader
 import common.MirroringMode
-import java.io.Console
 
 @ExperimentalUnsignedTypes
 class NesFileHeader(
@@ -254,10 +252,5 @@ class NesFileHeader(
             2u -> TvSystem.MULTIREGIONAL
             else -> TvSystem.DENDY
         }
-
-    }
-
-    init {
-
     }
 }

@@ -1,5 +1,6 @@
 package cartridge
 
+import NesEmulator.cartridge.NesFileHeader
 import java.io.File
 
 @ExperimentalUnsignedTypes

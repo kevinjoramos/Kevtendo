@@ -37,12 +37,12 @@ class Cartridge(
 
         // Extract the program rom section
         leftPointer = rightPointer + 1
-        rightPointer += header.sizeOfProgramRom
+        rightPointer += header.programRomSize.toInt()
         programRom = gameByteCode.sliceArray(leftPointer..rightPointer)
 
         // Extract the character rom section.
         leftPointer = rightPointer + 1
-        rightPointer += header.sizeOfCharacterRom
+        rightPointer += header.characterRomSize.toInt()
         characterRom = gameByteCode.sliceArray(leftPointer..rightPointer)
     }
 

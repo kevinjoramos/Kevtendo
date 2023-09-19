@@ -27,7 +27,7 @@ class Cartridge(
         // Extract the INES header for cartridge metadata.
         var leftPointer = 0
         var rightPointer = HEADER_SIZE - 1
-        header = INesHeader(gameByteCode.sliceArray(leftPointer..rightPointer))
+        header = NesFileHeader(gameByteCode.sliceArray(leftPointer..rightPointer))
 
         // If cartridge has a trainer section, throw away.
         if (header.hasTrainer) {

@@ -2,5 +2,6 @@ package common
 
 enum class MirroringMode {
     HORIZONTAL,
-    VERTICAL
+    VERTICAL,
+    FOUR_SCREEN
 }

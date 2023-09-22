@@ -15,17 +15,17 @@ import com.badlogic.gdx.utils.viewport.Viewport
 import controller.GameController
 import ktx.app.KtxGame
 import ktx.app.KtxScreen
-import ktx.log.debug
 import ui.NesColors
-import kotlin.system.measureTimeMillis
 
 /** [com.badlogic.gdx.ApplicationListener] implementation shared by all platforms. */
 @OptIn(ExperimentalUnsignedTypes::class)
 class Kevtendo : KtxGame<KtxScreen>() {
 
     private lateinit var spriteBatch: SpriteBatch
-    private lateinit var viewport: Viewport
-    private lateinit var camera: Camera
+    private lateinit var viewportGame: Viewport
+    private lateinit var viewportDebug: Viewport
+    private lateinit var cameraGame: Camera
+    private lateinit var cameraDebug: Camera
 
     private var systemClock = 0
     private lateinit var bus: Bus
@@ -49,10 +49,11 @@ class Kevtendo : KtxGame<KtxScreen>() {
         super.create()
 
         // LibGDX setup
-        camera = OrthographicCamera()
-        viewport = FitViewport(256f, 240f, camera)
-        viewport.apply()
-        camera.position.set(camera.viewportWidth/2, camera.viewportHeight/2, 0f)
+        cameraGame = OrthographicCamera()
+        viewportGame = FitViewport(256f, 240f, cameraGame)
+        viewportGame.apply()
+        cameraGame.position.set(cameraGame.viewportWidth/2, cameraGame.viewportHeight/2, 0f)
+
         spriteBatch = SpriteBatch()
 
         // Debugging
@@ -64,8 +65,9 @@ class Kevtendo : KtxGame<KtxScreen>() {
         // NES setup.
         //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Donkey Kong.nes"
         //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Super Mario Bros.nes"
-        val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/smb.nes"
+        //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/smb.nes"
         //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/PacMan.nes"
+        val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Ice Climber.nes"
 
 
         bus = Bus(pathToGame)
@@ -76,8 +78,8 @@ class Kevtendo : KtxGame<KtxScreen>() {
     override fun resize(width: Int, height: Int) {
         super.resize(width, height)
 
-        viewport.update(width, height)
-        camera.position.set(camera.viewportWidth/2, camera.viewportHeight/2, 0f)
+        viewportGame.update(width, height)
+        cameraGame.position.set(cameraGame.viewportWidth/2, cameraGame.viewportHeight/2, 0f)
     }
 
     override fun render() {
@@ -90,10 +92,10 @@ class Kevtendo : KtxGame<KtxScreen>() {
         executeFrameCycle()
         systemClock = 0
 
-        camera.update()
+        cameraGame.update()
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
 
-        spriteBatch.projectionMatrix = camera.combined
+        spriteBatch.projectionMatrix = cameraGame.combined
         val pixels = Pixmap(256, 240, Pixmap.Format.RGBA8888)
 
         for ((i, row) in bus.ppu.frameBuffer.withIndex()) {

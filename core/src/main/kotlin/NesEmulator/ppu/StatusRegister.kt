@@ -67,8 +67,8 @@ class StatusRegister {
         }
         set(value) {
             this.value = when (value) {
-                true -> this.value or 0x40u
                 false -> this.value and (0x40u).inv()
+                true -> this.value or 0x40u
             }
         }
 
@@ -80,8 +80,8 @@ class StatusRegister {
         }
         set(value) {
             when (value) {
-                true -> this.value = this.value or 0x80u
                 false -> this.value = this.value and (0x80u).inv()
+                true -> this.value = this.value or 0x80u
             }
         }
 

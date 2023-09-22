@@ -44,7 +44,7 @@ class PPU2C02(
     private var fineX: UInt = 0u
         set(value) { field = value and 0x07u }
 
-    private val nameTableMirroring = MirroringMode.VERTICAL
+    private val nameTableMirroring = MirroringMode.HORIZONTAL
 
     /**
      * Memories

@@ -16,13 +16,11 @@ class ControllerRegister {
      * (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
      */
     val baseNameTableAddress: UInt
-        get() {
-            return when (value and 0x03u) {
-                0u -> 0x2000u
-                1u -> 0x2400u
-                2u -> 0x2800u
-                else -> 0x2C00u
-            }
+        get() = when (value and 0x03u) {
+            0u -> 0x2000u
+            1u -> 0x2400u
+            2u -> 0x2800u
+            else -> 0x2C00u
         }
 
     /**

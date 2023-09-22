@@ -62,9 +62,9 @@ class Kevtendo : KtxGame<KtxScreen>() {
         //setScreen<GameScreen>()
 
         // NES setup.
-        //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Donkey Kong.nes"
+        val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Donkey Kong.nes"
         //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Super Mario Bros.nes"
-        val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/PacMan.nes"
+        //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/PacMan.nes"
 
 
         bus = Bus(pathToGame)
@@ -114,11 +114,6 @@ class Kevtendo : KtxGame<KtxScreen>() {
         spriteBatch.end()
 
         frameBuffer.dispose()
-
-        // Limit the frame rate to 60 fps.
-        while (Gdx.graphics.deltaTime < (1 / 60)) {
-            continue
-        }
     }
 
     private fun executeFrameCycle() {

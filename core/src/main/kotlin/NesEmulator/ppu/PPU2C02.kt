@@ -251,6 +251,10 @@ class PPU2C02(
                         scanline.toUInt(),
                         controllerRegister.isSpriteSize8x16
                     )
+
+                    /*println("OAM Eight Sprites:")
+                    objectAttributeMemory.secondaryMemory.forEach { println(it) }
+                    println()*/
                 }
 
                 if (cycles == 340) {

@@ -7,7 +7,6 @@ class ObjectAttributeMemory {
 
     // This is the buffer used for the sprite evaluation.
     val secondaryMemory = List(8) { Sprite() }
-    var openSlot = 0
 
     var isSpriteZeroPossible = false
     var isSpriteZeroBeingRendered = false
@@ -28,42 +27,37 @@ class ObjectAttributeMemory {
         secondaryMemory.forEach { sprite ->
             sprite.clear()
         }
-        openSlot = 0
 
         isSpriteZeroPossible = false
 
-        // Pick out the first 8 sprites on this scanline to draw
-        for (index in 0..primaryMemory.lastIndex step 4) {
+        primaryMemory
+            .chunked(4)
 
-            // if the current y value is in between the height of the tile, it is being rendered.
-            if ((scanline >= primaryMemory[index]) && (scanline <= (primaryMemory[index] + if (isSpriteSize8x16) 15u else 7u))) {
-
-                // Check for sprite 0
-                if (index == 0) {
+            // check to see if sprite 0 will be rendered.
+            .also { it ->
+                if (scanline >= it[0][0] && scanline <= (it[0][0] + if (isSpriteSize8x16) 15u else 7u))  {
                     isSpriteZeroPossible = true
                 }
-
-                // If 8 sprites are found check to see if we need to set the sprite overflow flag.
-                if (openSlot == 8) {
-                    hasSpriteOverflow = true
-                    break;
-                }
-
-                // Store the sprites into our structure.
-                secondaryMemory[openSlot].yPosition = primaryMemory[index].toUInt()
-                secondaryMemory[openSlot].tileIndex = primaryMemory[index + 1].toUInt()
-                secondaryMemory[openSlot].attributes = primaryMemory[index + 2].toUInt()
-                secondaryMemory[openSlot].xPosition = primaryMemory[index + 3].toUInt()
-
-                openSlot++
             }
-        }
 
-        // Fill any empty spaces with FF.
-        while (openSlot < 8) {
-            secondaryMemory[openSlot].clear()
-            openSlot++
-        }
+            // filter out the sprites not on this scanline.
+            .filter { bytes -> scanline >= bytes[0] && scanline <= (bytes[0] + if (isSpriteSize8x16) 15u else 7u)}
+
+            // naively check for sprite overflow.
+            .also {
+                if (it.size > 8) hasSpriteOverflow = true
+            }
+
+            // pick out the first 8 sprites on the scanline.
+            .take(8)
+
+            // update the secondary memory sprite values.
+            .forEachIndexed { index, bytes ->
+                secondaryMemory[index].yPosition = bytes[0].toUInt()
+                secondaryMemory[index].tileIndex = bytes[1].toUInt()
+                secondaryMemory[index].attributes = bytes[2].toUInt()
+                secondaryMemory[index].xPosition = bytes[3].toUInt()
+            }
 
         return hasSpriteOverflow
     }
@@ -148,6 +142,10 @@ class ObjectAttributeMemory {
 
         fun orientTileSliver(sliver: UInt, isSpriteSize8x16: Boolean) {
 
+        }
+
+        override fun toString(): String {
+            return "Sprite(yPosition=$yPosition, tileIndex=$tileIndex, attributes=$attributes, palette=$palette, hasPriority=$hasPriority, isFlippedHorizontally=$isFlippedHorizontally, isFlippedVertically=$isFlippedVertically, xPosition=$xPosition)"
         }
     }
 

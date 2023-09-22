@@ -72,50 +72,6 @@ class PPU2C02(
     private var highPaletteShiftRegister: UInt = 0u
     private var lowPaletteShiftRegister: UInt = 0u
 
-    fun testPrintNameTable() {
-        val nameTables = nameTable.chunked(0x400)
-        for (row in nameTables[0].chunked(32)) {
-            println("")
-            for (tile in row) {
-                print("${tile.toUInt().to2DigitHexString()} ")
-            }
-        }
-    }
-
-    fun testPrintFrameBuffer() {
-        for (row in frameBuffer) {
-            println("")
-            for (color in row) {
-                print("${color.toUInt().to2DigitHexString()} ")
-            }
-        }
-    }
-
-    fun testPrintPaletteTable() {
-        println("")
-        println(paletteTable[0].toUInt().to2DigitHexString())
-        for (color in paletteTable.slice(1..3)) {
-            print("${ color.toUInt().to2DigitHexString() } ")
-        }
-        println("")
-        for (color in paletteTable.slice(5..7)) {
-            print("${color.toUInt().to2DigitHexString()} ")
-        }
-        println("")
-        for (color in paletteTable.slice(9..11)) {
-            print("${color.toUInt().to2DigitHexString()} ")
-        }
-        println("")
-        for (color in paletteTable.slice(13..15)) {
-            print("${color.toUInt().to2DigitHexString()} ")
-        }
-        println("")
-    }
-
-    private var testCounter = 31
-
-    private var testCounterY = 29
-
     fun run() {
 
         /**
@@ -435,33 +391,35 @@ class PPU2C02(
                 var finalColorSelect = 0u
                 var finalPaletteSelect = 0u
 
+                // Background pixel 0 vs Sprite pixel 0 = BG
                 if (backgroundColorSelect == 0u && spriteColorSelect == 0u) {
-                    finalColorSelect = 0u
-                    finalPaletteSelect = 0u
+                    finalColorSelect = backgroundColorSelect
+                    finalPaletteSelect = backgroundPaletteSelect
                 }
 
+                //  backgrounnd pixel 0 vs sprite pixel 1-3 = SP
                 if (backgroundColorSelect == 0u && spriteColorSelect != 0u) {
                     finalColorSelect = spriteColorSelect
                     finalPaletteSelect = spritePaletteSelect
                 }
 
+                //  backgrounnd pixel 1-3 vs sprite pixel 0 = BG
                 if (backgroundColorSelect != 0u && spriteColorSelect == 0u) {
                     finalColorSelect = backgroundColorSelect
                     finalPaletteSelect = backgroundPaletteSelect
                 }
 
+                // tie breaker, priority false = SP
                 if (backgroundColorSelect != 0u && spriteColorSelect != 0u && !spritePriority) {
                     finalColorSelect = spriteColorSelect
                     finalPaletteSelect = spritePaletteSelect
 
                     if (objectAttributeMemory.isSpriteZeroPossible && objectAttributeMemory.isSpriteZeroBeingRendered) {
-                        if (maskRegister.isShowingBackground  || maskRegister.isShowingSprites) {
+                        if (maskRegister.isShowingBackground && maskRegister.isShowingSprites) {
                             if (cycles != 255) {
-                                if (!(maskRegister.isShowingBackgroundInLeftMost8Pixels || maskRegister.isShowingSpritesInLeftMost8Pixels)) {
-                                    if (cycles in 8..256) {
-                                        statusRegister.hasSpriteHit = true
-                                    }
-                                } else {
+                                if (maskRegister.isShowingBackgroundInLeftMost8Pixels && maskRegister.isShowingSpritesInLeftMost8Pixels) {
+                                    statusRegister.hasSpriteHit = true
+                                } else if (cycles !in 0..7) {
                                     statusRegister.hasSpriteHit = true
                                 }
                             }
@@ -469,18 +427,17 @@ class PPU2C02(
                     }
                 }
 
+                // tie breaker, priority true = BG
                 if (backgroundColorSelect != 0u && spriteColorSelect != 0u && spritePriority) {
                     finalColorSelect = backgroundColorSelect
                     finalPaletteSelect = backgroundPaletteSelect
 
                     if (objectAttributeMemory.isSpriteZeroPossible && objectAttributeMemory.isSpriteZeroBeingRendered) {
-                        if (maskRegister.isShowingBackground  || maskRegister.isShowingSprites) {
+                        if (maskRegister.isShowingBackground && maskRegister.isShowingSprites) {
                             if (cycles != 255) {
-                                if (!(maskRegister.isShowingBackgroundInLeftMost8Pixels || maskRegister.isShowingSpritesInLeftMost8Pixels)) {
-                                    if (cycles in 8..256) {
-                                        statusRegister.hasSpriteHit = true
-                                    }
-                                } else {
+                                if (maskRegister.isShowingBackgroundInLeftMost8Pixels && maskRegister.isShowingSpritesInLeftMost8Pixels) {
+                                    statusRegister.hasSpriteHit = true
+                                } else if (cycles !in 0..7) {
                                     statusRegister.hasSpriteHit = true
                                 }
                             }

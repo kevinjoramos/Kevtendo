@@ -43,7 +43,7 @@ class ObjectAttributeMemory {
             // filter out the sprites not on this scanline.
             .filter { bytes -> scanline >= bytes[0] && scanline <= (bytes[0] + if (isSpriteSize8x16) 15u else 7u)}
 
-            // naively check for sprite overflow.
+           // naively check for sprite overflow.
             .also {
                 if (it.size > 8) hasSpriteOverflow = true
             }
@@ -67,29 +67,30 @@ class ObjectAttributeMemory {
     }
 
     fun shiftAllActiveSprites() {
-        for (sprite in secondaryMemory) {
-            if (sprite.xPosition == 0u) {
+        secondaryMemory
+            .filter { sprite -> sprite.xPosition == 0u }
+            .forEach { sprite ->
                 sprite.lowSpriteShiftRegister = sprite.lowSpriteShiftRegister shl 1
                 sprite.highSpriteShiftRegister = sprite.highSpriteShiftRegister shl 1
             }
-        }
     }
 
-    fun getPrioritizedActiveSprite(): Sprite? {
+    fun getPrioritizedActiveSprite(): Sprite {
 
         // Look for first active sprite with non 0 pixel value.
         isSpriteZeroBeingRendered = false
-        for ((index, sprite) in secondaryMemory.withIndex()) {
-            if (sprite.xPosition == 0u) {
-                val colorSelect = ((sprite.highSpriteShiftRegister and 0x80u) shr 6) or ((sprite.lowSpriteShiftRegister and 0x80u) shr 7)
-                if (colorSelect != 0u) {
-                    if (index == 0 && isSpriteZeroPossible) isSpriteZeroBeingRendered = true
-                    return sprite
-                }
-            }
-        }
 
-        return null
+        val activeSprite = secondaryMemory
+            // check for sprite 0.
+            .filter { sprite -> sprite.xPosition == 0u }
+            .firstOrNull { sprite ->
+                val pixelTileData = ((sprite.highSpriteShiftRegister and 0x80u) shr 6) or ((sprite.lowSpriteShiftRegister and 0x80u) shr 7)
+                pixelTileData != 0u
+            } ?: Sprite()
+
+        if (activeSprite === secondaryMemory[0]) isSpriteZeroBeingRendered = true
+
+        return activeSprite
     }
 
     /**
@@ -138,10 +139,6 @@ class ObjectAttributeMemory {
 
             lowSpriteShiftRegister = 0u
             highSpriteShiftRegister = 0u
-        }
-
-        fun orientTileSliver(sliver: UInt, isSpriteSize8x16: Boolean) {
-
         }
 
         override fun toString(): String {

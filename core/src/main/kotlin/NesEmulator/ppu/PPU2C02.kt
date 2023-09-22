@@ -389,24 +389,16 @@ class PPU2C02(
         // Output Pixels
         if (scanline in 0..239 && cycles in 1..256) {
 
-            var spriteColorSelect = 0u
-            var spritePaletteSelect = 0u
-            var spritePriority = false
-            if (maskRegister.isShowingSprites) {
-                val activeSprite = objectAttributeMemory.getPrioritizedActiveSprite()
-
-                if (activeSprite == null) {
-                    spriteColorSelect = 0u
-                    spritePaletteSelect = 0u
-                    spritePriority = false
-                } else {
-                    spriteColorSelect = (((activeSprite.highSpriteShiftRegister and 0x80u) shr 6) or ((activeSprite.lowSpriteShiftRegister and 0x80u) shr 7))
-                    spritePaletteSelect = activeSprite.palette
-                    spritePriority = activeSprite.hasPriority
-                }
-
-                objectAttributeMemory.shiftAllActiveSprites()
+            val activeSprite = if (maskRegister.isShowingSprites) {
+                objectAttributeMemory.getPrioritizedActiveSprite()
+            } else {
+                ObjectAttributeMemory.Sprite()
             }
+            val spriteColorSelect = (((activeSprite.highSpriteShiftRegister and 0x80u) shr 6) or ((activeSprite.lowSpriteShiftRegister and 0x80u) shr 7))
+            val spritePaletteSelect = activeSprite.palette
+            val spritePriority = activeSprite.hasPriority
+
+            if (maskRegister.isShowingSprites) objectAttributeMemory.shiftAllActiveSprites()
 
             var backgroundColorSelect = 0u
             var backgroundPaletteSelect = 0u

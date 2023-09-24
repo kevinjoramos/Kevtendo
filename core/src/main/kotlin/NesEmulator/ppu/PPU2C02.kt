@@ -427,7 +427,7 @@ class PPU2C02(
                     }
                 }
 
-                // tie breaker, priority true = BG
+                // tiebreaker, priority true = BG
                 if (backgroundColorSelect != 0u && spriteColorSelect != 0u && spritePriority) {
                     finalColorSelect = backgroundColorSelect
                     finalPaletteSelect = backgroundPaletteSelect
@@ -547,12 +547,10 @@ class PPU2C02(
 
         if (!vRamHasFirstWrite) {
             tRegister.parseUpperLatch(data)
-            //addressRegister = (data shl 8)
             vRamHasFirstWrite = true
         } else {
             tRegister.parseLowerLatch(data)
             vRegister.value = tRegister.value
-            //addressRegister = (addressRegister and 0xFF00u) or data
             vRamHasFirstWrite = false
         }
     }
@@ -713,6 +711,7 @@ class PPU2C02(
             nameTableAddress -= 0x1000u
         }
 
+        // Vertical mirroring: $2000 equals $2800 and $2400 equals $2C00 (e.g. Super Mario Bros.)
         if (nameTableMirroring == MirroringMode.VERTICAL) {
             if (nameTableAddress in 0x2000u..0x23FFu) {
                 return nameTable[(nameTableAddress - 0x2000u).toInt()].toUInt()
@@ -731,7 +730,7 @@ class PPU2C02(
             }
         }
 
-
+        // Horizontal mirroring: $2000 equals $2400 and $2800 equals $2C00 (e.g. Kid Icarus)
         if (nameTableMirroring == MirroringMode.HORIZONTAL) {
             if (nameTableAddress in 0x2000u..0x23FFu) {
                 return nameTable[(nameTableAddress - 0x2000u).toInt()].toUInt()
@@ -762,6 +761,7 @@ class PPU2C02(
             nameTableAddress -= 0x1000u
         }
 
+        // Vertical mirroring: $2000 equals $2800 and $2400 equals $2C00 (e.g. Super Mario Bros.)
         if (nameTableMirroring == MirroringMode.VERTICAL) {
             if (nameTableAddress in 0x2000u..0x23FFu) {
                 nameTable[(nameTableAddress - 0x2000u).toInt()] = data.toUByte()
@@ -784,7 +784,9 @@ class PPU2C02(
             }
         }
 
+        // Horizontal mirroring: $2000 equals $2400 and $2800 equals $2C00 (e.g. Kid Icarus)
         if (nameTableMirroring == MirroringMode.HORIZONTAL) {
+
             if (nameTableAddress in 0x2000u..0x23FFu) {
                 nameTable[(nameTableAddress - 0x2000u).toInt()] = data.toUByte()
                 return

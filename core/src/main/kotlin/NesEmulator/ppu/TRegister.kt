@@ -13,7 +13,7 @@ class TRegister {
      */
     fun parseCoarseX(data: UInt) {
         val newCoarseX = (data shr 3) and (0x1Fu)
-        this.value = (this.value and 0x1Fu.inv()) or newCoarseX
+        this.value = (this.value and (0x1Fu).inv()) or newCoarseX
     }
 
     val coarseY: UInt
@@ -24,7 +24,7 @@ class TRegister {
      */
     fun parseCoarseY(data: UInt) {
         val newCoarseY = (data and 0xF8u) shl 2
-        this.value = (this.value and 0x03E0u.inv()) or newCoarseY
+        this.value = (this.value and (0x03E0u).inv()) or newCoarseY
     }
 
     val nameTableSelect: UInt
@@ -35,7 +35,7 @@ class TRegister {
      */
     fun parseNameTableSelect(data: UInt) {
         val newNameTableSelect = (data and 0x03u) shl 10
-        this.value = (this.value and 0xC00u.inv()) or newNameTableSelect
+        this.value = (this.value and (0xC00u).inv()) or newNameTableSelect
     }
 
     val fineY: UInt
@@ -46,7 +46,7 @@ class TRegister {
      */
     fun parseFineY(data: UInt) {
         val newFineY = (data and 0x07u) shl 12
-        this.value = (this.value and 0x7000u.inv()) or newFineY
+        this.value = (this.value and (0x7000u).inv()) or newFineY
     }
 
     /**

@@ -165,20 +165,112 @@ class PPU2C02(
             }
         }
 
+        // Increment vertical position of VRegister.
+        // @ 0 - 239, 261:256 (if rendering is enabled.)
+        if ((scanline in 0..239 || scanline == 261) && cycles == 256) {
+            if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
+                vRegister.incrementY()
+            }
+        }
 
         // Increment horizontal position of VRegister.
         // @ 0 - 239, 261:8 - 256 every 8 bytes, and 328 and 336 (if rendering is enabled.)
-
-        // Increment vertical position of VRegister.
-        // @ 0 - 239, 261:256 (if rendering is enabled.)
+        if (scanline in 0..239 || scanline == 261) {
+            if ((cycles in 8..256 && cycles.mod(8) == 0)
+                || cycles == 328
+                || cycles == 336
+            ) {
+                if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
+                    vRegister.incrementCoarseX()
+                }
+            }
+        }
 
         // Copy horizontal position of TRegister to VRegister.
+        // v: ... .A.. ...B CDEF <- t: ... .A.. ...B CDEF
         // @ 0 - 239, 261:257 (if rendering is enabled.)
+        if ((scanline in 0..239 || scanline == 261) && cycles == 257) {
+            if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
+                vRegister.value = (vRegister.value and (0x041Fu).inv()) or (tRegister.value and 0x041Fu)
+            }
+        }
 
         // Copy vertical position of TRegister to VRegister.
+        // v: GHI A.BC DEF. .... <- t: GHI A.BC DEF. ....
         // @ 261 : 280 - 304 (if rendering is enabled.)
+        if (scanline == 261 && cycles in 280..304) {
+            if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
+                vRegister.value = (vRegister.value and (0x7BE0u).inv()) or (tRegister.value and 0x7BE0u)
+            }
+        }
+
+        // Reload Background Shift Registers
+        // @ 0 - 239, 261: 9 - 257, 329, 337 every 8 bytes. < - TODO I'm not sure if these are all necessary for the prerender scanline.
+        if (scanline in 0..239 || scanline == 261) {
+            if ((cycles in 9..257 && cycles.mod(8) == 1)
+                || cycles == 329
+                || cycles == 337
+            ) {
+                // new tile data is loaded into the end of the shift registers.
+                lowBackgroundShiftRegister = (lowBackgroundShiftRegister and 0xFF00u) or tileLowBitPlane
+                highBackgroundShiftRegister = (highBackgroundShiftRegister and 0xFF00u) or tileHighBitPlane
+
+                // Load palette registers with attribute bits.
+                lowPaletteShiftRegister = when (attributeBits and 0x01u) {
+                    0u -> (lowPaletteShiftRegister and 0xFF00u)
+                    else -> (lowPaletteShiftRegister and 0xFF00u) or 0xFFu
+                }
+
+                highPaletteShiftRegister = when ((attributeBits shr 1) and 0x01u) {
+                    0u -> (highPaletteShiftRegister and 0xFF00u)
+                    else -> (highPaletteShiftRegister and 0xFF00u) or 0xFFu
+                }
+            }
+        }
+
+        // Shift the shift registers.
+        // @ 0 - 239, 261: 2 - 257, 322-337 < - TODO I'm not sure if these are all necessary for the prerender scanline.
+        if (scanline in 0..239 || scanline == 261) {
+            if (cycles in 2..257 || cycles in 322..337) {
+                lowBackgroundShiftRegister = lowBackgroundShiftRegister shl 1
+                highBackgroundShiftRegister = highBackgroundShiftRegister shl 1
+                lowPaletteShiftRegister = lowPaletteShiftRegister shl 1
+                highPaletteShiftRegister = highPaletteShiftRegister shl 1
+            }
+        }
+
+        // Sprite Evaluation for next scanline.
+        // @ 0 - 239 : 257
+        if ((scanline in 0..239) && cycles == 257) {
+            objectAttributeMemory.evaluateNextEightSprites(
+                scanline.toUInt(),
+                controllerRegister.isSpriteSize8x16
+            )
+
+            if (objectAttributeMemory.hasSpriteOverflow) {
+                statusRegister.hasSpriteOverflow = true
+            }
+        }
+
+        // Load sprite registers.
+
+        // Shift sprite registers.
+
+        // Pixel Multiplexer and render.
 
 
+        // Increment X And Y Over Entire Area.
+        if (cycles < 340) {
+            cycles++
+        } else {
+            cycles  = 0
+
+            if (scanline < 261) {
+                scanline++
+            } else {
+                scanline = 0
+            }
+        }
 
         /**
 

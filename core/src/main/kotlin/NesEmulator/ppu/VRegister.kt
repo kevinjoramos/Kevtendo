@@ -70,7 +70,7 @@ class VRegister {
 
     fun incrementCoarseX() {
         if (coarseX == 31u) {
-            this.value = this.value and 0x1Fu.inv()
+            this.value = this.value and (0x1Fu).inv()
             this.value = this.value xor 0x0400u
         } else {
             this.value++
@@ -95,7 +95,7 @@ class VRegister {
                     y += 1u
                 }
             }
-            value = (value and 0x03E0u.inv()) or (y shl 5)
+            value = (value and (0x03E0u).inv()) or (y shl 5)
         }
     }
 }

@@ -10,6 +10,7 @@ class ObjectAttributeMemory {
 
     var isSpriteZeroPossible = false
     var isSpriteZeroBeingRendered = false
+    var hasSpriteOverflow = false
 
     // This is the actual space that stores the 64 sprites.
     val primaryMemory = UByteArray(0x100) { 0u }
@@ -19,9 +20,9 @@ class ObjectAttributeMemory {
      * This function finds the next 8 bytes on the provided scanline,
      * and loads their data into the secondary OAM Space.
      */
-    fun evaluateNextEightSprites(scanline: UInt, isSpriteSize8x16: Boolean): Boolean {
+    fun evaluateNextEightSprites(scanline: UInt, isSpriteSize8x16: Boolean) {
 
-        var hasSpriteOverflow = false
+        hasSpriteOverflow = false
 
         // Clear the list of sprites to draw.
         secondaryMemory.forEach { sprite ->
@@ -58,8 +59,6 @@ class ObjectAttributeMemory {
                 secondaryMemory[index].attributes = bytes[2].toUInt()
                 secondaryMemory[index].xPosition = bytes[3].toUInt()
             }
-
-        return hasSpriteOverflow
     }
 
     fun decrementAllX() {

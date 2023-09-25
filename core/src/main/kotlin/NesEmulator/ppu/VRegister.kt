@@ -56,7 +56,7 @@ class VRegister {
     /**
      * The tile address is the value represented by excluding fine y.
      */
-    val tileAddress: UInt
+    val patternTileAddress: UInt
         get() = 0x2000u or (value and 0x0FFFu)
 
     /**
@@ -64,8 +64,8 @@ class VRegister {
      * This is done by shifting our Coarse X and Y
      * The free bits become the attribute offset. Attribute tiles start at 23C0
      */
-    val attributeDataAddress: UInt
-        get() = 0x23C0u or ((value and 0x0C00u) or ((coarseY and 0x1Cu) shl 1) or ((coarseX and 0x1Cu) shr 2))
+    val attributeTileAddress: UInt
+        get() = 0x23C0u or ((value and 0x0C00u) or ((value shr 4) and 0x38u) or ((value shr 2) and 0x07u))
 
 
     fun incrementCoarseX() {

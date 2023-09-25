@@ -5,7 +5,6 @@ import mediator.Component
 import mediator.Event
 import mediator.Mediator
 import mediator.Sender
-import util.reverse
 import util.to2DigitHexString
 import util.to4DigitHexString
 
@@ -59,7 +58,7 @@ class PPU2C02(
     val frameBuffer = Array(240) { UByteArray(256) { (0x0Fu).toUByte() } }
     private var scanline = 0
     private var cycles = 0
-    private var patternTileAddress = 0x0000u
+    private var patternTileId = 0x0000u
     private var attributeBits = 0u
     private var tileLowBitPlane = 0x00u
     private var tileHighBitPlane = 0x00u
@@ -73,6 +72,115 @@ class PPU2C02(
     private var lowPaletteShiftRegister: UInt = 0u
 
     fun run() {
+
+        // Clear VBlank, Sprite 0, and Sprite Overflow.
+        // @ 261:1
+        if (scanline == 261 && cycles == 1) {
+            statusRegister.apply {
+                this.isInVBlank = false
+                this.hasSpriteOverflow = false
+                this.hasSpriteHit = false
+            }
+        }
+
+        // Fetch Nametable bytes from current address.
+        // @ 0-239 : 1 - 249 once every 8 cycles i.e 1, 9, 17... 249
+        // @ 0-239 : 321 and 329
+        // @ 261 : 1 - 249 once every 8 cycles i.e 1, 9, 17... 249 <- TODO These might not be necessary.
+        // @ 261 : 321 and 329
+        if (scanline in 0..239 || scanline == 261) {
+            if ((cycles in 1..249 && cycles.mod(8) == 1)
+                || cycles == 321
+                || cycles == 329
+            ) {
+                patternTileId = readNameTableMemory(vRegister.patternTileAddress)
+            }
+        }
+
+        // Fetch Attribute table byte from current address.
+        // @ 0-239 : 3 - 251 once every 8 cycles i.e 3, 11, 19... 251
+        // @ 0-239 : 323 and 331
+        // @ 261 : 3 - 251 once every 8 cycles i.e 3, 11, 19... 251 <- TODO These might not be necessary.
+        // @ 261 : 323 and 331
+        if (scanline in 0..239 || scanline == 261) {
+            if ((cycles in 3..251 && cycles.mod(8) == 3)
+                || cycles == 323
+                || cycles == 331
+            ) {
+                val attributeTileId = readNameTableMemory(vRegister.attributeTileAddress)
+
+                val quadrantAddress = ((vRegister.coarseY and 0x02u) or ((vRegister.coarseX and 0x02u) shr 1))
+
+                attributeBits = when (quadrantAddress) {
+                    0u -> attributeTileId and 0x03u
+                    1u -> (attributeTileId shr 2) and 0x03u
+                    2u -> (attributeTileId shr 4) and 0x03u
+                    else -> (attributeTileId shr 6) and 0x03u
+                }
+            }
+        }
+
+        // Fetch table tile low plane byte.
+        // @ 0-239 : 5 - 253 once every 8 cycles i.e 5, 13, 21... 253
+        // @ 0-239 : 325 and 333
+        // @ 261 : 5 - 253 once every 8 cycles i.e 5, 13, 21... 253 <- TODO These might not be necessary.
+        // @ 261 : 325 and 333
+        if (scanline in 0..239 || scanline == 261) {
+            if ((cycles in 5..253 && cycles.mod(8) == 5)
+                || cycles == 325
+                || cycles == 333
+            ) {
+                tileLowBitPlane = readPatternTableMemory(
+                    controllerRegister.backgroundPatternTableAddress +
+                        (patternTileId shl 4) +
+                        vRegister.fineY
+                )
+            }
+        }
+
+        // Fetch table tile high plane byte.
+        // @ 0-239 : 7 - 255 once every 8 cycles i.e 7, 15, 23... 255
+        // @ 0-239 : 327 and 335
+        // @ 261 :  7 - 255 once every 8 cycles i.e 7, 15, 23... 255 <- TODO These might not be necessary.
+        // @ 261 : 327 and 335
+        if (scanline in 0..239 || scanline == 261) {
+            if ((cycles in 7..255 && cycles.mod(8) == 7)
+                || cycles == 327
+                || cycles == 335
+            ) {
+                tileHighBitPlane = readPatternTableMemory(
+                    controllerRegister.backgroundPatternTableAddress +
+                        (patternTileId shl 4) +
+                        (vRegister.fineY) + 8u
+                )
+            }
+        }
+
+        // Emit NMI on second tick of vertical blank.
+        // @ 241:1
+        if (scanline == 241 && cycles == 1) {
+            statusRegister.isInVBlank = true
+            if (controllerRegister.generateNMIAtStartVBlank) {
+                emitNMISignal()
+            }
+        }
+
+
+        // Increment horizontal position of VRegister.
+        // @ 0 - 239, 261:8 - 256 every 8 bytes, and 328 and 336 (if rendering is enabled.)
+
+        // Increment vertical position of VRegister.
+        // @ 0 - 239, 261:256 (if rendering is enabled.)
+
+        // Copy horizontal position of TRegister to VRegister.
+        // @ 0 - 239, 261:257 (if rendering is enabled.)
+
+        // Copy vertical position of TRegister to VRegister.
+        // @ 261 : 280 - 304 (if rendering is enabled.)
+
+
+
+        /**
 
         /**
          * Pre-Render Scanline
@@ -481,6 +589,8 @@ class PPU2C02(
                 scanline = 0
             }
         }
+
+        */
     }
 
     private fun drawPixel(scanline: Int, cycle: Int, colorSelect: UInt, paletteSelect: UInt) {

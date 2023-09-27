@@ -5,6 +5,7 @@ import mediator.Component
 import mediator.Event
 import mediator.Mediator
 import mediator.Sender
+import util.reverse
 import util.to2DigitHexString
 import util.to4DigitHexString
 
@@ -253,296 +254,116 @@ class PPU2C02(
         }
 
         // Load sprite registers.
+        // @ 0 - 239 : 340
+        if ((scanline in 0..239 && cycles == 340)) {
+            objectAttributeMemory.secondaryMemory.forEach { sprite ->
 
-        // Shift sprite registers.
-
-        // Pixel Multiplexer and render.
-
-
-        // Increment X And Y Over Entire Area.
-        if (cycles < 340) {
-            cycles++
-        } else {
-            cycles  = 0
-
-            if (scanline < 261) {
-                scanline++
-            } else {
-                scanline = 0
-            }
-        }
-
-        /**
-
-        /**
-         * Pre-Render Scanline
-         * - Fill the shift registers with data for first 2 tiles of next scanline.
-         * - No pixels rendered, but make same memory access.
-         * - For odd frames, last cycle is skipped.
-         * - Reload vertical bits v = t.
-         */
-        if (scanline == 261) {
-            if (cycles == 1) {
-                statusRegister.isInVBlank = false
-                statusRegister.hasSpriteOverflow = false
-                statusRegister.hasSpriteHit = false
-            }
-
-            // v: 0GHI A.BC DEF. .... <- t: 0GHI A.BC DEF. ....
-            if (cycles in 280..304) {
-                if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
-                    vRegister.value = vRegister.value and (0x7BE0u).inv()
-                    vRegister.value = vRegister.value or (tRegister.value and 0x7BE0u)
-                }
-            }
-        }
-
-        /**
-         * Visible Scanlines
-         * cycle 0 -> idle cycle.
-         * cycles 1 - 256 -> Memory access loops.
-         * every 8 cycles from 9..257 reload registers.
-         */
-        if (scanline in 0..239 || scanline == 261) {
-
-            //Reload shift Registers
-            if ((cycles in 9..257 || cycles in 321..337 ) && (cycles.mod(8)) == 1) {
-                // Load shift registers.
-                lowBackgroundShiftRegister = (lowBackgroundShiftRegister and 0xFF00u) or tileLowBitPlane
-                highBackgroundShiftRegister = (highBackgroundShiftRegister and 0xFF00u) or tileHighBitPlane
-
-                // Load palette registers with attribute bits.
-                lowPaletteShiftRegister = when (attributeBits and 0x01u) {
-                    0u -> (lowPaletteShiftRegister and 0xFF00u)
-                    else -> (lowPaletteShiftRegister and 0xFF00u) or 0xFFu
-                }
-
-                highPaletteShiftRegister = when ((attributeBits shr 1) and 0x01u) {
-                    0u -> (highPaletteShiftRegister and 0xFF00u)
-                    else -> (highPaletteShiftRegister and 0xFF00u) or 0xFFu
-                }
-            }
-
-            // 1..256 Visible cycles
-            // 257..320 Junk
-            // 321..336 next 2 tiles on next scanline.
-            if (cycles in 1..256 || cycles in 321..336) {
-                when ((cycles - 1).mod(8)) {
-                    0 -> {
-                        // Fetch the pattern tile at current name table address.
-                        patternTileAddress = readNameTableMemory(vRegister.tileAddress)
-                    }
-
-                    2 -> {
-                        // Fetch corresponding Attribute Byte
-
-                        val attributeData = readNameTableMemory(vRegister.attributeDataAddress)
-
-                        val quadrantAddress = ((vRegister.coarseY and 0x02u) or ((vRegister.coarseX and 0x02u) shr 1))
-
-                        attributeBits = when (quadrantAddress) {
-                            0u -> attributeData and 0x03u
-                            1u -> (attributeData shr 2) and 0x03u
-                            2u -> (attributeData shr 4) and 0x03u
-                            else -> (attributeData shr 6) and 0x03u
-                        }
-
-                        /*println("ATTRIB ADD: ${vRegister.attributeDataAddress.to4DigitHexString()}")
-                        println("ATTRIB: ${attributeData.to4DigitHexString()}")
-                        println("QUADRANT: ${quadrantAddress.to4DigitHexString()}")
-                        println("AttributeBits: ${attributeBits.to4DigitHexString()}")
-                        testPrintPaletteTable()
-                        println("")*/
-                    }
-
-                    4 -> {
-                        // Fetch low bit plane of pattern tile
-                        tileLowBitPlane = readPatternTableMemory(
-                            controllerRegister.backgroundPatternTableAddress +
-                                    (patternTileAddress shl 4) +
-                                    vRegister.fineY
-                        )
-                    }
-
-                    6 -> {
-                        // Fetch high bit plane of pattern tile
-                        tileHighBitPlane = readPatternTableMemory(
-                            controllerRegister.backgroundPatternTableAddress +
-                                    (patternTileAddress shl 4) +
-                                    (vRegister.fineY) + 8u
-                        )
-                    }
-                }
-            }
-
-            if (cycles in 328..340 || cycles in 1..256) {
-                if (cycles.mod(8) == 0) {
-                    if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
-                        vRegister.incrementCoarseX()
-                    }
-                }
-            }
-
-            // Increment Y values in vRegister. Skips attribute tables.
-            if (cycles == 256) {
-                if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
-                    vRegister.incrementY()
-                }
-            }
-
-            // Horizontal bits in V = Horizontal bits in T
-            // v: 0... .A.. ...B CDEF <- t: 0... .A.. ...B CDEF
-            if (cycles == 257) {
-                if (maskRegister.isShowingBackground || maskRegister.isShowingSprites) {
-                    vRegister.value = vRegister.value and (0x041Fu).inv()
-                    vRegister.value = vRegister.value or (tRegister.value and 0x041Fu)
-                }
-            }
-
-            if (scanline in 0..239) {
-
-                if (cycles == 257) {
-                    // Sprite Evaluation.
-                    statusRegister.hasSpriteOverflow = objectAttributeMemory.evaluateNextEightSprites(
-                        scanline.toUInt(),
-                        controllerRegister.isSpriteSize8x16
+                // when the sprite is 8x8 and not flipped vertically
+                if (!controllerRegister.isSpriteSize8x16 && !sprite.isFlippedVertically) {
+                    sprite.lowSpriteShiftRegister = readPatternTableMemory(
+                        controllerRegister.squareSpritePatternTableAddress +
+                            (sprite.tileIndex shl 4) + (scanline.toUInt() - sprite.yPosition)
                     )
 
-                    /*println("OAM Eight Sprites:")
-                    objectAttributeMemory.secondaryMemory.forEach { println(it) }
-                    println()*/
+                    sprite.highSpriteShiftRegister = readPatternTableMemory(
+                        controllerRegister.squareSpritePatternTableAddress +
+                            (sprite.tileIndex shl 4) + (scanline.toUInt() - sprite.yPosition) + 8u
+                    )
                 }
 
-                if (cycles == 340) {
+                // when the sprite is 8x8 and flipped vertically
+                if (!controllerRegister.isSpriteSize8x16 && sprite.isFlippedVertically) {
+                    sprite.lowSpriteShiftRegister = readPatternTableMemory(
+                        controllerRegister.squareSpritePatternTableAddress +
+                            (sprite.tileIndex shl 4) + (7u - (scanline.toUInt() - sprite.yPosition))
+                    )
 
-                    objectAttributeMemory.secondaryMemory.forEach { sprite ->
-                        if (!controllerRegister.isSpriteSize8x16) {
-                            if (sprite.isFlippedVertically) {
-                                sprite.lowSpriteShiftRegister = readPatternTableMemory(
-                                    controllerRegister.squareSpritePatternTableAddress +
-                                            (sprite.tileIndex shl 4) + (7u - (scanline.toUInt() - sprite.yPosition))
-                                )
+                    sprite.highSpriteShiftRegister = readPatternTableMemory(
+                        controllerRegister.squareSpritePatternTableAddress +
+                            (sprite.tileIndex shl 4) + (7u - (scanline.toUInt() - sprite.yPosition)) + 8u
+                    )
+                }
 
-                                sprite.highSpriteShiftRegister = readPatternTableMemory(
-                                    controllerRegister.squareSpritePatternTableAddress +
-                                            (sprite.tileIndex shl 4) + (7u - (scanline.toUInt() - sprite.yPosition)) + 8u
-                                )
-                            } else {
-                                sprite.lowSpriteShiftRegister = readPatternTableMemory(
-                                    controllerRegister.squareSpritePatternTableAddress +
-                                            (sprite.tileIndex shl 4) + (scanline.toUInt() - sprite.yPosition)
-                                )
+                // when the sprite is 8x16 and not flipped vertically
+                if (controllerRegister.isSpriteSize8x16 && !sprite.isFlippedVertically) {
+                    if (sprite.yPosition - scanline.toUInt() < 8u) {
 
-                                sprite.highSpriteShiftRegister = readPatternTableMemory(
-                                    controllerRegister.squareSpritePatternTableAddress +
-                                            (sprite.tileIndex shl 4) + (scanline.toUInt() - sprite.yPosition) + 8u
-                                )
-                            }
+                        // Top Half
+                        sprite.lowSpriteShiftRegister = readPatternTableMemory(
+                            ((sprite.tileIndex and 0x01u) shl 12) +
+                                ((sprite.tileIndex and 0xFEu) shl 4) +
+                                ((scanline.toUInt() - sprite.yPosition) and 0x07u)
+                        )
 
-                        } else {
-                            if (sprite.isFlippedVertically) {
-                                if (sprite.yPosition - scanline.toUInt() < 8u) {
+                        sprite.highSpriteShiftRegister = readPatternTableMemory(
+                            ((sprite.tileIndex and 0x01u) shl 12) +
+                                ((sprite.tileIndex and 0xFEu) shl 4) +
+                                ((scanline.toUInt() - sprite.yPosition) and 0x07u) + 8u
+                        )
+                    } else {
 
-                                    // Top Half
-                                    sprite.lowSpriteShiftRegister = readPatternTableMemory(
-                                        ((sprite.tileIndex and 0x01u) shl 12) +
-                                                (((sprite.tileIndex and 0xFEu) + 1u) shl 4) +
-                                                (7u - (scanline.toUInt() - sprite.yPosition) and 0x07u)
-                                    )
+                        // Bottom Half
+                        sprite.lowSpriteShiftRegister = readPatternTableMemory(
+                            ((sprite.tileIndex and 0x01u) shl 12) +
+                                (((sprite.tileIndex and 0xFEu) + 1u) shl 4) +
+                                ((scanline.toUInt() - sprite.yPosition) and 0x07u)
+                        )
 
-                                    sprite.highSpriteShiftRegister = readPatternTableMemory(
-                                        ((sprite.tileIndex and 0x01u) shl 12) +
-                                                (((sprite.tileIndex and 0xFEu) + 1u) shl 4) +
-                                                (7u - (scanline.toUInt() - sprite.yPosition) and 0x07u) + 8u
-                                    )
-
-                                } else {
-
-                                    // Bottom Half
-
-
-                                    sprite.lowSpriteShiftRegister = readPatternTableMemory(
-                                        ((sprite.tileIndex and 0x01u) shl 12) +
-                                                ((sprite.tileIndex and 0xFEu) shl 4) +
-                                                ((scanline.toUInt() - sprite.yPosition) and 0x07u)
-                                    )
-
-                                    sprite.highSpriteShiftRegister = readPatternTableMemory(
-                                        ((sprite.tileIndex and 0x01u) shl 12) +
-                                                ((sprite.tileIndex and 0xFEu) shl 4) +
-                                                ((scanline.toUInt() - sprite.yPosition) and 0x07u) + 8u
-                                    )
-
-                                }
-                            } else { // not flipped vertically.
-                                if (sprite.yPosition - scanline.toUInt() < 8u) {
-
-                                    // Top Half
-                                    sprite.lowSpriteShiftRegister = readPatternTableMemory(
-                                        ((sprite.tileIndex and 0x01u) shl 12) +
-                                                ((sprite.tileIndex and 0xFEu) shl 4) +
-                                                ((scanline.toUInt() - sprite.yPosition) and 0x07u)
-                                    )
-
-                                    sprite.highSpriteShiftRegister = readPatternTableMemory(
-                                        ((sprite.tileIndex and 0x01u) shl 12) +
-                                                ((sprite.tileIndex and 0xFEu) shl 4) +
-                                                ((scanline.toUInt() - sprite.yPosition) and 0x07u) + 8u
-                                    )
-                                } else {
-
-                                    // Bottom Half
-                                    sprite.lowSpriteShiftRegister = readPatternTableMemory(
-                                        ((sprite.tileIndex and 0x01u) shl 12) +
-                                                (((sprite.tileIndex and 0xFEu) + 1u) shl 4) +
-                                                ((scanline.toUInt() - sprite.yPosition) and 0x07u)
-                                    )
-
-                                    sprite.highSpriteShiftRegister = readPatternTableMemory(
-                                        ((sprite.tileIndex and 0x01u) shl 12) +
-                                                (((sprite.tileIndex and 0xFEu) + 1u) shl 4) +
-                                                ((scanline.toUInt() - sprite.yPosition) and 0x07u) + 8u
-                                    )
-
-                                }
-                            }
-                        }
-
-                        // Flip horizontally if necessary.
-                        if (sprite.isFlippedHorizontally) {
-                            sprite.lowSpriteShiftRegister = sprite.lowSpriteShiftRegister.toUByte().reverse().toUInt()
-                            sprite.highSpriteShiftRegister = sprite.highSpriteShiftRegister.toUByte().reverse().toUInt()
-                        }
+                        sprite.highSpriteShiftRegister = readPatternTableMemory(
+                            ((sprite.tileIndex and 0x01u) shl 12) +
+                                (((sprite.tileIndex and 0xFEu) + 1u) shl 4) +
+                                ((scanline.toUInt() - sprite.yPosition) and 0x07u) + 8u
+                        )
 
                     }
                 }
-            }
+
+                // when the sprite is 8x16 and flipped vertically
+                if (controllerRegister.isSpriteSize8x16 && sprite.isFlippedVertically) {
+                    if (sprite.yPosition - scanline.toUInt() < 8u) {
+
+                        // Top Half
+                        sprite.lowSpriteShiftRegister = readPatternTableMemory(
+                            ((sprite.tileIndex and 0x01u) shl 12) +
+                                (((sprite.tileIndex and 0xFEu) + 1u) shl 4) +
+                                (7u - (scanline.toUInt() - sprite.yPosition) and 0x07u)
+                        )
+
+                        sprite.highSpriteShiftRegister = readPatternTableMemory(
+                            ((sprite.tileIndex and 0x01u) shl 12) +
+                                (((sprite.tileIndex and 0xFEu) + 1u) shl 4) +
+                                (7u - (scanline.toUInt() - sprite.yPosition) and 0x07u) + 8u
+                        )
+
+                    } else {
+
+                        // Bottom Half
 
 
-            if (cycles in 257..320) {
-                // GARBAGE FETCHES
-            }
+                        sprite.lowSpriteShiftRegister = readPatternTableMemory(
+                            ((sprite.tileIndex and 0x01u) shl 12) +
+                                ((sprite.tileIndex and 0xFEu) shl 4) +
+                                ((scanline.toUInt() - sprite.yPosition) and 0x07u)
+                        )
 
+                        sprite.highSpriteShiftRegister = readPatternTableMemory(
+                            ((sprite.tileIndex and 0x01u) shl 12) +
+                                ((sprite.tileIndex and 0xFEu) shl 4) +
+                                ((scanline.toUInt() - sprite.yPosition) and 0x07u) + 8u
+                        )
 
-        }
+                    }
+                }
 
-        // Post-Render scanline
-        if (scanline == 240) {
-            // IDLE SCANLINE
-        }
-
-        // Vertical Blanking Lines
-        if (scanline in 241..260) {
-            // Emit NMI on 2nd tick of scanline 241
-            if (scanline == 241 && cycles == 1) {
-                statusRegister.isInVBlank = true
-                if (controllerRegister.generateNMIAtStartVBlank) {
-                    emitNMISignal()
+                // flip bits horizontally if needed.
+                if (sprite.isFlippedHorizontally) {
+                    sprite.lowSpriteShiftRegister = sprite.lowSpriteShiftRegister.toUByte().reverse().toUInt()
+                    sprite.highSpriteShiftRegister = sprite.highSpriteShiftRegister.toUByte().reverse().toUInt()
                 }
             }
         }
 
-        // Output Pixels
+        // Pixel Multiplexer and render.
         if (scanline in 0..239 && cycles in 1..256) {
 
             val activeSprite = if (maskRegister.isShowingSprites) {
@@ -597,13 +418,13 @@ class PPU2C02(
                     finalPaletteSelect = backgroundPaletteSelect
                 }
 
-                //  backgrounnd pixel 0 vs sprite pixel 1-3 = SP
+                //  background pixel 0 vs sprite pixel 1-3 = SP
                 if (backgroundColorSelect == 0u && spriteColorSelect != 0u) {
                     finalColorSelect = spriteColorSelect
                     finalPaletteSelect = spritePaletteSelect
                 }
 
-                //  backgrounnd pixel 1-3 vs sprite pixel 0 = BG
+                //  background pixel 1-3 vs sprite pixel 0 = BG
                 if (backgroundColorSelect != 0u && spriteColorSelect == 0u) {
                     finalColorSelect = backgroundColorSelect
                     finalPaletteSelect = backgroundPaletteSelect
@@ -645,6 +466,13 @@ class PPU2C02(
                     }
                 }
 
+                // Decrement X on all sprites
+                if ((scanline in 0..239) && cycles in 1..256) {
+                    if (maskRegister.isShowingSprites) {
+                        objectAttributeMemory.decrementAllX()
+                    }
+                }
+
                 drawPixel(
                     scanline,
                     cycles,
@@ -654,20 +482,6 @@ class PPU2C02(
             }
         }
 
-        if ((scanline in 0..239 || scanline == 261) && (cycles in 1..256 || cycles in 321..336)) {
-            if (maskRegister.isShowingBackground) {
-                lowBackgroundShiftRegister = lowBackgroundShiftRegister shl 1
-                highBackgroundShiftRegister = highBackgroundShiftRegister shl 1
-                lowPaletteShiftRegister = lowPaletteShiftRegister shl 1
-                highPaletteShiftRegister = highPaletteShiftRegister shl 1
-            }
-        }
-
-        if ((scanline in 0..239) && cycles in 1..256) {
-            if (maskRegister.isShowingSprites) {
-                objectAttributeMemory.decrementAllX()
-            }
-        }
 
         // Increment X And Y Over Entire Area.
         if (cycles < 340) {
@@ -681,8 +495,6 @@ class PPU2C02(
                 scanline = 0
             }
         }
-
-        */
     }
 
     private fun drawPixel(scanline: Int, cycle: Int, colorSelect: UInt, paletteSelect: UInt) {

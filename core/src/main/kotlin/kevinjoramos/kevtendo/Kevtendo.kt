@@ -66,8 +66,9 @@ class Kevtendo : KtxGame<KtxScreen>() {
         //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Donkey Kong.nes"
         //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Super Mario Bros.nes"
         //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/smb.nes"
-        //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/PacMan.nes"
-        val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Ice Climber.nes"
+        //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/nestest.nes"
+        val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/PacMan.nes"
+        //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Ice Climber.nes"
 
 
         bus = Bus(pathToGame)

@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.utils.viewport.ExtendViewport
 import com.badlogic.gdx.utils.viewport.FitViewport
 import com.badlogic.gdx.utils.viewport.Viewport
 import controller.GameController
@@ -38,6 +39,10 @@ class Kevtendo : KtxGame<KtxScreen>() {
     private var currentDMAData = 0u
 
     companion object {
+        const val WORLD_WIDTH = 256f
+        const val WORLD_HEIGHT = 240f
+
+
         const val TOTAL_SYSTEM_CYCLES_PER_FRAME = 89_342
         const val FIRST_CYCLE_AFTER_RENDER = 81_841
         //const val FIRST_CYCLE_AFTER_RENDER = 82_080
@@ -50,9 +55,16 @@ class Kevtendo : KtxGame<KtxScreen>() {
 
         // LibGDX setup
         cameraGame = OrthographicCamera()
-        viewportGame = FitViewport(256f, 240f, cameraGame)
+        cameraDebug = OrthographicCamera()
+
+        viewportGame = FitViewport(WORLD_WIDTH, WORLD_HEIGHT, cameraGame)
         viewportGame.apply()
+
+        viewportDebug = FitViewport(WORLD_WIDTH / 3, WORLD_HEIGHT, cameraDebug)
+        viewportDebug.apply()
+
         cameraGame.position.set(cameraGame.viewportWidth/2, cameraGame.viewportHeight/2, 0f)
+        cameraDebug.position.set(cameraDebug.viewportWidth / 2, cameraDebug.viewportHeight/2, 0f)
 
         spriteBatch = SpriteBatch()
 

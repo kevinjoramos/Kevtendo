@@ -7,7 +7,7 @@ import util.to4DigitHexString
 @ExperimentalUnsignedTypes
 class MapperZero(val cartridge: Cartridge, bus: Mediator) : Mapper(cartridge, bus) {
     init {
-        mirrorCharacterMemory() //TODO("This needs to be toggled by the header.")
+        //mirrorCharacterMemory() //TODO("This needs to be toggled by the header.")
     }
     override fun readCartridgeAddress(address: UShort): UByte {
         if (address in 0x6000u..0x7FFFu) {
@@ -15,7 +15,7 @@ class MapperZero(val cartridge: Cartridge, bus: Mediator) : Mapper(cartridge, bu
         }
 
         if (address in 0x8000u.. 0xFFFFu) {
-            return cartridge.programRom[(address - 0x8000u).toInt()]
+                return cartridge.programRom[(address - 0x8000u).toInt()]
         }
 
         return 0u

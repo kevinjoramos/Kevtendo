@@ -281,7 +281,7 @@ class CPU6502(override var bus: Mediator) : Component {
     ).withDefault { Triple(AddressingMode.ILL, NOP(), 0) }
 
     init {
-        disassembler.disassembleAssemblyCode(0x8000u, 0xFFFFu)
+        //disassembler.disassembleAssemblyCode(0x8000u, 0xFFFFu)
         reset()
     }
 

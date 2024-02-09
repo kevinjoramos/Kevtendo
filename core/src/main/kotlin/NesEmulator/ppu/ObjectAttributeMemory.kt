@@ -36,15 +36,15 @@ class ObjectAttributeMemory {
 
             // check to see if sprite 0 will be rendered.
             .also { it ->
-                if (scanline >= it[0][0] && scanline <= (it[0][0] + if (isSpriteSize8x16) 15u else 7u))  {
+                if (scanline >= it[0][0] && scanline <= (it[0][0] + if (isSpriteSize8x16) 15u else 7u)) {
                     isSpriteZeroPossible = true
                 }
             }
 
             // filter out the sprites not on this scanline.
-            .filter { bytes -> scanline >= bytes[0] && scanline <= (bytes[0] + if (isSpriteSize8x16) 15u else 7u)}
+            .filter { bytes -> scanline >= bytes[0] && scanline <= (bytes[0] + if (isSpriteSize8x16) 15u else 7u) }
 
-           // naively check for sprite overflow.
+            // naively check for sprite overflow.
             .also {
                 if (it.size > 8) hasSpriteOverflow = true
             }
@@ -83,7 +83,8 @@ class ObjectAttributeMemory {
             // check for sprite 0.
             .filter { sprite -> sprite.xPosition == 0u }
             .firstOrNull { sprite ->
-                val pixelTileData = ((sprite.highSpriteShiftRegister and 0x80u) shr 6) or ((sprite.lowSpriteShiftRegister and 0x80u) shr 7)
+                val pixelTileData =
+                    ((sprite.highSpriteShiftRegister and 0x80u) shr 6) or ((sprite.lowSpriteShiftRegister and 0x80u) shr 7)
                 pixelTileData != 0u
             } ?: Sprite()
 
@@ -91,58 +92,72 @@ class ObjectAttributeMemory {
 
         return activeSprite
     }
+}
 
-    /**
-     * Sprite class is just a structure I made for easier access.
-     * Since each sprite takes up 4 bytes.
-     */
-    class Sprite {
-        var yPosition: UInt = 0u
-            set(value) {field = value and 0xFFu}
-        var tileIndex: UInt = 0u
-            set(value) {field = value and 0xFFu}
-        var attributes: UInt = 0u
-            set(value) {field = value and 0xFFu}
+/**
+ * Sprite class is just a structure I made for easier access.
+ * Since each sprite takes up 4 bytes.
+ */
+class Sprite {
+    var yPosition: UInt = 0u
+        set(value) {
+            field = value and 0xFFu
+        }
+    var tileIndex: UInt = 0u
+        set(value) {
+            field = value and 0xFFu
+        }
+    var attributes: UInt = 0u
+        set(value) {
+            field = value and 0xFFu
+        }
 
-        val palette: UInt get() = (attributes and 0x03u) + 4u
+    val palette: UInt get() = (attributes and 0x03u) + 4u
 
-        val hasPriority: Boolean get() = when (attributes and 0x20u) {
+    val hasPriority: Boolean
+        get() = when (attributes and 0x20u) {
             0u -> false
             else -> true
         }
 
-        val isFlippedHorizontally: Boolean get() = when (attributes and 0x40u) {
+    val isFlippedHorizontally: Boolean
+        get() = when (attributes and 0x40u) {
             0u -> false
             else -> true
         }
 
-        val isFlippedVertically: Boolean get() = when (attributes and 0x80u) {
+    val isFlippedVertically: Boolean
+        get() = when (attributes and 0x80u) {
             0u -> false
             else -> true
         }
 
-        var xPosition: UInt = 0u
-            set(value) {field = value and 0xFFu}
-
-        var lowSpriteShiftRegister = 0u
-            set(value) {field = value and 0xFFu}
-
-        var highSpriteShiftRegister = 0u
-            set(value) {field = value and 0xFFu}
-
-        fun clear() {
-            yPosition = 0xFFu
-            tileIndex = 0xFFu
-            attributes = 0xFFu
-            xPosition = 0xFFu
-
-            lowSpriteShiftRegister = 0u
-            highSpriteShiftRegister = 0u
+    var xPosition: UInt = 0u
+        set(value) {
+            field = value and 0xFFu
         }
 
-        override fun toString(): String {
-            return "Sprite(yPosition=$yPosition, tileIndex=$tileIndex, attributes=$attributes, palette=$palette, hasPriority=$hasPriority, isFlippedHorizontally=$isFlippedHorizontally, isFlippedVertically=$isFlippedVertically, xPosition=$xPosition)"
+    var lowSpriteShiftRegister = 0u
+        set(value) {
+            field = value and 0xFFu
         }
+
+    var highSpriteShiftRegister = 0u
+        set(value) {
+            field = value and 0xFFu
+        }
+
+    fun clear() {
+        yPosition = 0xFFu
+        tileIndex = 0xFFu
+        attributes = 0xFFu
+        xPosition = 0xFFu
+
+        lowSpriteShiftRegister = 0u
+        highSpriteShiftRegister = 0u
     }
 
+    override fun toString(): String {
+        return "Sprite(yPosition=$yPosition, tileIndex=$tileIndex, attributes=$attributes, palette=$palette, hasPriority=$hasPriority, isFlippedHorizontally=$isFlippedHorizontally, isFlippedVertically=$isFlippedVertically, xPosition=$xPosition)"
+    }
 }

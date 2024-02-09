@@ -1,28 +1,20 @@
 package kevinjoramos.kevtendo
 
 import actors.NesScreen
-import bus.Bus
-import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.Input
-import com.badlogic.gdx.graphics.Camera
 import com.badlogic.gdx.graphics.GL20
-import com.badlogic.gdx.graphics.OrthographicCamera
-import com.badlogic.gdx.graphics.Pixmap
-import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.utils.viewport.ExtendViewport
+import com.badlogic.gdx.scenes.scene2d.ui.Label
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane
+import com.badlogic.gdx.scenes.scene2d.ui.Skin
+import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.utils.viewport.FitViewport
-import com.badlogic.gdx.utils.viewport.ScreenViewport
-import com.badlogic.gdx.utils.viewport.Viewport
-import controller.GameController
 import ktx.app.KtxGame
 import ktx.app.KtxScreen
-import ui.NesColors
 
 class Kevtendo : KtxGame<KtxScreen>() {
     private lateinit var stage: Stage
+    private lateinit var skin: Skin
 
     companion object {
         const val TOTAL_SYSTEM_CYCLES_PER_FRAME = 89_342
@@ -31,13 +23,61 @@ class Kevtendo : KtxGame<KtxScreen>() {
     }
 
     override fun create() {
-        stage = Stage(FitViewport(245f, 240f))
+        skin = Skin(Gdx.files.internal("uiskin.json"))
+        stage = Stage(FitViewport(256f, 240f))
         stage.apply {
             Gdx.input.inputProcessor = this
+            val screen = NesScreen()
+            addActor(screen)
+            /*
+            val container = Table()
+            addActor(container)
+            container.setFillParent(true)
 
-            val actor = NesScreen()
-            addActor(actor)
-            keyboardFocus = actor
+            val Screen = NesScreen()
+            val scrollPaneTable = Table()
+            val scrollPane = ScrollPane(scrollPaneTable, skin)
+            //addActor(actor)
+            container.add(Screen).grow()
+            container.add(scrollPane)
+
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+            scrollPaneTable.row()
+            scrollPaneTable.add(Label("Hello World!", skin))
+
+             */
+
+            keyboardFocus = screen
         }
     }
 

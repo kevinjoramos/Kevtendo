@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.Sprite
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.scenes.scene2d.Actor
 import controller.GameController
 import kevinjoramos.kevtendo.Kevtendo
@@ -26,15 +25,17 @@ class NesScreen : Actor() {
     private var highByteDMAPointer = 0u
     private var lowByteDMAPointer = 0u
     private var currentDMAData = 0u
+    lateinit var spritesSnapshot: List<ppu.Sprite>
 
     init {
         setBounds(sprite.x, sprite.y, sprite.width, sprite.height)
-        val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Donkey Kong.nes"
+        //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Donkey Kong.nes"
         //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Super Mario Bros.nes"
         //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/smb.nes"
         //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/nestest.nes"
         //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/PacMan.nes"
         //val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/Ice Climber.nes"
+        val pathToGame = "/home/kevin/Documents/IntellijProjects/Kevtendo/core/src/main/kotlin/NesEmulator/games/palette_ram.nes"
         bus = Bus(pathToGame)
         bus.also {
             this.controller1 = it.controller1
@@ -118,6 +119,21 @@ class NesScreen : Actor() {
                     }
                 }
             }
+
+            /*
+            spritesSnapshot = bus.ppu.objectAttributeMemory.primaryMemory
+                .chunked(4)
+                .map {
+                    ppu.Sprite().apply {
+                        yPosition = it[0].toUInt()
+                        tileIndex = it[1].toUInt()
+                        attributes = it[2].toUInt()
+                        xPosition = it[3].toUInt()
+                    }
+                }
+
+             */
+
 
             systemClock++
         }

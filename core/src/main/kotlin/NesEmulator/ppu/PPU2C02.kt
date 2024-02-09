@@ -50,7 +50,7 @@ class PPU2C02(
      * Memories
      */
     private val nameTable: UByteArray = UByteArray(NAMETABLE_MEMORY_SIZE)
-    private val objectAttributeMemory = ObjectAttributeMemory()
+    val objectAttributeMemory = ObjectAttributeMemory()
     val paletteTable = UByteArray(PALETTE_TABLE_MEMORY_SIZE)
 
     /**
@@ -369,7 +369,7 @@ class PPU2C02(
             val activeSprite = if (maskRegister.isShowingSprites) {
                 objectAttributeMemory.getPrioritizedActiveSprite()
             } else {
-                ObjectAttributeMemory.Sprite()
+                Sprite()
             }
             val spriteColorSelect = (((activeSprite.highSpriteShiftRegister and 0x80u) shr 6) or ((activeSprite.lowSpriteShiftRegister and 0x80u) shr 7))
             val spritePaletteSelect = activeSprite.palette

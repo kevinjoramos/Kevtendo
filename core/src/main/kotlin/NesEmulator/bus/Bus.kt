@@ -95,6 +95,7 @@ class Bus(
 
         // Cartridge Space
         if (address in 0x4020u..0xFFFFu) {
+            println(address)
             return mapper.readCartridgeAddress(address)
         }
 

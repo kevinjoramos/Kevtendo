@@ -1,5 +1,6 @@
 package ppu
 
+import bus.Bus
 import common.MirroringMode
 import mediator.Component
 import mediator.Event
@@ -11,7 +12,7 @@ import util.to4DigitHexString
 
 @ExperimentalUnsignedTypes
 class PPU2C02(
-    override var bus: Mediator
+    override val bus: Bus
 ) : Component {
 
     /**
@@ -49,9 +50,9 @@ class PPU2C02(
     /**
      * Memories
      */
-    private val nameTable: UByteArray = UByteArray(NAMETABLE_MEMORY_SIZE)
-    val objectAttributeMemory = ObjectAttributeMemory()
-    val paletteTable = UByteArray(PALETTE_TABLE_MEMORY_SIZE)
+    private val nameTable: UByteArray = UByteArray(1024)
+    private val objectAttributeMemory = ObjectAttributeMemory()
+    private val paletteTable = UByteArray(32)
 
     /**
      * Scanline Rendering
@@ -674,20 +675,28 @@ class PPU2C02(
      * PPU Memory Access
      */
     private fun readPPUMemory(address: UInt): UInt {
+        // Left and right sides of pattern table
+        if (address in 0x0000u..0x1FFFu) {
+            readAddressFromBus(address.toUShort())
+        }
+        // nametables 0-3 (also the mirrors)
+        if (address in 0x2000u..0x3EFFu) {
+
+        }
+        // palette ram and mirrors.
+        if (address in 0x3F00u..0x3FFFu)
+
+
+
+
+
         return when (address) {
-
-            // Pattern Table 0
-            in 0x0000u..0x0FFFu -> readPatternTableMemory(address)
-
-            // Pattern Table 1
-            in 0x1000u..0x1FFFu -> readPatternTableMemory(address)
-
+            // Left and right sides of pattern table
+            in  -> readPatternTableMemory(address)
             // Name Tables 0-3 and Mirrors.
             in 0x2000u..0x3EFFu -> readNameTableMemory(address)
-
             // Pallet tables
             in 0x3F00u..0x3FFFu -> readPaletteTableMemory(address - 0x3F00u)
-
             // I'd have no idea how you got here if you did.
             else -> 0u
         }
@@ -866,6 +875,9 @@ class PPU2C02(
 
         return paletteTable[paletteAddress.toInt()].toUInt()
     }
+
+    override fun readAddressFromBus(address: UShort): UByte = bus.readAddressAsPpu(address)
+
 
     companion object {
         const val NAMETABLE_MEMORY_SIZE = 0x800

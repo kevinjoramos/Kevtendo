@@ -1,7 +1,6 @@
 package cpu
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import bus.Bus
 import mediator.Component
 import mediator.Mediator
 import util.to2DigitHexString
@@ -17,7 +16,7 @@ import util.to4DigitHexString
  * TODO("implement clock cycles")
  */
 @ExperimentalUnsignedTypes
-class CPU6502(override var bus: Mediator) : Component {
+class CPU6502(override val bus: Bus) : Component {
 
     /**
      * 6502 Architecture components
@@ -293,7 +292,7 @@ class CPU6502(override var bus: Mediator) : Component {
                 isPendingIRQ = false
                 nmi()
             } else {
-                this.opcodeValue = readAddress(programCounter)
+                this.opcodeValue = readAddressFromBus(programCounter)
 
                 val (addressingMode, operation, cycles) = fetchInstruction(opcodeValue)
 
@@ -407,7 +406,7 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     fun immediateAddressing() {
         programCounter++
-        operandLowByte = readAddress(programCounter)
+        operandLowByte = readAddressFromBus(programCounter)
         immediateOperand  = operandLowByte
     }
 
@@ -419,11 +418,11 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     fun absoluteAddressing() {
         programCounter++
-        val operandLowByte = readAddress(programCounter)
+        val operandLowByte = readAddressFromBus(programCounter)
         this.operandLowByte = operandLowByte
 
         programCounter++
-        val operandHighByte = readAddress((programCounter))
+        val operandHighByte = readAddressFromBus((programCounter))
         this.operandHighByte = operandHighByte
 
         this.targetAddress = (operandHighByte.toUInt() shl 8).toUShort() or operandLowByte.toUShort()
@@ -438,7 +437,7 @@ class CPU6502(override var bus: Mediator) : Component {
     fun zeroPageAddressing() {
         programCounter++
 
-        val operandLowByte = readAddress(programCounter)
+        val operandLowByte = readAddressFromBus(programCounter)
         this.operandLowByte = operandLowByte
 
         this.targetAddress = operandLowByte.toUShort()
@@ -452,11 +451,11 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     fun absoluteXIndexedAddressing() {
         programCounter++
-        val operandLowByte = readAddress(programCounter)
+        val operandLowByte = readAddressFromBus(programCounter)
         this.operandLowByte = operandLowByte
 
         programCounter++
-        val operandHighByte = readAddress(programCounter)
+        val operandHighByte = readAddressFromBus(programCounter)
         this.operandHighByte = operandHighByte
 
         val targetAddress = ((operandHighByte.toUInt() shl 8) + operandLowByte.toUInt() + xRegister.toUInt()).toUShort()
@@ -476,11 +475,11 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     fun absoluteYIndexedAddressing() {
         programCounter++
-        val operandLowByte = readAddress(programCounter)
+        val operandLowByte = readAddressFromBus(programCounter)
         this.operandLowByte = operandLowByte
 
         programCounter++
-        val operandHighByte = readAddress(programCounter)
+        val operandHighByte = readAddressFromBus(programCounter)
         this.operandHighByte = operandHighByte
 
         val targetAddress = ((operandHighByte.toUInt() shl 8) + operandLowByte.toUInt() + yRegister.toUInt()).toUShort()
@@ -501,7 +500,7 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     fun zeroPageXIndexedAddressing() {
         programCounter++
-        val operandLowByte = readAddress(programCounter)
+        val operandLowByte = readAddressFromBus(programCounter)
         this.operandLowByte = operandLowByte
 
         this.targetAddress =  (operandLowByte + xRegister).toUByte().toUShort()
@@ -516,7 +515,7 @@ class CPU6502(override var bus: Mediator) : Component {
      */
     fun zeroPageYIndexedAddressing() {
         programCounter++
-        val operandLowByte = readAddress(programCounter)
+        val operandLowByte = readAddressFromBus(programCounter)
         this.operandLowByte = operandLowByte
 
         this.targetAddress =  (operandLowByte + yRegister).toUByte().toUShort()
@@ -524,23 +523,23 @@ class CPU6502(override var bus: Mediator) : Component {
 
     fun indirectAddressing() {
         programCounter++
-        val operandLowByte = readAddress(programCounter)
+        val operandLowByte = readAddressFromBus(programCounter)
         this.operandLowByte = operandLowByte
 
         programCounter++
-        val operandHighByte = readAddress(programCounter)
+        val operandHighByte = readAddressFromBus(programCounter)
         this.operandHighByte = operandHighByte
 
         val indirectAddress: UShort = ((operandHighByte.toUInt() shl 8) + operandLowByte.toUInt()).toUShort()
 
-        val targetLeastSignificantByte: UByte = readAddress(indirectAddress)
+        val targetLeastSignificantByte: UByte = readAddressFromBus(indirectAddress)
 
         // this wonkyness is here because of the original JMP bug in the 6502.
         val targetMostSignificantByte =
             if (indirectAddress.toUByte() == (0xFFu).toUByte()) {
-                readAddress((indirectAddress - 0xFFu).toUShort()).toUInt()
+                readAddressFromBus((indirectAddress - 0xFFu).toUShort()).toUInt()
             } else {
-                readAddress((indirectAddress + 1u).toUShort()).toUInt()
+                readAddressFromBus((indirectAddress + 1u).toUShort()).toUInt()
             }
 
         this.targetAddress = ((targetMostSignificantByte shl 8) + targetLeastSignificantByte).toUShort()
@@ -548,24 +547,24 @@ class CPU6502(override var bus: Mediator) : Component {
 
     fun xIndexedIndirectAddressing() {
         programCounter++
-        val operandLowByte = readAddress(programCounter)
+        val operandLowByte = readAddressFromBus(programCounter)
         this.operandLowByte = operandLowByte
 
         val zeroPageAddress: UShort = (operandLowByte + xRegister).toUByte().toUShort()
 
-        val targetLeastSignificantByte: UByte = readAddress(zeroPageAddress)
-        val targetMostSignificantByte: UByte = readAddress((zeroPageAddress + 1u).toUByte().toUShort())
+        val targetLeastSignificantByte: UByte = readAddressFromBus(zeroPageAddress)
+        val targetMostSignificantByte: UByte = readAddressFromBus((zeroPageAddress + 1u).toUByte().toUShort())
 
         this.targetAddress = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte).toUShort()
     }
 
     fun indirectYIndexedAddressing() {
         programCounter++
-        val operandLowByte = readAddress(programCounter)
+        val operandLowByte = readAddressFromBus(programCounter)
         this.operandLowByte = operandLowByte
 
-        val targetLeastSignificantByte = readAddress(operandLowByte.toUShort())
-        val targetMostSignificantByte: UByte =  readAddress((operandLowByte + 1u).toUByte().toUShort())
+        val targetLeastSignificantByte = readAddressFromBus(operandLowByte.toUShort())
+        val targetMostSignificantByte: UByte =  readAddressFromBus((operandLowByte + 1u).toUByte().toUShort())
 
         val targetAddress = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte + yRegister).toUShort()
 
@@ -578,7 +577,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
     fun relativeAddressing() {
         programCounter++
-        val offset: Byte = readAddress(programCounter).toByte()
+        val offset: Byte = readAddressFromBus(programCounter).toByte()
         val nextInstructionAddress = (programCounter.toInt() + 1).toUShort()
         val targetAddress = (nextInstructionAddress.toInt() + offset.toInt()).toUShort()
 
@@ -637,7 +636,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         override fun execute(targetAddress: UShort) {
             val signBitMask: UByte = 0x80u
-            val operand: UByte = this@CPU6502.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddressFromBus(targetAddress)
 
             val accumulatorSignedBit = this@CPU6502.accumulator and signBitMask == signBitMask
             val operandSignedBit = operand and signBitMask == signBitMask
@@ -693,7 +692,7 @@ class CPU6502(override var bus: Mediator) : Component {
         }
 
         override fun execute(targetAddress: UShort) {
-            val operand: UByte = this@CPU6502.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddressFromBus(targetAddress)
             val result: UByte = this@CPU6502.accumulator and operand
             this@CPU6502.accumulator = result
 
@@ -730,9 +729,9 @@ class CPU6502(override var bus: Mediator) : Component {
         }
 
         override fun execute(targetAddress: UShort) {
-            val data: UInt = this@CPU6502.readAddress(targetAddress).toUInt()
+            val data: UInt = this@CPU6502.readAddressFromBus(targetAddress).toUInt()
             val result: UByte = (data shl 1).toUByte()
-            this@CPU6502.writeToAddress(targetAddress, result)
+            this@CPU6502.writeToAddressInBus(targetAddress, result)
 
             this@CPU6502.carryFlag = (data shr 7) == 1u
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
@@ -803,7 +802,7 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "BIT"
 
         override fun execute(targetAddress: UShort) {
-            val operand: UInt = this@CPU6502.readAddress(targetAddress).toUInt()
+            val operand: UInt = this@CPU6502.readAddressFromBus(targetAddress).toUInt()
             val result: UByte = this@CPU6502.accumulator and operand.toUByte()
 
             this@CPU6502.negativeFlag = (operand shr 7) == 1u
@@ -873,21 +872,21 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "BRK"
 
         override fun execute() {
-            val vectorLeastSignificantByte = this@CPU6502.readAddress(0xFFFEu)
-            val vectorMostSignificantByte = this@CPU6502.readAddress(0xFFFFu)
+            val vectorLeastSignificantByte = this@CPU6502.readAddressFromBus(0xFFFEu)
+            val vectorMostSignificantByte = this@CPU6502.readAddressFromBus(0xFFFFu)
 
             this@CPU6502.programCounter++
             this@CPU6502.programCounter++
 
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, (this@CPU6502.programCounter.toInt() shr 8).toUByte())
+            this@CPU6502.writeToAddressInBus(this@CPU6502.stackPointer, (this@CPU6502.programCounter.toInt() shr 8).toUByte())
             this@CPU6502.stackPointer--
 
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, this@CPU6502.programCounter.toUByte())
+            this@CPU6502.writeToAddressInBus(this@CPU6502.stackPointer, this@CPU6502.programCounter.toUByte())
             this@CPU6502.stackPointer--
 
             val statusRegisterValue = this@CPU6502.statusRegister or EXTRA_BITMASK or BREAK_BITMASK
 
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, statusRegisterValue)
+            this@CPU6502.writeToAddressInBus(this@CPU6502.stackPointer, statusRegisterValue)
             this@CPU6502.stackPointer--
 
             this@CPU6502.interruptDisableFlag = true
@@ -1011,7 +1010,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         override fun execute(targetAddress: UShort) {
             val signBitMask: UByte = 0x80u
-            val operand: UByte = this@CPU6502.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddressFromBus(targetAddress)
             val rawResult = (this@CPU6502.accumulator.toByte() - operand.toByte()).toUInt()
             val result = rawResult.toUByte()
 
@@ -1048,7 +1047,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         override fun execute(targetAddress: UShort) {
             val signBitMask: UByte = 0x80u
-            val operand: UByte = this@CPU6502.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddressFromBus(targetAddress)
             val rawResult = (this@CPU6502.xRegister.toByte() - operand.toByte()).toUInt()
             val result = rawResult.toUByte()
 
@@ -1084,7 +1083,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         override fun execute(targetAddress: UShort) {
             val signBitMask: UByte = 0x80u
-            val operand: UByte = this@CPU6502.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddressFromBus(targetAddress)
             val rawResult = (this@CPU6502.yRegister.toByte() - operand.toByte()).toUInt()
             val result = rawResult.toUByte()
 
@@ -1100,9 +1099,9 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "DEC"
 
         override fun execute(targetAddress: UShort) {
-            val operand: UByte = this@CPU6502.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddressFromBus(targetAddress)
             val result = operand.dec()
-            this@CPU6502.writeToAddress(targetAddress, result)
+            this@CPU6502.writeToAddressInBus(targetAddress, result)
 
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
@@ -1157,7 +1156,7 @@ class CPU6502(override var bus: Mediator) : Component {
         }
 
         override fun execute(targetAddress: UShort) {
-            val operand: UByte = this@CPU6502.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddressFromBus(targetAddress)
             val result: UByte = this@CPU6502.accumulator xor operand
             this@CPU6502.accumulator = result
 
@@ -1181,9 +1180,9 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "INC"
 
         override fun execute(targetAddress: UShort) {
-            val operand: UByte = this@CPU6502.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddressFromBus(targetAddress)
             val result = operand.inc()
-            this@CPU6502.writeToAddress(targetAddress, result)
+            this@CPU6502.writeToAddressInBus(targetAddress, result)
 
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
             this@CPU6502.negativeFlag = (result.toUInt() shr 7) == 1u
@@ -1258,9 +1257,9 @@ class CPU6502(override var bus: Mediator) : Component {
             val currentAddressMostSignificantByte: UByte = (this@CPU6502.programCounter.toUInt() shr 8).toUByte()
             val currentAddressLeastSignificantByte: UByte = this@CPU6502.programCounter.toUByte()
 
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, currentAddressMostSignificantByte)
+            this@CPU6502.writeToAddressInBus(this@CPU6502.stackPointer, currentAddressMostSignificantByte)
             this@CPU6502.stackPointer--
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, currentAddressLeastSignificantByte)
+            this@CPU6502.writeToAddressInBus(this@CPU6502.stackPointer, currentAddressLeastSignificantByte)
             this@CPU6502.stackPointer--
 
             this@CPU6502.programCounter = targetAddress
@@ -1285,7 +1284,7 @@ class CPU6502(override var bus: Mediator) : Component {
         }
 
         override fun execute(targetAddress: UShort) {
-            val data: UByte = this@CPU6502.readAddress(targetAddress)
+            val data: UByte = this@CPU6502.readAddressFromBus(targetAddress)
             this@CPU6502.accumulator = data
 
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
@@ -1314,7 +1313,7 @@ class CPU6502(override var bus: Mediator) : Component {
         }
 
         override fun execute(targetAddress: UShort) {
-            val data: UByte = this@CPU6502.readAddress(targetAddress)
+            val data: UByte = this@CPU6502.readAddressFromBus(targetAddress)
             this@CPU6502.xRegister = data
 
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
@@ -1343,7 +1342,7 @@ class CPU6502(override var bus: Mediator) : Component {
         }
 
         override fun execute(targetAddress: UShort) {
-            val data: UByte = this@CPU6502.readAddress(targetAddress)
+            val data: UByte = this@CPU6502.readAddressFromBus(targetAddress)
             this@CPU6502.yRegister = data
 
             this@CPU6502.zeroFlag = data == (0x00u).toUByte()
@@ -1381,9 +1380,9 @@ class CPU6502(override var bus: Mediator) : Component {
         }
 
         override fun execute(targetAddress: UShort){
-            val data: UInt = this@CPU6502.readAddress(targetAddress).toUInt()
+            val data: UInt = this@CPU6502.readAddressFromBus(targetAddress).toUInt()
             val result: UByte = (data shr 1).toUByte()
-            this@CPU6502.writeToAddress(targetAddress, result)
+            this@CPU6502.writeToAddressInBus(targetAddress, result)
 
             this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
@@ -1424,7 +1423,7 @@ class CPU6502(override var bus: Mediator) : Component {
         }
 
         override fun execute(targetAddress: UShort) {
-            val operand: UByte = this@CPU6502.readAddress(targetAddress)
+            val operand: UByte = this@CPU6502.readAddressFromBus(targetAddress)
             val result: UByte = this@CPU6502.accumulator or operand
             this@CPU6502.accumulator = result
 
@@ -1447,7 +1446,7 @@ class CPU6502(override var bus: Mediator) : Component {
         val baseCycleCost = 3
 
         override fun execute() {
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, this@CPU6502.accumulator)
+            this@CPU6502.writeToAddressInBus(this@CPU6502.stackPointer, this@CPU6502.accumulator)
             this@CPU6502.stackPointer--
 
             this@CPU6502.programCounter++
@@ -1469,7 +1468,7 @@ class CPU6502(override var bus: Mediator) : Component {
         override fun execute() {
             val statusRegisterValue = this@CPU6502.statusRegister or EXTRA_BITMASK or BREAK_BITMASK
 
-            this@CPU6502.writeToAddress(this@CPU6502.stackPointer, statusRegisterValue)
+            this@CPU6502.writeToAddressInBus(this@CPU6502.stackPointer, statusRegisterValue)
             this@CPU6502.stackPointer--
 
             this@CPU6502.programCounter++
@@ -1487,7 +1486,7 @@ class CPU6502(override var bus: Mediator) : Component {
 
         override fun execute() {
             this@CPU6502.stackPointer++
-            val data: UByte = this@CPU6502.readAddress(this@CPU6502.stackPointer)
+            val data: UByte = this@CPU6502.readAddressFromBus(this@CPU6502.stackPointer)
             this@CPU6502.accumulator = data
 
             this@CPU6502.negativeFlag = (data.toUInt() shr 7) == 1u
@@ -1510,7 +1509,7 @@ class CPU6502(override var bus: Mediator) : Component {
             val extraFlagValue = this@CPU6502.extraFlag
             val breakFlagValue = this@CPU6502.breakFlag
 
-            val data: UByte = this@CPU6502.readAddress(this@CPU6502.stackPointer)
+            val data: UByte = this@CPU6502.readAddressFromBus(this@CPU6502.stackPointer)
             this@CPU6502.statusRegister = data
 
             this@CPU6502.extraFlag = extraFlagValue
@@ -1545,9 +1544,9 @@ class CPU6502(override var bus: Mediator) : Component {
         }
 
         override fun execute(targetAddress: UShort) {
-            val data: UInt = this@CPU6502.readAddress(targetAddress).toUInt()
+            val data: UInt = this@CPU6502.readAddressFromBus(targetAddress).toUInt()
             val result: UByte = if (this@CPU6502.carryFlag) ((data shl 1) or (1u)).toUByte() else (data shl 1).toUByte()
-            this@CPU6502.writeToAddress(targetAddress, result)
+            this@CPU6502.writeToAddressInBus(targetAddress, result)
 
             this@CPU6502.carryFlag = (data shr 7).toUByte() == (1u).toUByte()
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
@@ -1583,9 +1582,9 @@ class CPU6502(override var bus: Mediator) : Component {
         }
 
         override fun execute(targetAddress: UShort) {
-            val data: UInt = this@CPU6502.readAddress(targetAddress).toUInt()
+            val data: UInt = this@CPU6502.readAddressFromBus(targetAddress).toUInt()
             val result: UByte = if (this@CPU6502.carryFlag) ((data shr 1) or (0x80u)).toUByte() else (data shr 1).toUByte()
-            this@CPU6502.writeToAddress(targetAddress, result)
+            this@CPU6502.writeToAddressInBus(targetAddress, result)
 
             this@CPU6502.carryFlag = (data.toUByte() and (0x01).toUByte()) == (1u).toUByte()
             this@CPU6502.zeroFlag = result == (0x00u).toUByte()
@@ -1607,16 +1606,16 @@ class CPU6502(override var bus: Mediator) : Component {
             val breakFlagValue = this@CPU6502.breakFlag
 
             this@CPU6502.stackPointer++
-            val statusRegisterValue = this@CPU6502.readAddress(this@CPU6502.stackPointer)
+            val statusRegisterValue = this@CPU6502.readAddressFromBus(this@CPU6502.stackPointer)
             this@CPU6502.statusRegister = statusRegisterValue
             this@CPU6502.extraFlag = extraFlagValue
             this@CPU6502.breakFlag = breakFlagValue
 
             this@CPU6502.stackPointer++
-            val targetLeastSignificantByte = this@CPU6502.readAddress(this@CPU6502.stackPointer)
+            val targetLeastSignificantByte = this@CPU6502.readAddressFromBus(this@CPU6502.stackPointer)
 
             this@CPU6502.stackPointer++
-            val targetMostSignificantByte = this@CPU6502.readAddress(this@CPU6502.stackPointer)
+            val targetMostSignificantByte = this@CPU6502.readAddressFromBus(this@CPU6502.stackPointer)
 
             this@CPU6502.programCounter = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte).toUShort()
         }
@@ -1631,9 +1630,9 @@ class CPU6502(override var bus: Mediator) : Component {
 
         override fun execute() {
             this@CPU6502.stackPointer++
-            val targetLeastSignificantByte = this@CPU6502.readAddress(this@CPU6502.stackPointer)
+            val targetLeastSignificantByte = this@CPU6502.readAddressFromBus(this@CPU6502.stackPointer)
             this@CPU6502.stackPointer++
-            val targetMostSignificantByte = this@CPU6502.readAddress(this@CPU6502.stackPointer)
+            val targetMostSignificantByte = this@CPU6502.readAddressFromBus(this@CPU6502.stackPointer)
 
             this@CPU6502.programCounter = ((targetMostSignificantByte.toUInt() shl 8) + targetLeastSignificantByte).toUShort()
             this@CPU6502.programCounter++
@@ -1680,7 +1679,7 @@ class CPU6502(override var bus: Mediator) : Component {
         }
 
         override fun execute(targetAddress: UShort) {
-            val operand = this@CPU6502.readAddress(targetAddress)
+            val operand = this@CPU6502.readAddressFromBus(targetAddress)
             val accumulatorSignedBit = this@CPU6502.accumulator and NEGATIVE_BITMASK == NEGATIVE_BITMASK
             val operandSignedBit = operand and NEGATIVE_BITMASK == NEGATIVE_BITMASK
 
@@ -1764,7 +1763,7 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "STA"
 
         override fun execute(targetAddress: UShort) {
-            this@CPU6502.writeToAddress(targetAddress, this@CPU6502.accumulator)
+            this@CPU6502.writeToAddressInBus(targetAddress, this@CPU6502.accumulator)
             this@CPU6502.programCounter++
         }
     }
@@ -1778,7 +1777,7 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "STX"
 
         override fun execute(targetAddress: UShort) {
-            this@CPU6502.writeToAddress(targetAddress, this@CPU6502.xRegister)
+            this@CPU6502.writeToAddressInBus(targetAddress, this@CPU6502.xRegister)
             this@CPU6502.programCounter++
         }
     }
@@ -1792,7 +1791,7 @@ class CPU6502(override var bus: Mediator) : Component {
         override val opcodeName = "STY"
 
         override fun execute(targetAddress: UShort) {
-            this@CPU6502.writeToAddress(targetAddress, this@CPU6502.yRegister)
+            this@CPU6502.writeToAddressInBus(targetAddress, this@CPU6502.yRegister)
             this@CPU6502.programCounter++
         }
     }
@@ -1922,18 +1921,18 @@ class CPU6502(override var bus: Mediator) : Component {
      * 6. PC is loaded with address stored at 0xFFFA 0xFFFB
      */
     fun nmi() {
-        val vectorLeastSignificantByte = readAddress(0xFFFAu)
-        val vectorMostSignificantByte = readAddress(0xFFFBu)
+        val vectorLeastSignificantByte = readAddressFromBus(0xFFFAu)
+        val vectorMostSignificantByte = readAddressFromBus(0xFFFBu)
 
-        writeToAddress(stackPointer, (programCounter.toInt() shr 8).toUByte())
+        writeToAddressInBus(stackPointer, (programCounter.toInt() shr 8).toUByte())
         stackPointer--
 
-        writeToAddress(stackPointer, programCounter.toUByte())
+        writeToAddressInBus(stackPointer, programCounter.toUByte())
         stackPointer--
 
         val statusRegisterValue = (this@CPU6502.statusRegister or EXTRA_BITMASK) and BREAK_BITMASK.inv()
 
-        writeToAddress(stackPointer, statusRegisterValue)
+        writeToAddressInBus(stackPointer, statusRegisterValue)
         stackPointer--
 
         this@CPU6502.interruptDisableFlag = true
@@ -1951,8 +1950,8 @@ class CPU6502(override var bus: Mediator) : Component {
         stackPointer--
         stackPointer--
         stackPointer--
-        val vectorLeastSignificantByte = readAddress(0xFFFCu)
-        val vectorMostSignificantByte = readAddress(0xFFFDu)
+        val vectorLeastSignificantByte = readAddressFromBus(0xFFFCu)
+        val vectorMostSignificantByte = readAddressFromBus(0xFFFDu)
         programCounter = (((vectorMostSignificantByte.toUInt() shl 8) + vectorLeastSignificantByte).toUShort())
     }
 
@@ -1968,18 +1967,18 @@ class CPU6502(override var bus: Mediator) : Component {
     fun irq() {
         if (interruptDisableFlag) return
 
-        val vectorLeastSignificantByte = readAddress(0xFFFEu)
-        val vectorMostSignificantByte = readAddress(0xFFFFu)
+        val vectorLeastSignificantByte = readAddressFromBus(0xFFFEu)
+        val vectorMostSignificantByte = readAddressFromBus(0xFFFFu)
 
-        writeToAddress(stackPointer, (programCounter.toInt() shr 8).toUByte())
+        writeToAddressInBus(stackPointer, (programCounter.toInt() shr 8).toUByte())
         stackPointer--
 
-        writeToAddress(stackPointer, programCounter.toUByte())
+        writeToAddressInBus(stackPointer, programCounter.toUByte())
         stackPointer--
 
         val statusRegisterValue = (this@CPU6502.statusRegister or EXTRA_BITMASK) and BREAK_BITMASK.inv()
 
-        writeToAddress(stackPointer, statusRegisterValue)
+        writeToAddressInBus(stackPointer, statusRegisterValue)
         stackPointer--
 
         interruptDisableFlag = true
@@ -1996,7 +1995,7 @@ class CPU6502(override var bus: Mediator) : Component {
             var currentIndex = 0
             while (currentAddress <= endAddress) {
 
-                val instruction = fetchInstruction(readAddress(currentAddress.toUShort()))
+                val instruction = fetchInstruction(readAddressFromBus(currentAddress.toUShort()))
 
                 val instructionName = instruction.second.opcodeName
 
@@ -2094,5 +2093,13 @@ class CPU6502(override var bus: Mediator) : Component {
         private const val INTERRUPT_DISABLE_BITMASK: UByte = 0x04u
         private const val ZERO_BITMASK: UByte = 0x02u
         private const val CARRY_BITMASK: UByte = 0x01u
+    }
+
+    override fun readAddressFromBus(address: UShort): UByte {
+        return bus.readAddressAsCpu(address)
+    }
+
+    override fun writeToAddressInBus(address: UShort, data: UByte) {
+        bus.writeToAddressAsCpu(address, data)
     }
 }

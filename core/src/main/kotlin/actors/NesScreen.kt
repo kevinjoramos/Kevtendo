@@ -88,7 +88,7 @@ class NesScreen : Actor() {
 
                         // Read
                         if (systemClock.mod(2) == 0) {
-                            currentDMAData = bus.readAddress(((highByteDMAPointer shl 8) or lowByteDMAPointer).toUShort()).toUInt()
+                            currentDMAData = bus.readAddressAsCpu(((highByteDMAPointer shl 8) or lowByteDMAPointer).toUShort()).toUInt()
                         }
 
                         // Write
